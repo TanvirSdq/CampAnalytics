@@ -1,3 +1,4 @@
+import html
 import io
 import re
 from collections import defaultdict
@@ -28,39 +29,30 @@ BG_MID = "#13284a"
 TEXT_LIGHT = "#eef3fc"
 TEXT_MUTED = "#a9b9d8"
 
-EVENT_MAP = {'wlf': 'Folklore', 'wle': 'Earth', 'wlm': 'Monuments', 'wlb': 'Bangla'}
+import json
+import os
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
-COUNTRY_MAP = {
-    'bd': 'Bangladesh', 'in': 'India', 'de': 'Germany', 'it': 'Italy',
-    'fr': 'France', 'us': 'United_States', 'ca': 'Canada', 'uk': 'United_Kingdom',
-    'nl': 'Netherlands', 'pl': 'Poland', 'br': 'Brazil', 'mx': 'Mexico',
-    'es': 'Spain', 'pt': 'Portugal', 'pk': 'Pakistan', 'np': 'Nepal',
-    'ng': 'Nigeria', 'ke': 'Kenya', 'id': 'Indonesia',
-    'ph': 'Philippines', 'my': 'Malaysia', 'tr': 'Turkey', 'eg': 'Egypt',
-    'ua': 'Ukraine', 'ru': 'Russia', 'ch': 'Switzerland', 'se': 'Sweden',
-    'no': 'Norway', 'fi': 'Finland', 'be': 'Belgium', 'at': 'Austria',
-    'ar': 'Argentina', 'co': 'Colombia', 'lk': 'Sri_Lanka', 'au': 'Australia',
-    'nz': 'New_Zealand', 'th': 'Thailand', 'gr': 'Greece', 'tn': 'Tunisia',
-    'ma': 'Morocco', 'dz': 'Algeria', 'za': 'South_Africa', 'gh': 'Ghana',
-    'tz': 'Tanzania', 'pe': 'Peru', 'cl': 'Chile', 've': 'Venezuela',
-    'cz': 'Czech_Republic', 'ro': 'Romania', 'hu': 'Hungary'
-}
+with open(os.path.join(os.path.dirname(__file__), 'config.json'), 'r') as f:
+    config = json.load(f)
 
-REGION_COUNTRY_MAPPING = {
-    "South Asia (SA)": ['bd', 'in', 'pk', 'np', 'lk'],
-    "East, Southeast Asia, Pacific (ESEAP)": ['id', 'ph', 'my', 'au', 'nz', 'th'],
-    "Northern & Western Europe (NWE)": ['de', 'fr', 'uk', 'nl', 'se', 'no', 'fi', 'be', 'at', 'ch'],
-    "Southern Europe (SE)": ['it', 'es', 'pt', 'gr'],
-    "Central & Eastern Europe (CEE)": ['pl', 'ua', 'ru', 'cz', 'ro', 'hu'],
-    "Middle East & North Africa (MENA)": ['tr', 'eg', 'tn', 'ma', 'dz'],
-    "Latin America (LATAM)": ['br', 'mx', 'ar', 'co', 'pe', 'cl', 've'],
-    "Sub-Saharan Africa (SSA)": ['ng', 'ke', 'za', 'gh', 'tz'],
-    "North America (NA)": ['us', 'ca']
-}
+EVENT_MAP = config['EVENT_MAP']
+COUNTRY_MAP = config['COUNTRY_MAP']
+REGION_COUNTRY_MAPPING = config['REGION_COUNTRY_MAPPING']
 
 CODE_RE = re.compile(r'(wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})')
 EXAMPLE_CODES = "wlmde21 wlmde22 wlmbd22 wlmbd23"
 COUNTRY_OPTIONS = sorted(COUNTRY_MAP.keys(), key=lambda k: COUNTRY_MAP[k])
+
+# --- RELIABLE HTTP SESSION ---
+def get_session():
+    session = requests.Session()
+    retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504, 429])
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    return session
+
+http_session = get_session()
 
 WIKI_CMAP = LinearSegmentedColormap.from_list(
     "wiki_blue", [CARD_LIGHT, "#bcd4f7", WIKI_BLUE, WIKI_BLUE_DARK, "#0b2b5c"]
@@ -100,119 +92,175 @@ def code_to_category(code):
 
 
 # --- DATA ACQUISITION LOGIC ---
-@st.cache_data(show_spinner=False, ttl=3600)
-def get_participants(code):
+def _fetch_toolforge_data(category):
     try:
-        category = code_to_category(code)
-        if not category:
-            return set()
-
-        response = requests.get(
-            'https://ptools.toolforge.org/uploadersincat.php?category=' + category, timeout=15
-        )
-
-        for uincattxt in response.content.decode("UTF-8").split('fieldset'):
-            if '<legend>List</legend>' in uincattxt:
-                break
-        splt = list(uincattxt.split('>'))
-        users = set()
-
-        for s in splt:
-            if "User:" in s and "href" not in s:
-                users.add(s.replace("User:", "").replace("</a", ""))
-        return users
+        url = f"https://ptools.toolforge.org/uploadersincat.php?category={category}"
+        response = http_session.get(url, timeout=8)
+        if response.status_code != 200:
+            return None
+        matches = re.findall(r'User:([^"\'<>#]+)</a>\s*:\s*(\d+)\s*files', response.text)
+        if matches:
+            uploader_counts = {html.unescape(user.strip()): int(count) for user, count in matches}
+            return uploader_counts
+        if "No files found" in response.text or "<fieldset>" in response.text:
+            return {}
+        return None
     except Exception:
-        return set()
+        return None
 
 
-def _fetch_category_file_records(category):
-    def _commons_query(params):
-        response = requests.get(COMMONS_API, params=params, headers=COMMONS_HEADERS, timeout=20)
-        response.raise_for_status()
-        payload = response.json()
-        if "error" in payload:
-            raise RuntimeError(payload["error"].get("info", "Commons API error"))
-        return payload
-
-    files = []
+def _fetch_participants_from_api(category):
+    users = set()
     params = {
         "action": "query",
         "format": "json",
         "generator": "categorymembers",
         "gcmtitle": f"Category:{category}",
         "gcmtype": "file",
-        "gcmlimit": "max",
-        "prop": "imageinfo|categories",
-        "iiprop": "user",
-        "iilimit": "1",
-        "cllimit": "max",
+        "gcmlimit": "500",
+        "prop": "imageinfo",
+        "iiprop": "user"
     }
 
-    while True:
-        payload = _commons_query(params)
+    try:
+        while True:
+            response = http_session.get(COMMONS_API, params=params, headers=COMMONS_HEADERS, timeout=20)
+            response.raise_for_status()
+            payload = response.json()
+
+            pages = payload.get("query", {}).get("pages", {})
+            for page in pages.values():
+                imageinfo = page.get("imageinfo", [])
+                if imageinfo:
+                    user = imageinfo[0].get("user")
+                    if user:
+                        users.add(user)
+
+            continuation = payload.get("continue")
+            if not continuation:
+                break
+            params["gcmcontinue"] = continuation.get("gcmcontinue")
+            params["continue"] = continuation.get("continue", "gcmcontinue||")
+
+        return users
+    except Exception as e:
+        print(f"Error fetching participants from API for {category}: {e}")
+        return set()
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def get_participants(code):
+    category = code_to_category(code)
+    if not category:
+        return set()
+
+    # 1. High-speed primary: Toolforge replica DB query (sub-second)
+    toolforge_uploaders = _fetch_toolforge_data(category)
+    if toolforge_uploaders is not None:
+        return set(toolforge_uploaders.keys())
+
+    # 2. Resilient fallback: Commons Action API
+    return _fetch_participants_from_api(category)
+
+
+def _fetch_file_sample_metrics(category, max_sample=1500):
+    """
+    Rapidly sample files for Quality Image and Global Usage metrics.
+    Uses targeted category filtering to avoid multi-continuation slowdowns.
+    """
+    params = {
+        "action": "query",
+        "format": "json",
+        "generator": "categorymembers",
+        "gcmtitle": f"Category:{category}",
+        "gcmtype": "file",
+        "gcmlimit": "500",
+        "prop": "categories|globalusage",
+        "clcategories": "Category:Quality images|Category:Featured pictures",
+        "gulimit": "10",
+    }
+
+    total_sampled = 0
+    quality_count = 0
+    used_count = 0
+
+    while total_sampled < max_sample:
+        try:
+            response = http_session.get(COMMONS_API, params=params, headers=COMMONS_HEADERS, timeout=15)
+            response.raise_for_status()
+            payload = response.json()
+        except Exception as e:
+            print(f"Error sampling files for {category}: {e}")
+            break
+
         pages = payload.get("query", {}).get("pages", {})
+        if not pages:
+            break
 
         for page in pages.values():
-            imageinfo = page.get("imageinfo", [])
-            uploader = imageinfo[0].get("user") if imageinfo else None
-            categories = [cat.get("title", "").lower() for cat in page.get("categories", [])]
-            is_quality_image = any(
-                keyword in category_name
-                for category_name in categories
-                for keyword in QUALITY_IMAGE_KEYWORDS
-            )
-            files.append({
-                "uploader": uploader,
-                "is_quality_image": is_quality_image,
-            })
+            total_sampled += 1
+            if page.get("categories"):
+                quality_count += 1
+            if page.get("globalusage"):
+                used_count += 1
 
         continuation = payload.get("continue")
-        if not continuation:
+        if not continuation or "gcmcontinue" not in continuation:
             break
-        params.update(continuation)
+        params["gcmcontinue"] = continuation.get("gcmcontinue")
+        params["continue"] = continuation.get("continue", "gcmcontinue||")
 
-    return files
+    return {
+        "sampled": total_sampled,
+        "quality_count": quality_count,
+        "used_count": used_count
+    }
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
 def get_campaign_structural_metrics(code):
     category = code_to_category(code)
     if not category:
-        return {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "total_uploads": 0}
+        return {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "usage_share": 0.0, "total_uploads": 0}
 
-    try:
-        file_records = _fetch_category_file_records(category)
-    except Exception:
-        return {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "total_uploads": 0}
+    # First, get exact uploaders and upload counts from Toolforge if possible
+    toolforge_uploaders = _fetch_toolforge_data(category)
 
-    total_uploads = len(file_records)
-    if total_uploads == 0:
-        return {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "total_uploads": 0}
+    if toolforge_uploaders:
+        uploader_counts = toolforge_uploaders
+        total_uploads = sum(uploader_counts.values())
+    else:
+        uploader_counts = {}
+        total_uploads = 0
 
-    quality_count = sum(1 for file_record in file_records if file_record["is_quality_image"])
-    quality_image_share = (quality_count / total_uploads) * 100
-
-    uploader_counts = defaultdict(int)
-    for file_record in file_records:
-        uploader = file_record["uploader"]
-        if uploader:
-            uploader_counts[uploader] += 1
-
+    # Calculate concentration / diversity
     if uploader_counts:
         top_uploader_count = max(1, ceil(len(uploader_counts) * 0.10))
         sorted_upload_counts = sorted(uploader_counts.values(), reverse=True)
         top_uploads = sum(sorted_upload_counts[:top_uploader_count])
-        # Use only uploads with a known uploader identity for this concentration metric.
-        # Otherwise files with missing uploader metadata can push the share below
-        # the theoretical minimum for a "top 10% uploader share".
         attributed_uploads = sum(sorted_upload_counts)
         top10_uploader_share = (top_uploads / attributed_uploads) * 100
     else:
         top10_uploader_share = 100.0
 
+    # Fast targeted sample for Quality Image and Global Usage rates
+    sample = _fetch_file_sample_metrics(category, max_sample=1500)
+    sample_size = sample["sampled"]
+
+    if sample_size > 0:
+        quality_image_share = (sample["quality_count"] / sample_size) * 100
+        usage_share = (sample["used_count"] / sample_size) * 100
+    else:
+        quality_image_share = 0.0
+        usage_share = 0.0
+
+    if total_uploads == 0:
+        total_uploads = sample_size
+
     return {
         "quality_image_share": quality_image_share,
         "top10_uploader_share": top10_uploader_share,
+        "usage_share": usage_share,
         "total_uploads": total_uploads,
     }
 
@@ -230,7 +278,7 @@ def fetch_structural_metrics_concurrently(codes, threads=8):
             try:
                 results[code] = future.result()
             except Exception:
-                results[code] = {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "total_uploads": 0}
+                results[code] = {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "usage_share": 0.0, "total_uploads": 0}
 
     return results
 
@@ -422,6 +470,7 @@ def create_worldmap(df, metric_label):
         geo=dict(
             showcountries=True, countrycolor="rgba(255,255,255,0.15)",
             showcoastlines=False, showland=True, showocean=False,
+            showlakes=False, lakecolor="#0f172a",
             landcolor="#152238", bgcolor="rgba(0,0,0,0)",
         ),
         paper_bgcolor="rgba(0,0,0,0)",
@@ -511,6 +560,13 @@ def generate_health_metrics(
         'raw': f"{growth_rate:.1f}%",
         'score': relative_score(growth_rate, benchmarks['growth'], positive_is_higher=True)
     }
+    
+    raw_usage = float(target_structural_metrics.get("usage_share", 0.0))
+    usage_baseline = float(benchmarks.get('usage', 0.0))
+    metrics['Usage'] = {
+        'raw': raw_usage,
+        'score': relative_score(raw_usage, usage_baseline, positive_is_higher=True)
+    }
 
     raw_quality = float(target_structural_metrics.get("quality_image_share", 0.0))
     quality_baseline = float(benchmarks.get('quality', 0.0))
@@ -527,10 +583,11 @@ def generate_health_metrics(
     }
 
     overall = (
-        (metrics['Retention']['score'] * 0.40) +
-        (metrics['Growth']['score'] * 0.25) +
-        (metrics['Quality']['score'] * 0.20) +
-        (metrics['Diversity']['score'] * 0.15)
+        (metrics['Retention']['score'] * 0.35) +
+        (metrics['Growth']['score'] * 0.20) +
+        (metrics['Usage']['score'] * 0.20) +
+        (metrics['Quality']['score'] * 0.15) +
+        (metrics['Diversity']['score'] * 0.10)
     )
     metrics['Overall'] = round(overall)
 
@@ -563,6 +620,13 @@ def generate_insights(metrics, region_name, benchmarks):
         insights.append("Quality image signal is below benchmark: the campaign is producing fewer files that meet the regional quality threshold.")
     else:
         insights.append("Quality image signal is near benchmark: the campaign is broadly aligned with the regional quality profile.")
+
+    if metrics['Usage']['score'] >= 70:
+        insights.append("Content Utility is excellent: a high proportion of uploaded files are actively being used across Wikimedia projects.")
+    elif metrics['Usage']['score'] < 40:
+        insights.append("Content Utility is low: very few uploaded files are currently in use, suggesting an opportunity to focus on encyclopedic integration.")
+    else:
+        insights.append("Content Utility is average: file usage across wikis is aligned with regional norms.")
 
     if metrics['Diversity']['score'] < 40:
         insights.append("Diversity remains concentrated: a small set of contributors accounts for a large share of uploads, which reduces resilience and breadth.")

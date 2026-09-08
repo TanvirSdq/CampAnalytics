@@ -11,81 +11,63 @@ The Wikimedia Campaign Suite supports organizers, evaluators, and stakeholders w
 
 The application has two main operating modes:
 
-1. Retention Analytics
+1. **Retention Analytics**
    - Compare contributor overlap across years and campaigns.
    - View retention matrices, summary tables, and world maps.
-2. Health Evaluation
+2. **Health Evaluation**
    - Score a campaign using weighted metrics against regional benchmark clusters.
    - Surface diagnostics and actionable insights for program strategy.
 
 ## Key Features
 
-- Contributor extraction from Wikimedia campaign categories via Toolforge.
-- Regional peer benchmarking by country cluster.
-- Weighted health scoring for retention, growth, quality image share, and diversity.
-- Retention heatmaps, summary tables, and choropleth map views.
-- Downloadable heatmap image exports.
-- Streamlit UI tuned for rapid campaign review and reporting.
+- **Reliable Data Acquisition:** Direct extraction of campaign contributors and file metadata from the official Wikimedia Commons Action API with automatic retries and connection pooling.
+- **Regional Peer Benchmarking:** Dynamic benchmark calibration by geographic cluster (South Asia, ESEAP, Europe, LAC, SSA, NA, etc.).
+- **5-Dimension Weighted Health Scoring:** Evaluates Retention (35%), Growth Capacity (20%), Content Utility / Usage (20%), Quality Image Share (15%), and Contributor Diversity (10%).
+- **Interactive Visualizations:** Retention heatmaps, summary data tables, and choropleth world map views.
+- **Exportable Outputs:** Downloadable high-resolution heatmap images (PNG) and data matrices (CSV).
+- **Professional Flat Dark UI:** Streamlit interface styled with flat design principles and Project Korikath / Wikimedia theme colors.
 
 ## Architecture
 
 The project is structured as:
 
-- `app.py` — Streamlit application and UI.
-- `analytics.py` — data collection, metric logic, scoring, insights, and visualizations.
-- `styles.css` — theme and UI styling.
-- `SCIENTIFIC_REVIEW.md` — original methodological review and caveats.
+- `app.py` — Streamlit application, UI components, and routing.
+- `analytics.py` — Data collection, Commons API integration, metric calculation, scoring engine, and visualization generation.
+- `config.json` — Externalized configuration mapping events, countries, and regional clusters.
+- `styles.css` — Professional flat dark theme stylesheet.
+- `requirements.txt` — Project Python package dependencies.
+- `SCIENTIFIC_REVIEW.md` — Original methodological review and caveats.
 
 ## Methodology
 
-### Retention analytics
+### Retention Analytics
 
 Directional campaign retention is calculated as:
 
-Retention(Source -> Target) = (|Source ∩ Target| / |Source|) × 100
+$$\text{Retention}(\text{Source} \to \text{Target}) = \left(\frac{|\text{Source} \cap \text{Target}|}{|\text{Source}|}\right) \times 100$$
 
 This supports cross-year and cross-event movement analysis for contributors.
 
-### Health evaluation
+### Health Evaluation
 
-The health score is computed on a 0–100 scale using a weighted composite framework:
+The health score is computed on a 0–100 scale using a weighted composite framework across five structural indicators:
 
-- Retention: 40%
-- Growth capacity: 25%
-- Quality Image: 20%
-- Diversity: 15%
+- **Retention (35%):** Percentage of users retained from the baseline campaign.
+- **Growth Capacity (20%):** Percentage of fresh, first-time active contributors.
+- **Usage / Content Utility (20%):** Percentage of uploaded campaign files actively used across Wikimedia wikis (`prop=globalusage`).
+- **Quality Image (15%):** Percentage of uploads recognized under official Commons quality categories (`Category:Quality images`, `Category:Featured pictures`).
+- **Diversity (10%):** Top 10% uploader share (measures upload concentration; lower concentration indicates broader participation).
 
-The quality image metric uses the Commons category structure and counts files whose category path includes official quality categories such as `Category:Quality images` and `Category:Featured pictures`.
-
-### Regional benchmarking
+### Regional Benchmarking
 
 The campaign is compared against the strongest peer countries in the same geographic group. The app:
 
-1. selects the region for the target campaign,
-2. identifies peer countries in that region,
-3. computes benchmark values from the top regional performer cluster,
-4. normalizes the target campaign against those values.
+1. Selects the region for the target campaign.
+2. Identifies peer countries in that region.
+3. Computes dynamic benchmark values from the top regional performer cluster.
+4. Normalizes the target campaign against those values.
 
 This reduces unfair comparisons caused by static global thresholds and better reflects regional campaign conditions.
-
-## Scientific review summary
-
-The core analytical design is technically coherent and practically useful for Wikimedia campaign monitoring.
-
-Strengths:
-
-- Reproducible computational workflow for retention and overlap analysis.
-- Region-aware normalization instead of rigid global thresholds.
-- Parallelized data collection and caching for responsiveness.
-- Multi-view reporting through heatmaps, tables, and geographic maps.
-
-Methodological limitations and caveats:
-
-- The project depends on external Wikimedia API and Toolforge behaviors.
-- Input is restricted to recognized event patterns and campaign code syntax.
-- Quality image status is a practical Commons quality-category proxy rather than a full editorial assessment.
-- Concentration-based diversity is informative but does not fully capture thematic or geographic spread.
-- Regional benchmarking is comparative and heuristic, not a formal causal model.
 
 ## Installation
 
@@ -94,13 +76,15 @@ Methodological limitations and caveats:
 - Python 3.9+
 - Internet access for Wikimedia API requests
 
-### Install dependencies
+### Install Dependencies
 
 ```bash
-pip install streamlit requests numpy pandas matplotlib seaborn plotly
+pip install -r requirements.txt
 ```
 
-### Run the app
+*(Alternatively: `pip install streamlit requests numpy pandas matplotlib seaborn plotly packaging`)*
+
+### Run the App
 
 ```bash
 streamlit run app.py
@@ -108,7 +92,7 @@ streamlit run app.py
 
 ## Usage
 
-### Campaign syntax
+### Campaign Syntax
 
 Use campaign identifiers in this form:
 
@@ -120,29 +104,22 @@ Examples:
 - `wlmde25` — Wiki Loves Monuments Germany 2025
 - `wlein22` — Wiki Loves Earth India 2022
 
-### Retention Analytics workflow
+### Retention Analytics Workflow
 
-1. Choose the suite mode.
-2. Enter campaign codes or use the selection builder.
-3. Run the dashboard to compute retention matrices and summary tables.
-4. Download heatmap images for reporting.
+1. Choose **Retention Analytics** in the App Mode.
+2. Enter campaign codes or use the **Selection Builder** helper.
+3. Click **Run Retention Analysis** to compute retention matrices and summary tables.
+4. Switch visualization models (Data Table, Heatmap Matrix, Choropleth) and download outputs.
 
-### Health Evaluation workflow
+### Health Evaluation Workflow
 
-1. Enter the target campaign code.
-2. Select the reference model (previous year baseline or custom reference campaign).
-3. Choose the geographic region.
-4. Run the diagnostic analysis.
-5. Review the weighted scorecard and supporting insights.
-
-## Data and quality notes
-
-The scoring model is designed as a comparative evaluation tool instead of a definitive measure of campaign quality. It is best used for trend monitoring, regional comparison, and strategic review.
+1. Choose **Health Evaluation** in the App Mode.
+2. Enter the target campaign code (e.g. `wlmbd24`).
+3. Select the **Benchmark Baseline** (Previous Year Baseline or Custom Baseline Code).
+4. Choose the geographic region.
+5. Click **Evaluate Campaign Health**.
+6. Review the 5-metric scorecard and automated diagnostic insights.
 
 ## License
 
 This project is intended for research and operational analysis use in Wikimedia campaign monitoring. Please review repository policy and licensing terms before redistribution or deployment in production environments.
-
-## Contributing
-
-Contributions are welcome. Improvements that strengthen benchmark calibration, performance, or reliability are especially valuable.

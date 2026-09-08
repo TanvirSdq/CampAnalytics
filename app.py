@@ -93,16 +93,15 @@ with st.sidebar:
         unsafe_allow_html=True
     )
     
-    st.title("Navigation Matrix")
-    st.subheader("Select Suite Interface")
-    app_mode = st.radio("Select Suite Interface", ["Retention Analytics", "Health Evaluation"], horizontal=False, label_visibility="collapsed")
+    st.title("App Mode")
+    app_mode = st.radio("Select Suite Interface", ["Retention Analytics", "Health Evaluation"], horizontal=False)
     
     st.markdown("---")
     
     if app_mode == "Retention Analytics":
-        st.subheader("Configuration Engine")
+        st.subheader("Campaign Selection")
         user_input = st.text_area(
-            "Target Code Field (Space separated)", key="code_input", placeholder=EXAMPLE_CODES, height=110
+            "Target Campaigns (e.g., wlmbd24)", key="code_input", placeholder=EXAMPLE_CODES, height=110
         )
 
         with st.expander("Selection Builder"):
@@ -114,7 +113,7 @@ with st.sidebar:
                 "Country Matrices", options=COUNTRY_OPTIONS,
                 format_func=country_display_name, key="sel_countries"
             )
-            st.slider("Chronological Index", 2005, 2040, (2021, 2025), key="yr_range")
+            st.slider("Year Range", 2005, 2040, (2021, 2025), key="yr_range")
 
             b_col1, b_col2 = st.columns(2)
             b_col1.button("Inject", on_click=add_codes_from_selectors, use_container_width=True)
@@ -127,14 +126,14 @@ with st.sidebar:
             "Visualization Model", list(VIEW_LABELS.keys()),
             format_func=lambda m: VIEW_LABELS[m], horizontal=True, key="view_mode", label_visibility="collapsed"
         )
-        run_retention = st.button("Process Dashboard Data", type="primary", use_container_width=True)
+        run_retention = st.button("Run Retention Analysis", type="primary", use_container_width=True)
         
     else:
-        st.subheader("Diagnostic Settings")
+        st.subheader("Health Assessment Settings")
         target_event = st.text_input("Target Campaign Registry Code", value="", placeholder="e.g., wlmbd24").strip()
         
         st.markdown("---")
-        comp_mode = st.radio("Comparative Metric Reference Framework", ["Previous Year Baseline", "Custom Verification Code"])
+        comp_mode = st.radio("Benchmark Baseline", ["Previous Year Baseline", "Custom Verification Code"])
         baseline_event = ""
 
         if comp_mode == "Custom Verification Code":
@@ -154,7 +153,7 @@ with st.sidebar:
         region = st.selectbox("Geographic Standardization Framework", list(REGION_COUNTRY_MAPPING.keys()))
         
         st.markdown("---")
-        analyze_health = st.button("Execute Diagnostic Analysis", type="primary", use_container_width=True)
+        analyze_health = st.button("Evaluate Campaign Health", type="primary", use_container_width=True)
 
     st.markdown("---")
     st.caption("Integrated Analytics Platform Engine")
@@ -270,7 +269,7 @@ else:
             structural_metrics = fetch_structural_metrics_concurrently(list(set(structural_codes)))
             
             # Extract metrics across top 3 volume drivers
-            rep_retentions, rep_growths, rep_quality_rates, rep_diversities = [], [], [], []
+            rep_retentions, rep_growths, rep_quality_rates, rep_diversities, rep_usages = [], [], [], [], []
             for cc in top_3_countries:
                 t_code = f"{event_type}{cc}{year_str}"
                 b_code = f"{event_type}{cc}{prev_year_str}"
@@ -285,12 +284,14 @@ else:
                     rep_growths.append(gro_val)
                 rep_quality_rates.append(float(structural.get("quality_image_share", 0.0)))
                 rep_diversities.append(float(structural.get("top10_uploader_share", 100.0)))
+                rep_usages.append(float(structural.get("usage_share", 0.0)))
             
             benchmarks = {
                 'retention': float(np.mean(rep_retentions)) if rep_retentions else 15.0,
                 'growth': float(np.mean(rep_growths)) if rep_growths else 40.0,
                 'quality': float(np.mean(rep_quality_rates)) if rep_quality_rates else 0.0,
-                'diversity': float(np.mean(rep_diversities)) if rep_diversities else 100.0
+                'diversity': float(np.mean(rep_diversities)) if rep_diversities else 100.0,
+                'usage': float(np.mean(rep_usages)) if rep_usages else 0.0
             }
             
             top_country_names = [COUNTRY_MAP.get(cc, cc).replace('_', ' ') for cc in top_3_countries if cc in COUNTRY_MAP]
@@ -304,7 +305,7 @@ else:
             base_users = all_fetched_data.get(baseline_event.lower(), set())
             target_structural_metrics = structural_metrics.get(
                 target_event.lower(),
-                {"quality_image_share": 0.0, "top10_uploader_share": 100.0, "total_uploads": 0}
+                {"quality_image_share": 0.0, "top10_uploader_share": 100.0, "usage_share": 0.0, "total_uploads": 0}
             )
 
             if not target_users:
@@ -327,19 +328,27 @@ else:
 <span></span>
 </div>
 <div class="metric-label">Retention Index</div>
-<div class="metric-desc">Percentage of users retained from the baseline campaign (40% score weight)</div>
+<div class="metric-desc">Percentage of users retained from the baseline campaign (35% weight)</div>
 <div class="metric-value">{metrics['Retention']['raw']}</div>
 <div class="stars">{calculate_stars(metrics['Retention']['score'])[0]}</div>
+
 <div class="metric-label">Growth Capacity</div>
-<div class="metric-desc">Percentage of fresh, first-time active contributors (25% score weight)</div>
+<div class="metric-desc">Percentage of fresh, first-time active contributors (20% weight)</div>
 <div class="metric-value">{metrics['Growth']['raw']}</div>
 <div class="stars">{calculate_stars(metrics['Growth']['score'])[0]}</div>
+
+<div class="metric-label">Usage / Utility</div>
+<div class="metric-desc">Percentage of files actively used on Wikimedia wikis (20% weight)</div>
+<div class="metric-value">{metrics['Usage']['raw']:.2f}%</div>
+<div class="stars">{calculate_stars(metrics['Usage']['score'])[0]}</div>
+
 <div class="metric-label">Quality Image</div>
-<div class="metric-desc">Percentage of quality images across total submissions (20% score weight)</div>
+<div class="metric-desc">Percentage of quality images across total submissions (15% weight)</div>
 <div class="metric-value">{metrics['Quality']['raw']:.2f}%</div>
 <div class="stars">{calculate_stars(metrics['Quality']['score'])[0]}</div>
+
 <div class="metric-label">Diversity</div>
-<div class="metric-desc">Top 10% uploader share (15% score weight)</div>
+<div class="metric-desc">Top 10% uploader share (10% weight)</div>
 <div class="metric-value">{metrics['Diversity']['raw']:.1f}%</div>
 <div class="stars">{calculate_stars(metrics['Diversity']['score'])[0]}</div>
 <hr style="border-color: rgba(255,255,255,0.1); margin: 1.5rem 0;">

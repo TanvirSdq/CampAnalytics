@@ -1,0 +1,34 @@
+{
+  "EVENT_MAP": {
+    "wlf": "Folklore",
+    "wle": "Earth",
+    "wlm": "Monuments",
+    "wlb": "Bangla"
+  },
+  "COUNTRY_MAP": {
+    "bd": "Bangladesh", "in": "India", "de": "Germany", "it": "Italy",
+    "fr": "France", "us": "United_States", "ca": "Canada", "uk": "United_Kingdom",
+    "nl": "Netherlands", "pl": "Poland", "br": "Brazil", "mx": "Mexico",
+    "es": "Spain", "pt": "Portugal", "pk": "Pakistan", "np": "Nepal",
+    "ng": "Nigeria", "ke": "Kenya", "id": "Indonesia",
+    "ph": "Philippines", "my": "Malaysia", "tr": "Turkey", "eg": "Egypt",
+    "ua": "Ukraine", "ru": "Russia", "ch": "Switzerland", "se": "Sweden",
+    "no": "Norway", "fi": "Finland", "be": "Belgium", "at": "Austria",
+    "ar": "Argentina", "co": "Colombia", "lk": "Sri_Lanka", "au": "Australia",
+    "nz": "New_Zealand", "th": "Thailand", "gr": "Greece", "tn": "Tunisia",
+    "ma": "Morocco", "dz": "Algeria", "za": "South_Africa", "gh": "Ghana",
+    "tz": "Tanzania", "pe": "Peru", "cl": "Chile", "ve": "Venezuela",
+    "cz": "Czech_Republic", "ro": "Romania", "hu": "Hungary"
+  },
+  "REGION_COUNTRY_MAPPING": {
+    "South Asia (SA)": ["bd", "in", "pk", "np", "lk"],
+    "East, Southeast Asia, Pacific (ESEAP)": ["id", "ph", "my", "au", "nz", "th"],
+    "Northern & Western Europe (NWE)": ["de", "fr", "uk", "nl", "se", "no", "fi", "be", "at", "ch"],
+    "Southern Europe (SE)": ["it", "es", "pt", "gr"],
+    "Central & Eastern Europe (CEE)": ["pl", "ua", "ru", "cz", "ro", "hu"],
+    "Middle East & North Africa (MENA)": ["tr", "eg", "tn", "ma", "dz"],
+    "Latin America & Caribbean (LAC)": ["br", "mx", "ar", "co", "pe", "cl", "ve"],
+    "Sub-Saharan Africa (SSA)": ["ng", "ke", "za", "gh", "tz"],
+    "North America (NA)": ["us", "ca"]
+  }
+}

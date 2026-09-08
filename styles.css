@@ -5,7 +5,7 @@ html, body, [class*="css"] {
 }
 
 .stApp {
-    background: #0a1526 !important;
+    background: #0f172a !important;
 }
 .stApp, .stApp p, .stApp li, .stApp label {
     color: #edf3ff !important;
@@ -34,7 +34,7 @@ hr {
 
 /* Sidebar */
 section[data-testid="stSidebar"] {
-    background: #13284a !important;
+    background: #1e293b !important;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 section[data-testid="stSidebar"] * {
@@ -73,12 +73,14 @@ section[data-testid="stSidebar"] span[data-baseweb="tag"] {
 
 /* Buttons */
 .stButton > button {
-    background: #3366cc;
+    background: #2e7d6b;
     color: white !important;
     border: none;
-    border-radius: 4px;
-    font-weight: 500;
-    padding: 0.5em 1em;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.6em 1em;
+    box-shadow: 0 4px 12px rgba(46, 125, 107, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stButton > button:hover {
     background: #2855b3;
@@ -99,11 +101,12 @@ div[data-testid="stDownloadButton"] > button p {
 
 /* Typography & Display Layouts */
 .hero-title {
-    font-size: 2rem;
-    font-weight: 600;
-    line-height: 1.2;
-    margin: 0.5rem 0 0.2rem 0;
-    color: #ffffff;
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin: 0.4rem 0 0.15rem 0;
+    color: #edf3ff;
 }
 .hero-subtitle {
     color: #b8c9df !important;
@@ -125,8 +128,8 @@ div[data-testid="stRadio"] label:hover {
     border-color: __WIKI_BLUE_LIGHT__;
 }
 div[data-testid="stRadio"] label:has(input:checked) {
-    background: __WIKI_BLUE_DARK__;
-    border-color: __WIKI_BLUE__;
+    background: __WIKI_BLUE__;
+    border-color: transparent;
 }
 div[data-testid="stRadio"] label:has(input:checked) p {
     color: white !important;
@@ -217,11 +220,12 @@ hr {
     margin-top: 0.5rem;
 }
 .insight-box {
-    border-left: 4px solid #3366cc;
-    background: rgba(255, 255, 255, 0.04);
-    padding: 1rem 1.2rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
+    border-left: 4px solid #2e7d6b;
+    background: rgba(46, 125, 107, 0.12);
+    padding: 1.2rem 1.5rem;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }
 .insight-box p {
     margin: 0 !important;
