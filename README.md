@@ -9,7 +9,7 @@ The Wikimedia Campaign Suite supports organizers, evaluators, and stakeholders w
 - How contributors move across campaigns and years.
 - How healthy a campaign appears relative to regional peer performance.
 
-The application has two main operating modes:
+The application has two analysis modes plus a built-in methodology reference:
 
 1. **Retention Analytics**
    - Compare contributor overlap across years and campaigns.
@@ -17,6 +17,10 @@ The application has two main operating modes:
 2. **Health Evaluation**
    - Score a campaign using weighted metrics against regional benchmark clusters.
    - Surface diagnostics and actionable insights for program strategy.
+3. **Methodology**
+   - Explain how campaign codes, Wikimedia data acquisition, retention calculations,
+     and health scoring work.
+   - Provide a compact guide for using all three interface modes.
 
 ## Key Features
 
@@ -191,6 +195,10 @@ The health score is computed on a 0–100 scale using a weighted composite frame
 - **Quality Image (15%):** Percentage of uploads recognized under official Commons quality categories (`Category:Quality images`, `Category:Featured pictures`).
 - **Diversity (10%):** Top 10% uploader share (measures upload concentration; lower concentration indicates broader participation).
 
+Health Evaluation requires participant data for both the target campaign and its
+baseline. If either campaign has not taken place or has no participants, the app
+stops and shows a message instead of treating the missing campaign as a zero.
+
 ### Regional Benchmarking
 
 The campaign is compared against the strongest peer countries in the same geographic group. The app:
@@ -252,6 +260,13 @@ Examples:
 4. Choose the geographic region.
 5. Click **Evaluate Campaign Health**.
 6. Review the 5-metric scorecard and automated diagnostic insights.
+
+### Methodology Reference
+
+1. Choose **Methodology** in the App Mode selector.
+2. Use the three quick-guide cards to orient yourself to each interface.
+3. Read the data-flow, analytical-model, and interpretation sections before
+   comparing results or communicating findings.
 
 ## License
 

@@ -94,7 +94,11 @@ with st.sidebar:
     )
     
     st.title("App Mode")
-    app_mode = st.radio("Select Suite Interface", ["Retention Analytics", "Health Evaluation"], horizontal=False)
+    app_mode = st.radio(
+        "Select Suite Interface",
+        ["Retention Analytics", "Health Evaluation", "Methodology"],
+        horizontal=False,
+    )
     
     st.markdown("---")
     
@@ -128,7 +132,7 @@ with st.sidebar:
         )
         run_retention = st.button("Run Retention Analysis", type="primary", use_container_width=True)
         
-    else:
+    elif app_mode == "Health Evaluation":
         st.subheader("Health Assessment Settings")
         target_event = st.text_input("Target Campaign Registry Code", value="", placeholder="e.g., wlmbd24").strip()
         
@@ -161,9 +165,205 @@ with st.sidebar:
 # --- MAIN RUNTIME ROUTER ---
 st.markdown("<br>", unsafe_allow_html=True)
 
-if app_mode == "Retention Analytics":
+if app_mode == "Methodology":
+    st.markdown('<div class="hero-title">Methodology &amp; Usage Guide</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="hero-subtitle">Understand how the suite turns Wikimedia Commons campaign data into retention and health signals.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Quick guide")
+    guide_col1, guide_col2, guide_col3 = st.columns(3, gap="medium")
+    with guide_col1:
+        st.markdown(
+            """
+            <div class="methodology-card">
+                <div class="methodology-card-title">1 · Retention Analytics</div>
+                <p>Enter two or more campaign codes, such as <code>wlmbd22 wlmbd23</code>.
+                Run the analysis, then choose a table, heatmap, or world map to compare
+                contributor overlap across campaigns.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with guide_col2:
+        st.markdown(
+            """
+            <div class="methodology-card">
+                <div class="methodology-card-title">2 · Health Evaluation</div>
+                <p>Enter one target code, select a previous-year or custom baseline,
+                choose a region, and evaluate. Review the five weighted indicators and
+                the peer-relative diagnostic insights.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with guide_col3:
+        st.markdown(
+            """
+            <div class="methodology-card">
+                <div class="methodology-card-title">3 · Methodology</div>
+                <p>Use this tab as the reference layer: it explains the data sources,
+                processing stages, scoring model, and interpretation limits behind the
+                two analysis modes.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+    st.markdown("### How the website works")
+    st.markdown(
+        """
+        The website does not store a separate campaign database. When you run an
+        analysis, it looks up the requested campaign information from Wikimedia
+        Commons and then calculates the result for that request.
+
+        **Step 1 — Read the campaign code.** A code such as `wlmbd24` tells the
+        website the event (`wlm`, Wiki Loves Monuments), country (`bd`, Bangladesh),
+        and year (`24`, 2024). The code is translated into the matching Commons
+        category where that campaign's files are kept.
+
+        **Step 2 — Find the contributors.** The website checks which Wikimedia
+        accounts uploaded files in each campaign category. It first tries the faster
+        Toolforge source. If that source is unavailable, it asks the official
+        Wikimedia Commons Action API instead. The returned accounts are treated as
+        a group so that the groups from two campaigns can be compared.
+
+        **Step 3 — Collect supporting file information.** For health evaluation, the
+        website also checks a sample of campaign files. It looks at whether files are
+        used on Wikimedia projects, whether they belong to Commons quality categories,
+        and how uploads are distributed among contributors. This keeps the request
+        practical while still providing useful signals.
+
+        **Step 4 — Cache recent results.** A completed lookup is kept for one hour.
+        Running the same analysis again during that period is faster and avoids
+        sending unnecessary repeat requests. A new campaign or an expired cache
+        causes the website to look up fresh information.
+
+        **Step 5 — Show the result.** Retention Analytics shows overlap between
+        campaign contributor groups. Health Evaluation compares one target campaign
+        with a baseline and with active peers in the selected region. Methodology
+        explains how those results should be read.
+        """,
+    )
+
+    st.markdown("### What each mode measures")
+    model_col1, model_col2 = st.columns(2, gap="large")
+    with model_col1:
+        st.markdown(
+            """
+            <div class="methodology-panel">
+                <h4>Retention Analytics</h4>
+                <p><b>Purpose:</b> See whether contributors from one campaign appear
+                again in another campaign.</p>
+                <p>Enter two or more campaign codes and run the analysis. The website
+                groups contributors by country and only compares a country when it has
+                at least two campaigns with participants.</p>
+                <p>For each pair, it counts the accounts present in both campaigns and
+                divides by the number in the first campaign:</p>
+                <div class="formula">returning share = accounts in both ÷ accounts in the first campaign × 100</div>
+                <p>This is directional. A result from 2022 to 2023 can differ from
+                the result from 2023 to 2022 because the two starting groups may have
+                different sizes.</p>
+                <p><b>Views:</b> The table gives exact rows, the heatmap makes strong
+                and weak connections easier to spot, and the world map summarizes
+                country-level retention.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with model_col2:
+        st.markdown(
+            """
+            <div class="methodology-panel">
+                <h4>Health Evaluation</h4>
+                <p><b>Purpose:</b> Give one campaign a structured health check compared
+                with a previous campaign and with similar campaigns in its region.</p>
+                <p>The target and baseline must both have participants. If either
+                campaign has not taken place or has no participants, the website stops
+                and displays a message instead of producing a score.</p>
+                <p>The final score is between 0 and 100. It combines five signals:</p>
+                <ul>
+                    <li><b>Returning contributors (35%):</b> how many baseline
+                    contributors came back.</li>
+                    <li><b>New contributors (20%):</b> how much of the target group
+                    is new compared with the baseline.</li>
+                    <li><b>File usage (20%):</b> how many sampled files are used on
+                    Wikimedia projects.</li>
+                    <li><b>Image quality (15%):</b> how many sampled files are in
+                    Commons quality categories.</li>
+                    <li><b>Contributor spread (10%):</b> whether uploads are shared
+                    across many people or concentrated among a small group.</li>
+                </ul>
+                <p>Each signal is compared with the strongest available campaigns in
+                the selected region. This makes the result a local comparison, not a
+                claim that one fixed score is good everywhere.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### How to use the results responsibly")
+    st.markdown(
+        """
+        - A high retention value means more of the earlier contributor group returned;
+          it does not prove that every contributor was contacted or that the campaign
+          was successful in every other way.
+        - A high health score means the target looks strong against the selected
+          comparison group. Changing the region or baseline can change the result.
+        - File usage and quality values are based on the files the website can inspect.
+          They are useful indicators, not a complete review of image quality or impact.
+        - Empty or missing campaign data is treated as a data problem, not as a zero
+          score. The Health Evaluation mode will not score a target or baseline that
+          has no participants.
+        - Use the results to start a conversation about follow-up, recruitment, and
+          campaign design. Combine them with organizer knowledge and local context.
+        """,
+    )
+    st.markdown("### Common workflow")
+    st.markdown(
+        """
+        1. Start in **Retention Analytics** when you want to compare multiple years
+           or countries.
+        2. Start in **Health Evaluation** when you want one target campaign's summary.
+        3. Use the previous-year baseline for a normal year-over-year comparison, or
+           provide a custom baseline when the usual previous year is not appropriate.
+        4. Open **Methodology** whenever you need to check what a number includes
+           before sharing or interpreting it.
+        """,
+    )
+    st.info(
+        "Results describe observable Wikimedia Commons activity, not the full experience "
+        "of campaign participants. Missing categories, API limits, sampled files, and "
+        "different campaign sizes can affect comparisons."
+    )
+
+elif app_mode == "Retention Analytics":
     st.markdown('<div class="hero-title">Cross-Event Retention Analytics</div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-subtitle">Evaluate longitudinal patterns and ecosystem user migration parameters.</div>', unsafe_allow_html=True)
+
+    if st.session_state.last_valid_countries is None:
+        st.markdown("### Quick start")
+        landing_col1, landing_col2, landing_col3 = st.columns(3, gap="medium")
+        with landing_col1:
+            st.markdown(
+                "**Retention Analytics**  \n"
+                "Enter two or more campaign codes in the sidebar, then run the analysis "
+                "to compare returning contributors."
+            )
+        with landing_col2:
+            st.markdown(
+                "**Health Evaluation**  \n"
+                "Switch modes, enter a target campaign, choose a baseline and region, "
+                "then review its peer-relative scorecard."
+            )
+        with landing_col3:
+            st.markdown(
+                "**Methodology**  \n"
+                "Open the third mode for the technical data flow, scoring model, and "
+                "interpretation guidance."
+            )
     
     if run_retention:
         raw_input = user_input.strip() or EXAMPLE_CODES
@@ -254,6 +454,22 @@ else:
             scan_pool = list(set(scan_pool))
             
             all_fetched_data = fetch_all_concurrently(scan_pool, threads=16)
+
+            target_users = all_fetched_data.get(target_event.lower(), set())
+            base_users = all_fetched_data.get(baseline_event.lower(), set())
+            missing_campaigns = []
+            if not base_users:
+                missing_campaigns.append(f"previous/baseline campaign {baseline_event.upper()}")
+            if not target_users:
+                missing_campaigns.append(f"target campaign {target_event.upper()}")
+            if missing_campaigns:
+                st.warning(
+                    "No participants were found for the "
+                    + " and ".join(missing_campaigns)
+                    + ". The campaign may not have taken place, or its participant data "
+                      "is not available, so a health score cannot be calculated."
+                )
+                st.stop()
             
             # Sort peers transparently based on verified registration footprint volumes
             peer_volumes = {}
@@ -301,16 +517,10 @@ else:
             else:
                 st.info("Establishing regional normalization indices based on standardized baseline coordinates.")
 
-            target_users = all_fetched_data.get(target_event.lower(), set())
-            base_users = all_fetched_data.get(baseline_event.lower(), set())
             target_structural_metrics = structural_metrics.get(
                 target_event.lower(),
                 {"quality_image_share": 0.0, "top10_uploader_share": 100.0, "usage_share": 0.0, "total_uploads": 0}
             )
-
-            if not target_users:
-                st.error(f"Empty payload returned for the target campaign matrix request: {target_event.upper()}.")
-                st.stop()
 
             metrics = generate_health_metrics(
                 target_users,

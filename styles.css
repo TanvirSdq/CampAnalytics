@@ -114,6 +114,47 @@ div[data-testid="stDownloadButton"] > button p {
     margin-bottom: 1.5rem;
 }
 
+/* Methodology reference page */
+.methodology-card, .methodology-panel {
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    padding: 1.1rem 1.2rem;
+    height: 100%;
+}
+.methodology-card-title {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.55rem;
+}
+.methodology-card p, .methodology-panel p, .methodology-panel li {
+    color: #b8c9df !important;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+.methodology-panel h4 {
+    color: #ffffff;
+    margin-top: 0;
+    margin-bottom: 0.7rem;
+}
+.methodology-panel ul {
+    padding-left: 1.2rem;
+}
+.formula {
+    background: rgba(51, 102, 204, 0.18);
+    border-left: 3px solid __WIKI_BLUE_LIGHT__;
+    border-radius: 0 5px 5px 0;
+    color: #ffffff;
+    font-family: monospace;
+    font-size: 0.86rem;
+    margin: 0.8rem 0;
+    padding: 0.7rem 0.8rem;
+}
+.methodology-card code {
+    color: #d7e4ff;
+}
+
 /* Radio Selectors */
 div[data-testid="stRadio"] > div {
     gap: 0.5rem;
