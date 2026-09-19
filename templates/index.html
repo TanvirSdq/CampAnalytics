@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+    {% if mode == 'Retention Analytics' %}
+        <form action="{{ url_for('retention') }}" method="POST">
+            <label>Target Campaigns (e.g., wlmbd24)
+                <textarea name="target_campaigns" rows="4" placeholder="{{ EXAMPLE_CODES }}">{{ target_campaigns }}</textarea>
+            </label>
+            
+            <details style="margin-top: 15px; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px; color: #7aa7ff;">Selection Builder</summary>
+                
+                <label style="display:block; margin-bottom: 10px;">Event Matrix
+                    <select id="sel_events" multiple size="4" style="margin-top:5px; width: 100%; box-sizing: border-box;">
+                        {% for event_key, event_val in EVENT_MAP.items() %}
+                            <option value="{{ event_key }}">{{ event_val }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                
+                <label style="display:block; margin-bottom: 10px;">Country Matrices
+                    <select id="sel_countries" multiple size="5" style="margin-top:5px; width: 100%; box-sizing: border-box;">
+                        {% for country_key in COUNTRY_OPTIONS %}
+                            <option value="{{ country_key }}">{{ COUNTRY_MAP[country_key].replace('_', ' ') }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                
+                <label style="display:block; margin-bottom: 10px;">Year Range
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <input type="number" id="yr_start" value="2021" min="2005" max="2040" style="width: 50%;">
+                        <input type="number" id="yr_end" value="2025" min="2005" max="2040" style="width: 50%;">
+                    </div>
+                </label>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="button" onclick="injectCodes()" style="background-color: #14428e;">Inject</button>
+                    <button type="button" onclick="resetCodes()" style="background-color: #54595d;">Reset</button>
+                </div>
+            </details>
+            
+            <div class="divider"></div>
+            <label>Visualization Model</label>
+            <div class="radio-group">
+                <label><input type="radio" name="view_mode" value="Table" {% if view_mode == 'Table' or not view_mode %}checked{% endif %}> Data Table</label>
+                <label><input type="radio" name="view_mode" value="Heatmap" {% if view_mode == 'Heatmap' %}checked{% endif %}> Heatmap Matrix</label>
+                <label><input type="radio" name="view_mode" value="Worldmap" {% if view_mode == 'Worldmap' %}checked{% endif %}> Choropleth</label>
+            </div>
+            
+            <div class="divider"></div>
+            <button type="submit">Run Retention Analysis</button>
+        </form>
+    {% elif mode == 'Health Evaluation' %}
+        <form action="{{ url_for('health') }}" method="POST">
+            <label>Target Campaign Registry Code
+                <input type="text" name="target_event" value="{{ target_event }}" placeholder="e.g., wlmbd24">
+            </label>
+            
+            <div class="divider"></div>
+            <label>Benchmark Baseline</label>
+            <div class="radio-group">
+                <label><input type="radio" name="comp_mode" value="Previous Year Baseline" {% if comp_mode == 'Previous Year Baseline' or not comp_mode %}checked{% endif %}> Previous Year Baseline</label>
+                <label><input type="radio" name="comp_mode" value="Custom Verification Code" {% if comp_mode == 'Custom Verification Code' %}checked{% endif %}> Custom Verification Code</label>
+            </div>
+            
+            <label>Custom Baseline Campaign Code (if selected)
+                <input type="text" name="baseline_event" value="{{ baseline_event }}" placeholder="e.g., wlmbd22">
+            </label>
+
+            <label>Geographic Standardization Framework
+                <select name="region">
+                    {% for reg in REGION_COUNTRY_MAPPING.keys() %}
+                        <option value="{{ reg }}" {% if region == reg %}selected{% endif %}>{{ reg }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            
+            <div class="divider"></div>
+            <button type="submit">Evaluate Campaign Health</button>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if error %}
+        <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    {% if mode == 'Methodology' %}
+        <div class="hero-title">Methodology &amp; Usage Guide</div>
+        <div class="hero-subtitle">Understand how the suite turns Wikimedia Commons campaign data into retention and health signals.</div>
+        
+        <h3 style="margin-top: 30px;">Quick guide</h3>
+        <div class="grid-3">
+            <div class="methodology-card card">
+                <div class="methodology-card-title" style="font-weight: bold; margin-bottom: 10px;">1 · Retention Analytics</div>
+                <p>Enter two or more campaign codes, such as <code>wlmbd22 wlmbd23</code>. Run the analysis, then choose a table, heatmap, or world map to compare contributor overlap across campaigns.</p>
+        <div class="card mb-3">
+            <div class="card-header">Methodology &amp; Usage Guide</div>
+            <div class="card-body">
+                <p>Understand how the suite turns Wikimedia Commons campaign data into retention and health signals.</p>
+                
+                <h3 style="margin-top: 20px; font-size: 1.2em;">Quick guide</h3>
+                <div class="grid-3">
+                    <div class="methodology-card">
+                        <div style="font-weight: bold; margin-bottom: 10px; color: #a9b9d8;">1 · Retention Analytics</div>
+                        <p style="font-size: 0.9em;">Enter two or more campaign codes, such as <code>wlmbd22 wlmbd23</code>. Run the analysis, then choose a table, heatmap, or world map to compare contributor overlap across campaigns.</p>
+                    </div>
+                    <div class="methodology-card">
+                        <div style="font-weight: bold; margin-bottom: 10px; color: #a9b9d8;">2 · Health Evaluation</div>
+                        <p style="font-size: 0.9em;">Enter one target code, select a previous-year or custom baseline, choose a region, and evaluate. Review the five weighted indicators and the peer-relative diagnostic insights.</p>
+                    </div>
+                    <div class="methodology-card">
+                        <div style="font-weight: bold; margin-bottom: 10px; color: #a9b9d8;">3 · Methodology</div>
+                        <p style="font-size: 0.9em;">Use this tab as the reference layer: it explains the data sources, processing stages, scoring model, and interpretation limits behind the two analysis modes.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="methodology-card card">
+                <div class="methodology-card-title" style="font-weight: bold; margin-bottom: 10px;">2 · Health Evaluation</div>
+                <p>Enter one target code, select a previous-year or custom baseline, choose a region, and evaluate. Review the five weighted indicators and the peer-relative diagnostic insights.</p>
+            </div>
+            <div class="methodology-card card">
+                <div class="methodology-card-title" style="font-weight: bold; margin-bottom: 10px;">3 · Methodology</div>
+                <p>Use this tab as the reference layer: it explains the data sources, processing stages, scoring model, and interpretation limits behind the two analysis modes.</p>
+            </div>
+        </div>
+
+    {% elif mode == 'Retention Analytics' %}
+        <div class="hero-title">Cross-Event Retention Analytics</div>
+        <div class="hero-subtitle">Evaluate longitudinal patterns and ecosystem user migration parameters.</div>
+        
+        <form action="{{ url_for('retention') }}" method="POST">
+            <div class="card mb-3">
+                <div class="card-header">Evaluation Parameters</div>
+                <div class="card-body">
+                    
+                    <div class="form-group">
+                        <label>Target Campaigns</label>
+                        <textarea name="target_campaigns" rows="3" placeholder="{{ EXAMPLE_CODES }}">{{ target_campaigns }}</textarea>
+                        <div style="font-size: 0.85em; color: {{ TEXT_MUTED }}; margin-top: 5px;">Enter two or more campaign codes separated by spaces (e.g. wlmbd24 wlmbd22)</div>
+                    </div>
+                    
+                    <details style="margin-bottom: 25px; background: rgba(0,0,0,0.15); padding: 15px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                        <summary style="cursor: pointer; font-weight: bold; color: #7aa7ff;">Selection Builder (Optional)</summary>
+                        
+                        <div class="form-row" style="margin-top: 15px;">
+                            <div class="form-col">
+                                <label>Event Matrix</label>
+                                <select id="sel_events" multiple size="4">
+                                    {% for event_key, event_val in EVENT_MAP.items() %}
+                                        <option value="{{ event_key }}">{{ event_val }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label>Country Matrices</label>
+                                <select id="sel_countries" multiple size="4">
+                                    {% for country_key in COUNTRY_OPTIONS %}
+                                        <option value="{{ country_key }}">{{ COUNTRY_MAP[country_key].replace('_', ' ') }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label>Year Start</label>
+                                <input type="number" id="yr_start" value="2021" min="2005" max="2040">
+                            </div>
+                            <div class="form-col">
+                                <label>Year End</label>
+                                <input type="number" id="yr_end" value="2025" min="2005" max="2040">
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" class="btn-primary" onclick="injectCodes()">Inject Codes</button>
+                            <button type="button" class="btn-secondary" onclick="resetCodes()">Reset</button>
+                        </div>
+                    </details>
+                    
+                    <div class="form-group">
+                        <label>Visualization Model</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="view_mode" value="Table" {% if view_mode == 'Table' or not view_mode %}checked{% endif %}> Data Table</label>
+                            <label><input type="radio" name="view_mode" value="Heatmap" {% if view_mode == 'Heatmap' %}checked{% endif %}> Heatmap Matrix</label>
+                            <label><input type="radio" name="view_mode" value="Worldmap" {% if view_mode == 'Worldmap' %}checked{% endif %}> Choropleth</label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Run Retention Analysis</button>
+                </div>
+            </div>
+        </form>
+
+        {% if not target_campaigns and not error %}
+            <div class="alert-info" style="margin-top:20px;">
+                <strong>Quick start:</strong> Enter two or more campaign codes in the sidebar, then run the analysis to compare returning contributors.
+            <div class="alert-info">
+                <strong>Quick start:</strong> Enter two or more campaign codes above, then run the analysis to compare returning contributors.
+            </div>
+        {% endif %}
+
+        {% if tables or heatmaps or worldmap_html %}
+            <div style="margin-top: 30px;">
+                {% if worldmap_html %}
+                    <div style="background: white; border-radius: 8px; margin-bottom: 20px;">
+                        {{ worldmap_html | safe }}
+                    </div>
+                {% endif %}
+            <div class="card mb-3">
+                <div class="card-header">Results</div>
+                <div class="card-body">
+                    {% if worldmap_html %}
+                        <div style="background: white; border-radius: 8px; margin-bottom: 20px;">
+                            {{ worldmap_html | safe }}
+                        </div>
+                    {% endif %}
+
+                {% if heatmaps %}
+                    <div class="grid-2">
+                        {% for c_name, hm in heatmaps %}
+                            <div class="card">
+                                <img src="data:image/png;base64,{{ hm }}" alt="{{ c_name }} heatmap" style="width: 100%; height: auto;">
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                    {% if heatmaps %}
+                        <div class="grid-2">
+                            {% for c_name, hm in heatmaps %}
+                                <div>
+                                    <h4 style="margin-top:0;">{{ c_name }}</h4>
+                                    <img src="data:image/png;base64,{{ hm }}" alt="{{ c_name }} heatmap" style="width: 100%; height: auto; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                {% for table in tables %}
+                    {{ table | safe }}
+                {% endfor %}
+                    {% for table in tables %}
+                        <div style="overflow-x: auto;">
+                            {{ table | safe }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+    {% elif mode == 'Health Evaluation' %}
+        <div class="hero-title">Campaign Health Evaluation Suite</div>
+        <div class="hero-subtitle">Compute analytical structural health indexes relative to real-time regional performance clusters.</div>
+        
+        <form action="{{ url_for('health') }}" method="POST">
+            <div class="card mb-3">
+                <div class="card-header">Evaluation Parameters</div>
+                <div class="card-body">
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Target Campaign Registry Code</label>
+                            <input type="text" name="target_event" value="{{ target_event }}" placeholder="e.g., wlmbd24">
+                        </div>
+                        <div class="form-col">
+                            <label>Geographic Standardization Framework</label>
+                            <select name="region">
+                                {% for reg in REGION_COUNTRY_MAPPING.keys() %}
+                                    <option value="{{ reg }}" {% if region == reg %}selected{% endif %}>{{ reg }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Benchmark Baseline</label>
+                        <div class="radio-group" style="margin-bottom: 10px;">
+                            <label><input type="radio" name="comp_mode" value="Previous Year Baseline" {% if comp_mode == 'Previous Year Baseline' or not comp_mode %}checked{% endif %}> Previous Year Baseline</label>
+                            <label><input type="radio" name="comp_mode" value="Custom Verification Code" {% if comp_mode == 'Custom Verification Code' %}checked{% endif %}> Custom Verification Code</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Custom Baseline Campaign Code (if selected)</label>
+                        <input type="text" name="baseline_event" value="{{ baseline_event }}" placeholder="e.g., wlmbd22">
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Evaluate Campaign Health</button>
+                </div>
+            </div>
+        </form>
+
+        {% if not target_event and not error %}
+            <div class="alert-info" style="margin-top:20px;">
+            <div class="alert-info">
+                System Initialized. Supply an execution identifier (e.g., wlmbd24) and assign a validation model to begin.
+            </div>
+        {% endif %}
+
+        {% if metrics %}
+            <div class="grid-2" style="grid-template-columns: 1fr 1.2fr;">
+                <div class="health-card card">
+                    <div class="health-title" style="font-weight: bold; font-size: 1.2em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">
+                        <span>{{ target_event.upper() }} Metrics Matrix</span>
+                    </div>
+                    
+                    <div class="metric-label" style="font-weight:bold; margin-top: 15px;">Retention Index</div>
+                    <div class="metric-desc" style="font-size: 0.85em; color: {{ TEXT_MUTED }};">Percentage of users retained from the baseline campaign (35% weight)</div>
+                    <div class="metric-value" style="font-size: 1.5em; color: #fff;">{{ metrics['Retention']['raw'] }}</div>
+                    <div class="stars" style="color: #ffd700;">{{ metrics['Retention']['stars'] }}</div>
+                    
+                    <div class="metric-label" style="font-weight:bold; margin-top: 15px;">Growth Capacity</div>
+                    <div class="metric-desc" style="font-size: 0.85em; color: {{ TEXT_MUTED }};">Percentage of fresh, first-time active contributors (20% weight)</div>
+                    <div class="metric-value" style="font-size: 1.5em; color: #fff;">{{ metrics['Growth']['raw'] }}</div>
+                    <div class="stars" style="color: #ffd700;">{{ metrics['Growth']['stars'] }}</div>
+            <div class="grid-2" style="grid-template-columns: 1fr 1.2fr; align-items: start;">
+                <div class="card mb-3">
+                    <div class="card-header">{{ target_event.upper() }} Metrics Matrix</div>
+                    <div class="card-body">
+                        
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight:bold; color: #a9b9d8;">Retention Index</div>
+                            <div style="font-size: 0.85em; color: {{ TEXT_MUTED }}; margin-bottom: 5px;">Percentage of users retained from the baseline (35% weight)</div>
+                            <div style="font-size: 1.5em; color: #fff;">{{ metrics['Retention']['raw'] }}</div>
+                            <div style="color: #ffd700; font-size: 1.2em;">{{ metrics['Retention']['stars'] }}</div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight:bold; color: #a9b9d8;">Growth Capacity</div>
+                            <div style="font-size: 0.85em; color: {{ TEXT_MUTED }}; margin-bottom: 5px;">Percentage of fresh, first-time active contributors (20% weight)</div>
+                            <div style="font-size: 1.5em; color: #fff;">{{ metrics['Growth']['raw'] }}</div>
+                            <div style="color: #ffd700; font-size: 1.2em;">{{ metrics['Growth']['stars'] }}</div>
+                        </div>
+
+                    <div class="metric-label" style="font-weight:bold; margin-top: 15px;">Usage / Utility</div>
+                    <div class="metric-desc" style="font-size: 0.85em; color: {{ TEXT_MUTED }};">Percentage of files actively used on Wikimedia wikis (20% weight)</div>
+                    <div class="metric-value" style="font-size: 1.5em; color: #fff;">{{ "%.2f"|format(metrics['Usage']['raw']) }}%</div>
+                    <div class="stars" style="color: #ffd700;">{{ metrics['Usage']['stars'] }}</div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight:bold; color: #a9b9d8;">Usage / Utility</div>
+                            <div style="font-size: 0.85em; color: {{ TEXT_MUTED }}; margin-bottom: 5px;">Percentage of files actively used on Wikimedia wikis (20% weight)</div>
+                            <div style="font-size: 1.5em; color: #fff;">{{ "%.2f"|format(metrics['Usage']['raw']) }}%</div>
+                            <div style="color: #ffd700; font-size: 1.2em;">{{ metrics['Usage']['stars'] }}</div>
+                        </div>
+
+                    <div class="metric-label" style="font-weight:bold; margin-top: 15px;">Quality Image</div>
+                    <div class="metric-desc" style="font-size: 0.85em; color: {{ TEXT_MUTED }};">Percentage of quality images across total submissions (15% weight)</div>
+                    <div class="metric-value" style="font-size: 1.5em; color: #fff;">{{ "%.2f"|format(metrics['Quality']['raw']) }}%</div>
+                    <div class="stars" style="color: #ffd700;">{{ metrics['Quality']['stars'] }}</div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight:bold; color: #a9b9d8;">Quality Image</div>
+                            <div style="font-size: 0.85em; color: {{ TEXT_MUTED }}; margin-bottom: 5px;">Percentage of quality images across total submissions (15% weight)</div>
+                            <div style="font-size: 1.5em; color: #fff;">{{ "%.2f"|format(metrics['Quality']['raw']) }}%</div>
+                            <div style="color: #ffd700; font-size: 1.2em;">{{ metrics['Quality']['stars'] }}</div>
+                        </div>
+
+                    <div class="metric-label" style="font-weight:bold; margin-top: 15px;">Diversity</div>
+                    <div class="metric-desc" style="font-size: 0.85em; color: {{ TEXT_MUTED }};">Top 10% uploader share (10% weight)</div>
+                    <div class="metric-value" style="font-size: 1.5em; color: #fff;">{{ "%.1f"|format(metrics['Diversity']['raw']) }}%</div>
+                    <div class="stars" style="color: #ffd700;">{{ metrics['Diversity']['stars'] }}</div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight:bold; color: #a9b9d8;">Diversity</div>
+                            <div style="font-size: 0.85em; color: {{ TEXT_MUTED }}; margin-bottom: 5px;">Top 10% uploader share (10% weight)</div>
+                            <div style="font-size: 1.5em; color: #fff;">{{ "%.1f"|format(metrics['Diversity']['raw']) }}%</div>
+                            <div style="color: #ffd700; font-size: 1.2em;">{{ metrics['Diversity']['stars'] }}</div>
+                        </div>
+
+                    <hr style="border-color: rgba(255,255,255,0.1); margin: 1.5rem 0;">
+                    <div class="metric-label" style="font-weight:bold;">Overall Weighted Evaluation Score</div>
+                    <div class="overall-score" style="font-size: 2em; font-weight: bold; color: #fff;">{{ metrics['Overall'] }}<span style="font-size: 1.2rem; color: #a9b9d8;"> / 100</span></div>
+                        <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                        <div>
+                            <div style="font-weight:bold; color: #a9b9d8;">Overall Weighted Evaluation Score</div>
+                            <div style="font-size: 2.2em; font-weight: bold; color: #fff;">{{ metrics['Overall'] }}<span style="font-size: 1rem; color: #a9b9d8; font-weight: normal;"> / 100</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3>Diagnostic Context Insights</h3>
+                    <p style='color: {{ TEXT_MUTED }}; margin-bottom: 1.5rem;'>Automated strategic diagnostic evaluations measured relative to peers in the <b>{{ region }}</b> cluster framework.</p>
+                    
+                    {% for insight in insights %}
+                        <div class="insight-box card" style="margin-bottom: 10px;">
+                            <p style="margin: 0;">{{ insight }}</p>
+                    <div class="card mb-3">
+                        <div class="card-header">Diagnostic Context Insights</div>
+                        <div class="card-body">
+                            <p style='color: {{ TEXT_MUTED }}; font-size: 0.9em; margin-top: 0;'>Automated strategic diagnostic evaluations measured relative to peers in the <b>{{ region }}</b> cluster framework.</p>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                {% for insight in insights %}
+                                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border-left: 3px solid #3366cc;">
+                                        <p style="margin: 0;">{{ insight }}</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <h4 style="margin-top: 0;">Quantifiable Cohort Footprints</h4>
+                        <ul style="padding-left: 20px; margin-bottom: 0;">
+                            <li><strong>Target Campaign Total Contributors:</strong> {{ target_users_count }}</li>
+                            <li><strong>Historical Baseline Group Size:</strong> {{ base_users_count }}</li>
+                            <li><strong>Common Intersecting User Core:</strong> {{ intersect_users_count }}</li>
+                        </ul>
+                    <div class="card mb-3">
+                        <div class="card-header">Quantifiable Cohort Footprints</div>
+                        <div class="card-body">
+                            <ul style="padding-left: 20px; margin: 0;">
+                                <li style="margin-bottom: 8px;"><strong>Target Campaign Total Contributors:</strong> {{ target_users_count }}</li>
+                                <li style="margin-bottom: 8px;"><strong>Historical Baseline Group Size:</strong> {{ base_users_count }}</li>
+                                <li><strong>Common Intersecting User Core:</strong> {{ intersect_users_count }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+
+<script>
+    function injectCodes() {
+        const selEvents = document.getElementById('sel_events');
+        const selCountries = document.getElementById('sel_countries');
+        
+        if (!selEvents || !selCountries) return;
+
+        const events = Array.from(selEvents.selectedOptions).map(opt => opt.value);
+        const countries = Array.from(selCountries.selectedOptions).map(opt => opt.value);
+        const yrStart = parseInt(document.getElementById('yr_start').value, 10);
+        const yrEnd = parseInt(document.getElementById('yr_end').value, 10);
+        
+        if (events.length === 0 || countries.length === 0) {
+            alert("Select at least one event type and one target country.");
+            return;
+        }
+        
+        let newCodes = [];
+        for (let e of events) {
+            for (let c of countries) {
+                for (let y = yrStart; y <= yrEnd; y++) {
+                    let yy = String(y % 100).padStart(2, '0');
+                    newCodes.push(e + c + yy);
+                }
+            }
+        }
+        
+        const textArea = document.querySelector('textarea[name="target_campaigns"]');
+        let currentText = textArea.value.trim();
+        let existingCodes = currentText ? currentText.split(/\s+/) : [];
+        
+        for (let code of newCodes) {
+            if (!existingCodes.includes(code)) {
+                existingCodes.push(code);
+            }
+        }
+        
+        textArea.value = existingCodes.join(" ");
+    }
+    
+    function resetCodes() {
+        const textArea = document.querySelector('textarea[name="target_campaigns"]');
+        if (textArea) textArea.value = "";
+    }
+</script>
+{% endblock %}
