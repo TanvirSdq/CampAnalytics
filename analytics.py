@@ -15,19 +15,10 @@ import seaborn as sns
 import streamlit as st
 from matplotlib.colors import LinearSegmentedColormap
 
-# --- SHARED DATA CONSTANTS ---
-WIKI_BLUE = "#3366cc"
-WIKI_BLUE_LIGHT = "#7aa7ff"
-WIKI_BLUE_DARK = "#14428e"
-WIKI_INK = "#202122"
-WIKI_GRAY = "#54595d"
-CARD_LIGHT = "#f7f9fc"
-CARD_DARK = "rgba(255, 255, 255, 0.05)"
-
-BG_DEEP = "#0a1526"
-BG_MID = "#13284a"
-TEXT_LIGHT = "#eef3fc"
-TEXT_MUTED = "#a9b9d8"
+from app_config import (
+    WIKI_BLUE, WIKI_BLUE_LIGHT, WIKI_BLUE_DARK, WIKI_INK, WIKI_GRAY,
+    CARD_LIGHT, CARD_DARK, BG_DEEP, BG_MID, TEXT_LIGHT, TEXT_MUTED
+)
 
 import json
 import os
