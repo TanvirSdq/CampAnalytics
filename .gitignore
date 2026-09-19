@@ -41,3 +41,7 @@ pip-log.txt
 *.log
 *.tmp
 *.bak
+
+# Agent artifacts
+.agents/
+ORIGINAL_REQUEST.md

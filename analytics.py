@@ -1,30 +1,36 @@
+import os
+# Ensure headless matplotlib and writable cache directory before any pyplot imports
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+import base64
 import html
 import io
+import json
 import re
+import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import permutations
 from math import ceil
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import requests
 import seaborn as sns
-import streamlit as st
 from matplotlib.colors import LinearSegmentedColormap
-
-from app_config import (
-    WIKI_BLUE, WIKI_BLUE_LIGHT, WIKI_BLUE_DARK, WIKI_INK, WIKI_GRAY,
-    CARD_LIGHT, CARD_DARK, BG_DEEP, BG_MID, TEXT_LIGHT, TEXT_MUTED
-)
-
-import json
-import os
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from app_config import (
+    NAV_TEAL, NAV_ACCENT, BG_CANVAS, TEXT_INK, TEXT_MUTED, BORDER_COLOR,
+    WIKI_BLUE, WIKI_BLUE_HOVER, CARD_LIGHT, CARD_SUBTLE
+)
+
+# Load configuration
 with open(os.path.join(os.path.dirname(__file__), 'config.json'), 'r') as f:
     config = json.load(f)
 
@@ -36,6 +42,25 @@ CODE_RE = re.compile(r'(wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})')
 EXAMPLE_CODES = "wlmde21 wlmde22 wlmbd22 wlmbd23"
 COUNTRY_OPTIONS = sorted(COUNTRY_MAP.keys(), key=lambda k: COUNTRY_MAP[k])
 
+# --- IN-MEMORY CACHING ---
+_DATA_CACHE = {}
+
+def timed_cache(ttl=3600):
+    """In-memory thread-safe cache decorator with TTL (seconds)."""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            key = (func.__name__, args, tuple(sorted(kwargs.items())))
+            now = time.time()
+            if key in _DATA_CACHE:
+                val, ts = _DATA_CACHE[key]
+                if now - ts < ttl:
+                    return val
+            result = func(*args, **kwargs)
+            _DATA_CACHE[key] = (result, now)
+            return result
+        return wrapper
+    return decorator
+
 # --- RELIABLE HTTP SESSION ---
 def get_session():
     session = requests.Session()
@@ -45,27 +70,23 @@ def get_session():
 
 http_session = get_session()
 
+# Refined bright colormaps harmonized with theme
 WIKI_CMAP = LinearSegmentedColormap.from_list(
-    "wiki_blue", [CARD_LIGHT, "#bcd4f7", WIKI_BLUE, WIKI_BLUE_DARK, "#0b2b5c"]
+    "campaign_marine", ["#f0fdf4", "#c6f6d5", "#72ded6", "#256d85", "#183f54"]
 )
-WORLD_SCALE = ["#16233d", "#1f3f73", WIKI_BLUE, WIKI_BLUE_LIGHT, "#cfe0ff"]
+WORLD_SCALE = ["#eef7fa", "#a8dfed", "#72ded6", "#256d85", "#183f54"]
+
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 COMMONS_HEADERS = {
     "User-Agent": "WikimediaCampaignSuite/1.0 (https://github.com/siddiquetanvir/WebApp)"
 }
-# Commons exposes selected quality images through the category tree (for example,
-# Category:Quality images / Category:Featured pictures). Counting files whose
-# campaign category membership also includes one of these categories is the reliable
-# API-based detection procedure for this metric.
 QUALITY_IMAGE_KEYWORDS = (
     "quality images",
     "featured pictures",
 )
 
-
 def country_display_name(cc):
     return COUNTRY_MAP.get(cc, cc).replace('_', ' ')
-
 
 def code_to_category(code):
     code = re.sub(r'\s+', '', code).lower()
@@ -80,7 +101,6 @@ def code_to_category(code):
             return None
         category += f"_in_{country_label}"
     return category
-
 
 # --- DATA ACQUISITION LOGIC ---
 def _fetch_toolforge_data(category):
@@ -98,7 +118,6 @@ def _fetch_toolforge_data(category):
         return None
     except Exception:
         return None
-
 
 def _fetch_participants_from_api(category):
     users = set()
@@ -138,14 +157,13 @@ def _fetch_participants_from_api(category):
         print(f"Error fetching participants from API for {category}: {e}")
         return set()
 
-
-@st.cache_data(show_spinner=False, ttl=3600)
+@timed_cache(ttl=3600)
 def get_participants(code):
     category = code_to_category(code)
     if not category:
         return set()
 
-    # 1. High-speed primary: Toolforge replica DB query (sub-second)
+    # 1. High-speed primary: Toolforge replica scraper
     toolforge_uploaders = _fetch_toolforge_data(category)
     if toolforge_uploaders is not None:
         return set(toolforge_uploaders.keys())
@@ -153,12 +171,7 @@ def get_participants(code):
     # 2. Resilient fallback: Commons Action API
     return _fetch_participants_from_api(category)
 
-
 def _fetch_file_sample_metrics(category, max_sample=1500):
-    """
-    Rapidly sample files for Quality Image and Global Usage metrics.
-    Uses targeted category filtering to avoid multi-continuation slowdowns.
-    """
     params = {
         "action": "query",
         "format": "json",
@@ -207,14 +220,12 @@ def _fetch_file_sample_metrics(category, max_sample=1500):
         "used_count": used_count
     }
 
-
-@st.cache_data(show_spinner=False, ttl=3600)
+@timed_cache(ttl=3600)
 def get_campaign_structural_metrics(code):
     category = code_to_category(code)
     if not category:
         return {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "usage_share": 0.0, "total_uploads": 0}
 
-    # First, get exact uploaders and upload counts from Toolforge if possible
     toolforge_uploaders = _fetch_toolforge_data(category)
 
     if toolforge_uploaders:
@@ -224,7 +235,6 @@ def get_campaign_structural_metrics(code):
         uploader_counts = {}
         total_uploads = 0
 
-    # Calculate concentration / diversity
     if uploader_counts:
         top_uploader_count = max(1, ceil(len(uploader_counts) * 0.10))
         sorted_upload_counts = sorted(uploader_counts.values(), reverse=True)
@@ -234,7 +244,6 @@ def get_campaign_structural_metrics(code):
     else:
         top10_uploader_share = 100.0
 
-    # Fast targeted sample for Quality Image and Global Usage rates
     sample = _fetch_file_sample_metrics(category, max_sample=1500)
     sample_size = sample["sampled"]
 
@@ -255,7 +264,6 @@ def get_campaign_structural_metrics(code):
         "total_uploads": total_uploads,
     }
 
-
 def fetch_structural_metrics_concurrently(codes, threads=8):
     results = {}
     total = len(codes)
@@ -273,29 +281,23 @@ def fetch_structural_metrics_concurrently(codes, threads=8):
 
     return results
 
-
 def fetch_all_concurrently(codes, threads=16):
+    """Fetch participant footprints for codes concurrently without Streamlit UI dependencies."""
     results = {}
     total = len(codes)
     if total == 0:
         return results
-    progress = st.progress(0, text="Fetching campaign footprints from Toolforge...")
 
     with ThreadPoolExecutor(max_workers=min(threads, max(1, total))) as executor:
         future_to_code = {executor.submit(get_participants, code): code for code in codes}
-        done = 0
         for future in as_completed(future_to_code):
             code = future_to_code[future]
             try:
                 results[code] = future.result()
             except Exception:
                 results[code] = set()
-            done += 1
-            progress.progress(done / total, text=f"Acquired metric array: {done}/{total}")
 
-    progress.empty()
     return results
-
 
 # --- RETENTION SUITE UTILITIES ---
 def compute_retention_percentages(events):
@@ -308,8 +310,8 @@ def compute_retention_percentages(events):
         percentages.append((overlap / len(source_users)) * 100)
     return percentages
 
-
 def create_heatmap(events, country_name):
+    """Generate high-contrast Seaborn retention heatmap on bright clean canvas."""
     sns.set_theme(style="white")
     event_codes = list(events.keys())
     size = len(event_codes)
@@ -317,8 +319,12 @@ def create_heatmap(events, country_name):
 
     readable_labels = []
     for code in event_codes:
-        event, cc, yr = CODE_RE.match(code).groups()
-        readable_labels.append(f"{EVENT_MAP[event]} 20{yr}")
+        match = CODE_RE.match(code)
+        if match:
+            event, cc, yr = match.groups()
+            readable_labels.append(f"{EVENT_MAP.get(event, event.upper())} 20{yr}")
+        else:
+            readable_labels.append(code)
 
     for i, source in enumerate(event_codes):
         for j, target in enumerate(event_codes):
@@ -334,76 +340,26 @@ def create_heatmap(events, country_name):
     np.fill_diagonal(matrix, rounded_max)
 
     fig, ax = plt.subplots(figsize=(max(5, size * 1.2), max(4, size)))
-    fig.patch.set_facecolor(CARD_LIGHT)
-    ax.patch.set_facecolor(CARD_LIGHT)
+    fig.patch.set_facecolor("#ffffff")
+    ax.patch.set_facecolor("#ffffff")
 
     sns.heatmap(
         matrix, annot=True, fmt=".1f",
         xticklabels=readable_labels, yticklabels=readable_labels,
-        cmap=WIKI_CMAP, linewidths=1, linecolor="#ffffff",
+        cmap=WIKI_CMAP, linewidths=1.5, linecolor="#ffffff",
         cbar_kws={'label': 'Retention (%)'},
         vmin=0, vmax=rounded_max, ax=ax,
-        annot_kws={"fontweight": "bold", "fontsize": 10}
+        annot_kws={"fontweight": "bold", "fontsize": 10, "color": TEXT_INK}
     )
 
-    ax.set_title(f"{country_name.replace('_', ' ')} Metric Matrix", pad=15, fontweight='bold',
-                 fontsize=14, color=WIKI_INK)
-    ax.set_ylabel("Source Cohort", fontweight='bold', color=WIKI_GRAY)
-    ax.set_xlabel("Target Cohort", fontweight='bold', color=WIKI_GRAY)
-    plt.xticks(rotation=45, ha='right', color=WIKI_GRAY)
-    plt.yticks(rotation=0, color=WIKI_GRAY)
+    ax.set_title(f"{country_name.replace('_', ' ')} Retention Matrix", pad=15, fontweight='bold',
+                 fontsize=13, color=TEXT_INK)
+    ax.set_ylabel("Source Cohort", fontweight='bold', color=TEXT_MUTED, fontsize=10)
+    ax.set_xlabel("Target Cohort", fontweight='bold', color=TEXT_MUTED, fontsize=10)
+    plt.xticks(rotation=45, ha='right', color=TEXT_INK, fontsize=9)
+    plt.yticks(rotation=0, color=TEXT_INK, fontsize=9)
     plt.tight_layout()
     return fig
-
-
-def _figure_to_png(fig):
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format="png", dpi=200, bbox_inches="tight")
-    buffer.seek(0)
-    return buffer
-
-
-def render_heatmap_view(valid_countries):
-    cols = st.columns(2)
-    for idx, (country_code, events) in enumerate(valid_countries.items()):
-        fig = create_heatmap(events, COUNTRY_MAP.get(country_code, country_code))
-        with cols[idx % 2]:
-            with st.container(border=True):
-                st.pyplot(fig, use_container_width=True, clear_figure=True)
-                png_bytes = _figure_to_png(fig)
-                st.download_button(
-                    "Download heatmap image",
-                    data=png_bytes,
-                    file_name=f"{country_code}_retention_heatmap.png",
-                    mime="image/png",
-                    use_container_width=True,
-                )
-                plt.close(fig)
-
-
-def render_table_view(valid_countries):
-    table_df = build_global_table(valid_countries)
-    if table_df.empty:
-        st.info("Insufficient longitudinal data found to populate records.")
-        return
-    st.dataframe(table_df, use_container_width=True)
-    csv_bytes = table_df.to_csv(index=True, index_label="Rank").encode("utf-8")
-    st.download_button(
-        "Download Data Array (CSV)", data=csv_bytes,
-        file_name="wikimedia_retention_suite.csv", mime="text/csv"
-    )
-
-
-def render_worldmap_view(valid_countries):
-    metric_choice = st.radio("Metric Vector Selection", ["Average", "Median"], horizontal=True, key="worldmap_metric")
-    world_df = build_world_data(valid_countries, metric_choice)
-    if world_df.empty:
-        st.info("Geographic coordinates unavailable for the current selection.")
-        return
-    fig = create_worldmap(world_df, metric_choice)
-    st.plotly_chart(fig, use_container_width=True)
-    st.dataframe(world_df, use_container_width=True, hide_index=True)
-
 
 def build_global_table(valid_countries):
     rows = []
@@ -425,7 +381,6 @@ def build_global_table(valid_countries):
     df.index += 1
     return df
 
-
 def build_world_data(valid_countries, metric):
     rows = []
     for country_code, events in valid_countries.items():
@@ -442,66 +397,58 @@ def build_world_data(valid_countries, metric):
         return pd.DataFrame()
     return pd.DataFrame(rows).sort_values("Retention (%)", ascending=False).reset_index(drop=True)
 
-
 def create_worldmap(df, metric_label):
+    """Plotly Choropleth map themed to bright natural earth aesthetic matching GLAMtools."""
+    max_val = df["Retention (%)"].max() if not df.empty and "Retention (%)" in df.columns else 10.0
+    range_max = max(15, float(max_val) * 1.15)
+    
     fig = px.choropleth(
         df,
         locations="Country",
         locationmode="country names",
         color="Retention (%)",
         color_continuous_scale=WORLD_SCALE,
-        range_color=(0, max(15, df["Retention (%)"].max() * 1.15)),
+        range_color=(0, range_max),
         hover_name="Country",
         hover_data={"Occurrences Compared": True, "Retention (%)": True},
         projection="natural earth",
     )
     fig.update_layout(
-        title=dict(text=f"{metric_label} Retention Distribution", x=0.02,
-                   font=dict(color=TEXT_LIGHT, size=18, family="Inter, sans-serif")),
+        title=dict(
+            text=f"{metric_label} Retention Distribution",
+            x=0.02,
+            font=dict(color=TEXT_INK, size=16, family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif")
+        ),
         geo=dict(
-            showcountries=True, countrycolor="rgba(255,255,255,0.15)",
-            showcoastlines=False, showland=True, showocean=False,
-            showlakes=False, lakecolor="#0f172a",
-            landcolor="#152238", bgcolor="rgba(0,0,0,0)",
+            showcountries=True,
+            countrycolor="#d0d7de",
+            countrywidth=0.7,
+            showcoastlines=True,
+            coastlinecolor="#d0d7de",
+            showland=True,
+            landcolor="#e8ecef",
+            showocean=True,
+            oceancolor="#f8f9fa",
+            showlakes=True,
+            lakecolor="#ffffff",
+            bgcolor="#ffffff",
         ),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(r=0, t=55, l=0, b=0),
+        paper_bgcolor="#ffffff",
+        plot_bgcolor="#ffffff",
+        margin=dict(r=10, t=50, l=10, b=10),
         coloraxis_colorbar=dict(
-            title=dict(text="Retention", font=dict(color=TEXT_LIGHT)),
-            tickfont=dict(color=TEXT_LIGHT), ticksuffix="%", outlinewidth=0,
+            title=dict(text="Retention", font=dict(color=TEXT_INK, size=12)),
+            tickfont=dict(color=TEXT_INK, size=11),
+            ticksuffix="%",
+            outlinewidth=1,
+            outlinecolor="#e0e0e0",
+            bgcolor="rgba(255,255,255,0.9)",
+            len=0.75
         ),
-        font=dict(color=TEXT_LIGHT, family="Inter, sans-serif"),
-        hoverlabel=dict(bgcolor=CARD_LIGHT, font_color=WIKI_INK, font_family="Inter, sans-serif"),
+        font=dict(color=TEXT_INK, family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"),
+        hoverlabel=dict(bgcolor="#ffffff", font_color=TEXT_INK, font_family="Inter, sans-serif", bordercolor="#e0e0e0"),
     )
     return fig
-
-
-def add_codes_from_selectors():
-    sel_events = st.session_state.get("sel_events", [])
-    sel_countries = st.session_state.get("sel_countries", [])
-    yr_start, yr_end = st.session_state.get("yr_range", (2021, 2023))
-
-    if not sel_events or not sel_countries:
-        st.toast("Select at least one event type and one target country.", icon="⚠️")
-        return
-
-    new_codes = []
-    for event in sel_events:
-        for country in sel_countries:
-            for yr in range(yr_start, yr_end + 1):
-                new_codes.append(f"{event}{country}{yr % 100:02d}")
-
-    existing = st.session_state.get("code_input", "").split()
-    merged = existing + [c for c in new_codes if c not in existing]
-    st.session_state.code_input = " ".join(merged)
-    st.toast(f"Merged {len(new_codes)} validation vectors.")
-
-
-def clear_code_input():
-    st.session_state.code_input = ""
-    st.toast("Input registry cleared.")
-
 
 # --- HEALTH ASSESSMENT CORE ENGINE ---
 def calculate_stars(score, max_score=100):
@@ -509,7 +456,6 @@ def calculate_stars(score, max_score=100):
     stars = int(round(normalized * 5))
     stars = min(5, max(1, stars))
     return "★" * stars + "☆" * (5 - stars), stars
-
 
 def generate_health_metrics(
     target_users,
@@ -584,18 +530,18 @@ def generate_health_metrics(
 
     return metrics
 
-
 def generate_insights(metrics, region_name, benchmarks):
     insights = []
 
     raw_ret = float(metrics['Retention']['raw'].replace('%', '')) if isinstance(metrics['Retention']['raw'], str) else float(metrics['Retention']['raw'])
     ret_diff = raw_ret - benchmarks['retention']
+    region_label = f"{region_name} regional" if region_name else "regional"
     if ret_diff > 5:
-        insights.append(f"Retention is healthy: {raw_ret:.1f}% is {ret_diff:.1f} percentage points above the regional baseline, indicating strong continuity of contributors from prior campaigns.")
+        insights.append(f"Retention is healthy: {raw_ret:.1f}% is {ret_diff:.1f} percentage points above the {region_label} baseline, indicating strong continuity of contributors from prior campaigns.")
     elif ret_diff < -5:
-        insights.append("Retention is under pressure: the campaign is losing more returning contributors than the regional standard, suggesting a likely engagement or follow-up gap.")
+        insights.append(f"Retention is under pressure: the campaign is losing more returning contributors than the {region_label} standard, suggesting a likely engagement or follow-up gap.")
     else:
-        insights.append("Retention is stable: the campaign is tracking near the regional benchmark, with no major churn signal evident.")
+        insights.append(f"Retention is stable: the campaign is tracking near the {region_label} benchmark, with no major churn signal evident.")
 
     raw_growth = float(metrics['Growth']['raw'].replace('%', '')) if isinstance(metrics['Growth']['raw'], str) else float(metrics['Growth']['raw'])
     if raw_growth > 75 and raw_ret < 10:
