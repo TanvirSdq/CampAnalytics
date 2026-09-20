@@ -33,7 +33,7 @@
     "wle": "*",
     "wlf": "*",
     "wla": ["ng", "ke", "za", "gh", "tz", "eg", "tn", "ma", "dz", "sn", "ci", "rw", "ug"],
-    "wlb": "no-cc",
+    "wlb": {"countries": ["bd", "in"], "no_country_suffix": true},
     "wlp": ["de", "fr", "nl", "be", "se", "no", "fi", "uk", "us", "ca", "au", "nz", "it", "es", "at", "ch", "br", "ar", "pl"],
     "wlfood": ["in", "id", "my", "ph", "th", "tr", "it", "es", "fr", "de", "nl", "br", "mx", "eg", "tn", "ma"],
     "wlpa": ["in", "de", "it", "es", "fr", "pl", "ua", "ru", "br", "mx", "us", "ca", "nl", "be", "at"],

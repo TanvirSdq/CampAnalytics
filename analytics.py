@@ -179,17 +179,26 @@ def get_participants(code):
     event, cc, yr = match.groups()
     if event == 'all':
         sub_codes = []
-        no_cc_codes = []  # campaigns that have no per-country editions
         for e in EVENT_MAP.keys():
             scope = EVENT_COUNTRY_SCOPE.get(e, '*')
-            if scope == 'no-cc':
-                # e.g. wlb24 — year-only category, no country suffix
-                no_cc_codes.append(f"{e}{yr}")
-            elif scope == '*' or (isinstance(scope, list) and cc in scope):
-                sub_codes.append(f"{e}{cc}{yr}")
 
-        all_codes = sub_codes + no_cc_codes
-        sub_results = fetch_all_concurrently(all_codes)
+            # Dict scope: has a country allowlist AND uses year-only Commons category
+            if isinstance(scope, dict):
+                allowed = scope.get('countries', [])
+                if cc in allowed:
+                    if scope.get('no_country_suffix'):
+                        sub_codes.append(f"{e}{yr}")       # e.g. wlb24
+                    else:
+                        sub_codes.append(f"{e}{cc}{yr}")
+            # Global: runs everywhere with country editions
+            elif scope == '*':
+                sub_codes.append(f"{e}{cc}{yr}")
+            # Country allowlist: only include when cc is valid
+            elif isinstance(scope, list) and cc in scope:
+                sub_codes.append(f"{e}{cc}{yr}")
+            # Otherwise: this campaign does not run in this country — skip
+
+        sub_results = fetch_all_concurrently(sub_codes)
         combined_users = set()
         breakdown = {}
         for sc, users in sub_results.items():

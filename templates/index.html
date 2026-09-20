@@ -72,9 +72,9 @@
                                 <div class="form-group">
                                     <label class="form-label">Longitudinal Year Range</label>
                                     <div class="year-range-row">
-                                        <input type="number" id="builder_yr_start" name="builder_yr_start" value="2021" min="2010" max="2026" class="form-control" onchange="syncBuilderToCodes()">
+                                        <input type="number" id="builder_yr_start" name="builder_yr_start" value="2021" min="2010" max="2040" class="form-control" onchange="syncBuilderToCodes()">
                                         <span class="year-separator">to</span>
-                                        <input type="number" id="builder_yr_end" name="builder_yr_end" value="2023" min="2010" max="2026" class="form-control" onchange="syncBuilderToCodes()">
+                                        <input type="number" id="builder_yr_end" name="builder_yr_end" value="2023" min="2010" max="2040" class="form-control" onchange="syncBuilderToCodes()">
                                     </div>
                                 </div>
                             </div>
@@ -255,7 +255,7 @@
 
                                 <div class="form-group">
                                     <label for="health_year" class="form-label">Campaign Year</label>
-                                    <input type="number" id="health_year" name="health_year" value="2024" min="2010" max="2026" class="form-control" onchange="syncHealthBuilderToCode()">
+                                    <input type="number" id="health_year" name="health_year" value="2024" min="2010" max="2040" class="form-control" onchange="syncHealthBuilderToCode()">
                                 </div>
                             </div>
 
@@ -510,9 +510,9 @@
                                 <div class="form-group">
                                     <label class="form-label">Year Range</label>
                                     <div class="year-range-row">
-                                        <input type="number" id="influx_yr_start" name="influx_yr_start" class="form-control" value="{{ influx_yr_start|default(2020) }}" min="2010" max="2026" onchange="syncInfluxBuilder()">
+                                        <input type="number" id="influx_yr_start" name="influx_yr_start" class="form-control" value="{{ influx_yr_start|default(2020) }}" min="2010" max="2040" onchange="syncInfluxBuilder()">
                                         <span class="year-separator">to</span>
-                                        <input type="number" id="influx_yr_end" name="influx_yr_end" class="form-control" value="{{ influx_yr_end|default(2024) }}" min="2010" max="2026" onchange="syncInfluxBuilder()">
+                                        <input type="number" id="influx_yr_end" name="influx_yr_end" class="form-control" value="{{ influx_yr_end|default(2024) }}" min="2010" max="2040" onchange="syncInfluxBuilder()">
                                     </div>
                                 </div>
                             </div>

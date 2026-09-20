@@ -226,7 +226,7 @@ with st.sidebar:
         )
         influx_years = st.slider(
             "Year Span",
-            2010, 2026, (2020, 2024),
+            2010, 2040, (2020, 2024),
             key="influx_years"
         )
         
