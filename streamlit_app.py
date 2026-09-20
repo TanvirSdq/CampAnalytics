@@ -29,7 +29,7 @@ from app_config import (
     PAGE_TITLE, PAGE_ICON, LAYOUT, INITIAL_SIDEBAR_STATE,
     WIKI_BLUE, WIKI_BLUE_LIGHT, WIKI_BLUE_DARK, WIKI_INK, WIKI_GRAY,
     CARD_LIGHT, CARD_DARK, BG_DEEP, BG_MID, TEXT_LIGHT, TEXT_MUTED,
-    KORIKATH_LOGO_URL, get_custom_css
+    KORIKATH_LOGO_URL, get_streamlit_css
 )
 
 # --- GLOBAL PAGE CONFIGURATION ---
@@ -40,7 +40,7 @@ st.set_page_config(
     initial_sidebar_state=INITIAL_SIDEBAR_STATE
 )
 
-CUSTOM_CSS = get_custom_css()
+CUSTOM_CSS = get_streamlit_css()
 st.markdown(f"<style>{CUSTOM_CSS}</style>", unsafe_allow_html=True)
 
 # --- MAPS & CONSTANTS ---

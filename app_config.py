@@ -33,6 +33,15 @@ TEXT_LIGHT = "#202122"
 KORIKATH_LOGO_URL = "https://commons.wikimedia.org/wiki/Special:FilePath/Project_Korikath_Logo-dark.svg"
 
 def get_custom_css():
+    """Returns CSS for Flask application."""
+    css_path = Path(__file__).with_name("styles.css")
+    if not css_path.exists():
+        return ""
+    with css_path.open("r", encoding="utf-8") as css_file:
+        return css_file.read()
+
+def get_streamlit_css():
+    """Returns CSS for Streamlit application."""
     css_path = Path(__file__).with_name("streamlit_styles.css")
     if not css_path.exists():
         return ""
