@@ -1,9 +1,32 @@
 {
   "EVENT_MAP": {
-    "wlf": "Folklore",
-    "wle": "Earth",
     "wlm": "Monuments",
-    "wlb": "Bangla"
+    "wle": "Earth",
+    "wlf": "Folklore",
+    "wla": "Africa",
+    "wlb": "Bangla",
+    "wlp": "Pride",
+    "wlfood": "Food",
+    "wlpa": "Public_Art",
+    "wllh": "Living_Heritage",
+    "wls": "Sport",
+    "wlbf": "Butterfly",
+    "wlbirds": "Birds"
+  },
+  "EVENT_DISPLAY_MAP": {
+    "all": "All Campaigns Combined (Ecosystem Overview)",
+    "wlm": "Wiki Loves Monuments (WLM)",
+    "wle": "Wiki Loves Earth (WLE)",
+    "wlf": "Wiki Loves Folklore (WLF)",
+    "wla": "Wiki Loves Africa (WLA)",
+    "wlb": "Wiki Loves Bangla (WLB)",
+    "wlp": "Wiki Loves Pride (WLP)",
+    "wlfood": "Wiki Loves Food (WLFood)",
+    "wlpa": "Wiki Loves Public Art (WLPA)",
+    "wllh": "Wiki Loves Living Heritage (WLLH)",
+    "wls": "Wiki Loves Sport (WLS)",
+    "wlbf": "Wiki Loves Butterfly (WLBF)",
+    "wlbirds": "Wiki Loves Birds (WLBirds)"
   },
   "COUNTRY_MAP": {
     "bd": "Bangladesh", "in": "India", "de": "Germany", "it": "Italy",

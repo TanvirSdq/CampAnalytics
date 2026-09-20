@@ -79,6 +79,7 @@ def influx():
         except (ValueError, TypeError):
             yr_start, yr_end = 2020, 2024
         raw_codes = request.form.get('influx_codes', '').strip()
+        should_compute = True
     else:
         event_type = request.args.get('influx_event_type', 'wlm').strip().lower()
         country = request.args.get('influx_country', 'de').strip().lower()
@@ -88,33 +89,37 @@ def influx():
         except (ValueError, TypeError):
             yr_start, yr_end = 2020, 2024
         raw_codes = request.args.get('influx_codes', '').strip()
+        should_compute = bool(request.args.get('influx_codes'))
 
-    if raw_codes:
-        codes = raw_codes.split()
-    else:
-        codes = [f"{event_type}{country}{y % 100:02d}" for y in range(yr_start, yr_end + 1)]
+    if not raw_codes:
+        raw_codes = ' '.join(f"{event_type}{country}{y % 100:02d}" for y in range(yr_start, yr_end + 1))
 
+    codes = raw_codes.split()
     valid_codes = [c for c in codes if CODE_RE.match(c)]
     
     error = None
     chart_b64 = ""
     influx_result = None
     
-    if not valid_codes or len(valid_codes) < 2:
-        error = "Please specify at least two chronological campaign editions to compute Year-over-Year influx."
-    else:
-        try:
-            influx_result = analytics.compute_yoy_influx(valid_codes)
-            if not influx_result['records'] or all(r['total_active'] == 0 for r in influx_result['records']):
-                error = "No participant records found for the selected campaign series on Wikimedia Commons."
-            else:
-                country_name = COUNTRY_MAP.get(country, country.upper()).replace('_', ' ')
-                event_name = EVENT_MAP.get(event_type, event_type.upper())
-                chart_title = f"Wiki Loves {event_name} ({country_name}) — Contributor Influx & Growth"
-                fig = analytics.create_influx_barchart(influx_result['records'], title=chart_title)
-                chart_b64 = fig_to_base64(fig)
-        except Exception as e:
-            error = f"Error evaluating influx trends: {str(e)}"
+    if should_compute:
+        if not valid_codes or len(valid_codes) < 2:
+            error = "Please specify at least two chronological campaign editions to compute Year-over-Year influx."
+        else:
+            try:
+                influx_result = analytics.compute_yoy_influx(valid_codes)
+                if not influx_result['records'] or all(r['total_active'] == 0 for r in influx_result['records']):
+                    error = "No participant records found for the selected campaign series on Wikimedia Commons."
+                else:
+                    country_name = COUNTRY_MAP.get(country, country.upper()).replace('_', ' ')
+                    if event_type == 'all':
+                        chart_title = f"All Campaigns Combined ({country_name}) — Contributor Influx & Growth"
+                    else:
+                        event_name = EVENT_MAP.get(event_type, event_type.upper())
+                        chart_title = f"Wiki Loves {event_name} ({country_name}) — Contributor Influx & Growth"
+                    fig = analytics.create_influx_barchart(influx_result['records'], title=chart_title)
+                    chart_b64 = fig_to_base64(fig)
+            except Exception as e:
+                error = f"Error evaluating influx trends: {str(e)}"
             
     return render_template(
         'index.html',

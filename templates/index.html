@@ -485,6 +485,8 @@
                             <div class="form-group">
                                 <label class="form-label">Campaign Type</label>
                                 <div class="pill-group" id="influx-event-group">
+                                    <input type="radio" name="influx_event_type" value="all" id="influx-evt-all" class="pill-checkbox" {% if influx_event_type == 'all' %}checked{% endif %} onchange="syncInfluxBuilder()">
+                                    <label for="influx-evt-all" class="pill-label" style="font-weight: 600; border-color: var(--nav-accent); background: #f0fdf4;">🌟 All Campaigns Combined (Ecosystem Overview)</label>
                                     {% for event_key, event_val in EVENT_MAP.items() %}
                                         <input type="radio" name="influx_event_type" value="{{ event_key }}" id="influx-evt-{{ event_key }}" class="pill-checkbox" {% if influx_event_type == event_key or (not influx_event_type and event_key == 'wlm') %}checked{% endif %} onchange="syncInfluxBuilder()">
                                         <label for="influx-evt-{{ event_key }}" class="pill-label">Wiki Loves {{ event_val }} ({{ event_key|upper }})</label>
@@ -519,7 +521,7 @@
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label for="influx_codes" class="form-label">Generated Campaign Sequence</label>
                                 <input type="text" id="influx_codes" name="influx_codes" class="form-control form-control-code" value="{{ influx_codes|default('wlmde20 wlmde21 wlmde22 wlmde23 wlmde24') }}" placeholder="e.g. wlmde20 wlmde21 wlmde22 wlmde23 wlmde24">
-                                <div class="form-hint">Space-separated list of chronological campaign editions to compare.</div>
+                                <div class="form-hint">Space-separated list of chronological campaign editions or <code>all[country][year]</code> composite codes.</div>
                             </div>
 
                             <button type="submit" class="btn-primary" style="width: auto;">
@@ -533,13 +535,21 @@
                             <div class="example-box">
                                 <div class="example-box-title">Featured Multi-Year Presets</div>
                                 <div class="preset-tags">
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'bd', 2020, 2024)">
+                                        allbd20 ... allbd24
+                                        <span class="preset-tag-label">All Campaigns · Bangladesh (5 Years)</span>
+                                    </button>
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'de', 2020, 2024)">
+                                        allde20 ... allde24
+                                        <span class="preset-tag-label">All Campaigns · Germany (5 Years)</span>
+                                    </button>
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wla', 'ng', 2020, 2024)">
+                                        wlang20 ... wlang24
+                                        <span class="preset-tag-label">WL Africa Nigeria (5 Years)</span>
+                                    </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlm', 'de', 2020, 2024)">
                                         wlmde20 ... wlmde24
                                         <span class="preset-tag-label">WLM Germany (5 Years)</span>
-                                    </button>
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlm', 'bd', 2020, 2024)">
-                                        wlmbd20 ... wlmbd24
-                                        <span class="preset-tag-label">WLM Bangladesh (5 Years)</span>
                                     </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wle', 'in', 2020, 2024)">
                                         wlein20 ... wlein24
@@ -556,6 +566,31 @@
                 </div>
             </div>
         </form>
+
+        {% if not influx_result and not error %}
+            <div class="glam-panel">
+                <div class="glam-panel-header">
+                    <span>Quick start · Multi-Year Influx Analysis</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">How to use this tool</span>
+                </div>
+                <div class="glam-panel-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 8px;">
+                        <div style="background: var(--card-subtle); border: 1px solid var(--border-color); border-radius: 4px; padding: 14px 16px;">
+                            <div style="font-weight: 600; color: var(--text-ink); font-size: 0.92rem; margin-bottom: 6px;">1 · Choose Campaign &amp; Country</div>
+                            <p style="color: var(--text-muted); font-size: 0.84rem; margin: 0; line-height: 1.5;">Select a campaign type (WLM, WLE, WLF, WLB) and a target country in the builder above, or pick one of the featured presets.</p>
+                        </div>
+                        <div style="background: var(--card-subtle); border: 1px solid var(--border-color); border-radius: 4px; padding: 14px 16px;">
+                            <div style="font-weight: 600; color: var(--text-ink); font-size: 0.92rem; margin-bottom: 6px;">2 · Define Longitudinal Span</div>
+                            <p style="color: var(--text-muted); font-size: 0.84rem; margin: 0; line-height: 1.5;">Select at least two consecutive editions (e.g. 2020–2024). The query codes update automatically in chronological sequence.</p>
+                        </div>
+                        <div style="background: var(--card-subtle); border: 1px solid var(--border-color); border-radius: 4px; padding: 14px 16px;">
+                            <div style="font-weight: 600; color: var(--text-ink); font-size: 0.92rem; margin-bottom: 6px;">3 · Compute Influx Trends</div>
+                            <p style="color: var(--text-muted); font-size: 0.84rem; margin: 0; line-height: 1.5;">Click <strong>Compute Influx Trends</strong> to generate dual-axis stacked newcomer/veteran volume bars, longevity profile, and cumulative pool.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
 
         {% if influx_result and influx_result.records %}
             <!-- Structured Panel: Trend KPI Summary -->
@@ -672,7 +707,12 @@
                                 {% for r in influx_result.records %}
                                     <tr>
                                         <td style="font-weight: 600;">{{ r.year }}</td>
-                                        <td><code>{{ r.code }}</code></td>
+                                        <td>
+                                            <code>{{ r.code }}</code>
+                                            {% if r.breakdown_str and r.breakdown_str != 'Single stream' %}
+                                                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 3px; line-height: 1.3;">{{ r.breakdown_str }}</div>
+                                            {% endif %}
+                                        </td>
                                         <td style="font-weight: 600;">{{ "{:,}".format(r.total_active) }}</td>
                                         <td style="color: #0d9488; font-weight: 600;">+{{ "{:,}".format(r.new_contributors) }}</td>
                                         <td style="color: var(--nav-teal); font-weight: 600;">{{ "{:,}".format(r.returning_contributors) }}</td>
@@ -826,6 +866,19 @@
                     <div class="math-formula">
                         Influx(C_t) = |U_t \setminus U_{&lt;t}|, \quad \text{Newcomer Share} = \left(\frac{Influx(C_t)}{|U_t|}\right) \times 100\%
                     </div>
+                </div>
+
+                <div class="math-panel">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Multi-Campaign Ecosystem Influx &amp; De-duplication</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+                        When analyzing all campaigns together (<code>all[country][year]</code>), participant sets across all active Wiki Loves photography contests in edition year \(t\) are aggregated into a unified ecosystem cohort \(U_t\):
+                    </p>
+                    <div class="math-formula">
+                        U_t = \bigcup_{e \in E} U_{e, t}, \quad I_t = U_t \setminus \bigcup_{j < t} U_j, \quad R_t = U_t \cap \bigcup_{j < t} U_j
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
+                        Where \(E = \{\text{WLM}, \text{WLE}, \text{WLF}, \text{WLA}, \text{WLB}, \text{WLP}, \text{WLFood}, \text{WLPA}, \text{WLLH}, \text{WLS}, \dots\}\). Contributor cross-participation across contests is de-duplicated, measuring the total net new individuals brought into the Wikimedia movement annually.
+                    </p>
                 </div>
 
                 <div class="math-panel">

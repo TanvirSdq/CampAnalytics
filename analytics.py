@@ -36,15 +36,19 @@ with open(os.path.join(os.path.dirname(__file__), 'config.json'), 'r') as f:
     config = json.load(f)
 
 EVENT_MAP = config['EVENT_MAP']
+EVENT_DISPLAY_MAP = config.get('EVENT_DISPLAY_MAP', {
+    k: f"Wiki Loves {v}" for k, v in EVENT_MAP.items()
+})
 COUNTRY_MAP = config['COUNTRY_MAP']
 REGION_COUNTRY_MAPPING = config['REGION_COUNTRY_MAPPING']
 
-CODE_RE = re.compile(r'(wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})')
+CODE_RE = re.compile(r'^(all|wlfood|wlbirds|wllh|wlpa|wlbf|wlf|wle|wlm|wlb|wla|wlp|wls)([a-z]{0,2})(\d{2})$')
 EXAMPLE_CODES = "wlmde21 wlmde22 wlmbd22 wlmbd23"
 COUNTRY_OPTIONS = sorted(COUNTRY_MAP.keys(), key=lambda k: COUNTRY_MAP[k])
 
 # --- IN-MEMORY CACHING ---
 _DATA_CACHE = {}
+_COMPOSITE_BREAKDOWNS = {}
 
 def timed_cache(ttl=3600):
     """In-memory thread-safe cache decorator with TTL (seconds)."""
@@ -95,8 +99,13 @@ def code_to_category(code):
     if not match:
         return None
     event, cc, yr = match.groups()
-    category = f"Images_from_Wiki_Loves_{EVENT_MAP[event]}_{2000 + int(yr)}"
-    if cc and event != 'wlb':
+    if event == 'all':
+        return None  # Aggregate pseudo-event resolved in get_participants
+    event_name = EVENT_MAP.get(event)
+    if not event_name:
+        return None
+    category = f"Images_from_Wiki_Loves_{event_name}_{2000 + int(yr)}"
+    if cc and event not in ('wlb',):
         country_label = COUNTRY_MAP.get(cc)
         if not country_label:
             return None
@@ -160,7 +169,28 @@ def _fetch_participants_from_api(category):
 
 @timed_cache(ttl=3600)
 def get_participants(code):
-    category = code_to_category(code)
+    code_clean = re.sub(r'\s+', '', code).lower()
+    match = CODE_RE.match(code_clean)
+    if not match:
+        return set()
+
+    event, cc, yr = match.groups()
+    if event == 'all':
+        sub_events = [k for k in EVENT_MAP.keys() if k != 'all']
+        sub_codes = [f"{e}{cc}{yr}" for e in sub_events]
+        sub_results = fetch_all_concurrently(sub_codes)
+        combined_users = set()
+        breakdown = {}
+        for sc, users in sub_results.items():
+            if users:
+                combined_users.update(users)
+                m = CODE_RE.match(sc)
+                evt_name = EVENT_MAP.get(m.group(1), m.group(1).upper()) if m else sc
+                breakdown[evt_name] = len(users)
+        _COMPOSITE_BREAKDOWNS[code_clean] = breakdown
+        return combined_users
+
+    category = code_to_category(code_clean)
     if not category:
         return set()
 
@@ -581,30 +611,48 @@ def compute_yoy_influx(campaign_codes):
     """
     Computes Year-over-Year newcomer influx, returning contributor retention,
     and cumulative community growth for a chronological sequence of campaign editions.
+    Supports single-campaign streams, multi-event groupings, and 'all' ecosystem aggregate codes.
     """
-    code_to_users = fetch_all_concurrently(campaign_codes)
+    cleaned_codes = [re.sub(r'\s+', '', c).lower() for c in campaign_codes if c.strip()]
+    code_to_users = fetch_all_concurrently(cleaned_codes)
     
+    # Group codes by year to support single-code series, multi-campaign combinations, and 'all' codes
+    year_to_codes = defaultdict(list)
+    for code in cleaned_codes:
+        m = CODE_RE.match(code)
+        if m:
+            yr = 2000 + int(m.group(3))
+            year_to_codes[yr].append(code)
+            
     records = []
     seen_all_prior = set()
     user_edition_counts = defaultdict(int)
-    
     prev_users = set()
     
-    # Ensure chronological order by year
-    sorted_codes = sorted(
-        campaign_codes,
-        key=lambda c: int(CODE_RE.match(c).group(3)) if CODE_RE.match(c) else 0
-    )
-    
-    for code in sorted_codes:
-        match = CODE_RE.match(code)
-        if not match:
-            continue
-        evt, cc, yy = match.groups()
-        year = 2000 + int(yy)
-        current_users = code_to_users.get(code, set())
+    sorted_years = sorted(year_to_codes.keys())
+    for year in sorted_years:
+        codes_for_year = year_to_codes[year]
+        current_users = set().union(*(code_to_users.get(c, set()) for c in codes_for_year))
         total_active = len(current_users)
         
+        # Build human-readable breakdown across events
+        breakdown_items = []
+        if len(codes_for_year) == 1:
+            single_code = codes_for_year[0]
+            code_display = single_code
+            if single_code in _COMPOSITE_BREAKDOWNS and _COMPOSITE_BREAKDOWNS[single_code]:
+                breakdown_items = [f"{k}: {v:,}" for k, v in sorted(_COMPOSITE_BREAKDOWNS[single_code].items())]
+        else:
+            code_display = f"Combined ({len(codes_for_year)} events)"
+            for c in codes_for_year:
+                cnt = len(code_to_users.get(c, set()))
+                if cnt > 0:
+                    m = CODE_RE.match(c)
+                    evt_key = m.group(1) if m else c
+                    breakdown_items.append(f"{EVENT_MAP.get(evt_key, evt_key.upper())}: {cnt:,}")
+                    
+        breakdown_str = ", ".join(breakdown_items) if breakdown_items else "Single stream"
+
         for u in current_users:
             user_edition_counts[u] += 1
             
@@ -636,7 +684,7 @@ def compute_yoy_influx(campaign_codes):
         cumulative_pool = len(seen_all_prior)
         
         records.append({
-            'code': code,
+            'code': code_display,
             'year': year,
             'total_active': total_active,
             'new_contributors': new_users,
@@ -646,7 +694,8 @@ def compute_yoy_influx(campaign_codes):
             'retention_from_prev_pct': round(retention_from_prev, 1),
             'yoy_growth_pct': round(yoy_growth, 1),
             'new_to_veteran_ratio': round(ratio, 2),
-            'cumulative_pool': cumulative_pool
+            'cumulative_pool': cumulative_pool,
+            'breakdown_str': breakdown_str
         })
         
         prev_users = current_users
@@ -781,11 +830,18 @@ def create_influx_plotly_chart(records, title="Year-over-Year Contributor Influx
         return px.bar(title="No data available")
 
     df = pd.DataFrame(records)
-    
+    id_vars = ['year', 'code', 'total_active', 'newcomer_share_pct', 'cumulative_pool']
+    hover_data = {'total_active': True, 'newcomer_share_pct': ':.1f%'}
+    labels = {'year': 'Campaign Year', 'Count': 'Active Contributors'}
+    if 'breakdown_str' in df.columns:
+        id_vars.append('breakdown_str')
+        hover_data['breakdown_str'] = True
+        labels['breakdown_str'] = 'Campaign Breakdown'
+
     # Melt for stacked bar chart in Plotly
     df_melted = pd.melt(
         df,
-        id_vars=['year', 'code', 'total_active', 'newcomer_share_pct', 'cumulative_pool'],
+        id_vars=id_vars,
         value_vars=['returning_contributors', 'new_contributors'],
         var_name='Contributor Type',
         value_name='Count'
@@ -805,8 +861,8 @@ def create_influx_plotly_chart(records, title="Year-over-Year Contributor Influx
             'First-Time Newcomers': NAV_ACCENT
         },
         title=title,
-        labels={'year': 'Campaign Year', 'Count': 'Active Contributors'},
-        hover_data={'total_active': True, 'newcomer_share_pct': ':.1f%'}
+        labels=labels,
+        hover_data=hover_data
     )
 
     fig.add_trace(go.Scatter(

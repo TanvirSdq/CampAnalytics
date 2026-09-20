@@ -611,5 +611,68 @@ class CampaignSuiteTestCase(unittest.TestCase):
         self.assertIsNotNone(fig)
         self.assertEqual(len(fig.data), 3) # New, Returning, Cumulative line
 
+    def test_new_wiki_loves_events_taxonomy(self):
+        """Test category resolution for newly added Wiki Loves campaigns."""
+        self.assertEqual(analytics.code_to_category('wlang22'), 'Images_from_Wiki_Loves_Africa_2022_in_Nigeria')
+        self.assertEqual(analytics.code_to_category('wlfoodin22'), 'Images_from_Wiki_Loves_Food_2022_in_India')
+        self.assertEqual(analytics.code_to_category('wlsde24'), 'Images_from_Wiki_Loves_Sport_2024_in_Germany')
+        self.assertEqual(analytics.code_to_category('wlpa21'), 'Images_from_Wiki_Loves_Public_Art_2021')
+        self.assertEqual(analytics.code_to_category('wllh23'), 'Images_from_Wiki_Loves_Living_Heritage_2023')
+        # Composite pseudo-event 'all' should resolve to None for category
+        self.assertIsNone(analytics.code_to_category('allbd22'))
+
+    def test_all_campaigns_composite_influx_aggregation(self):
+        """Test multi-campaign ecosystem aggregation and breakdown in compute_yoy_influx."""
+        with patch.object(analytics, 'fetch_all_concurrently') as mock_fetch:
+            mock_fetch.return_value = {
+                'allbd22': {'user_a', 'user_b', 'user_c'},
+                'allbd23': {'user_b', 'user_c', 'user_d', 'user_e'}
+            }
+            # Also simulate composite breakdown storage
+            analytics._COMPOSITE_BREAKDOWNS['allbd22'] = {'Monuments': 2, 'Earth': 1}
+            analytics._COMPOSITE_BREAKDOWNS['allbd23'] = {'Monuments': 3, 'Earth': 2, 'Folklore': 1}
+
+            res = analytics.compute_yoy_influx(['allbd22', 'allbd23'])
+            self.assertEqual(len(res['records']), 2)
+            
+            # Edition 2022
+            r22 = res['records'][0]
+            self.assertEqual(r22['year'], 2022)
+            self.assertEqual(r22['total_active'], 3)
+            self.assertEqual(r22['new_contributors'], 3)
+            self.assertEqual(r22['returning_contributors'], 0)
+            self.assertEqual(r22['cumulative_pool'], 3)
+            self.assertIn('Earth: 1', r22['breakdown_str'])
+            self.assertIn('Monuments: 2', r22['breakdown_str'])
+
+            # Edition 2023
+            r23 = res['records'][1]
+            self.assertEqual(r23['year'], 2023)
+            self.assertEqual(r23['total_active'], 4)
+            self.assertEqual(r23['new_contributors'], 2) # user_d, user_e
+            self.assertEqual(r23['returning_contributors'], 2) # user_b, user_c
+            self.assertEqual(r23['cumulative_pool'], 5) # a, b, c, d, e
+
+            # Summary
+            self.assertEqual(res['summary']['total_unique_community'], 5)
+
+    def test_influx_route_with_all_composite_code(self):
+        """Test /influx POST submission with composite 'all' campaign sequence."""
+        with patch.object(analytics, 'fetch_all_concurrently') as mock_fetch:
+            mock_fetch.return_value = {
+                'allbd22': {'u1', 'u2', 'u3'},
+                'allbd23': {'u2', 'u3', 'u4'}
+            }
+            res_post = self.client.post('/influx', data={
+                'influx_event_type': 'all',
+                'influx_country': 'bd',
+                'influx_codes': 'allbd22 allbd23'
+            })
+            self.assertEqual(res_post.status_code, 200)
+            html = res_post.data.decode('utf-8')
+            self.assertIn('All Campaigns Combined', html)
+            self.assertIn('Year-over-Year Influx Breakdown Data Table', html)
+            self.assertIn('Cumulative Community Footprint', html)
+
 if __name__ == '__main__':
     unittest.main()

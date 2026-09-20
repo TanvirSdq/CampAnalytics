@@ -204,10 +204,16 @@ with st.sidebar:
 
     elif app_mode == "New User Influx":
         st.subheader("Series Configuration")
+        influx_options = ["all"] + list(EVENT_MAP.keys())
+        def format_influx_event(k):
+            if k == "all":
+                return "🌟 All Campaigns Combined (Ecosystem Overview)"
+            return f"Wiki Loves {EVENT_MAP[k]} ({k.upper()})"
+
         influx_event = st.selectbox(
             "Campaign Type",
-            options=list(EVENT_MAP.keys()),
-            format_func=lambda k: f"Wiki Loves {EVENT_MAP[k]} ({k.upper()})",
+            options=influx_options,
+            format_func=format_influx_event,
             key="influx_event"
         )
         default_country_idx = COUNTRY_OPTIONS.index('de') if 'de' in COUNTRY_OPTIONS else 0
@@ -231,7 +237,7 @@ with st.sidebar:
         custom_series = st.text_input(
             "Campaign Sequence",
             value=generated_influx_codes,
-            key="custom_influx_series"
+            help="Space-separated list of chronological campaign editions or all[country][year] composite codes."
         )
         st.markdown("---")
         run_influx = st.button("Evaluate Influx Trends", type="primary", use_container_width=True)
@@ -274,7 +280,7 @@ if app_mode == "Methodology":
                 <div class="methodology-card-title">4 · Methodology</div>
                 <p>Use this tab as the reference layer: it explains the data sources,
                 processing stages, scoring model, and interpretation limits behind all
-                three analysis modes.</p>
+                analytical modes.</p>
             </div>''')
 
     st.markdown("---")
@@ -307,15 +313,17 @@ if app_mode == "Methodology":
         sending unnecessary repeat requests. A new campaign or an expired cache
         causes the website to look up fresh information.
 
-        **Step 5 — Show the result.** Retention Analytics shows overlap between
-        campaign contributor groups. Health Evaluation compares one target campaign
-        with a baseline and with active peers in the selected region. Methodology
-        explains how those results should be read.
+        **Step 5 — Show the result.** Retention Analytics shows contributor overlap
+        between campaign groups across events and countries. Health Evaluation
+        evaluates a target campaign against a baseline and regional peers. New User
+        Influx tracks newcomer arrival, returning veteran retention, and community expansion
+        over consecutive multi-year editions. Methodology provides the mathematical,
+        infrastructural, and interpretation reference layer.
         """,
     )
 
     st.markdown("### What each mode measures")
-    model_col1, model_col2 = st.columns(2, gap="large")
+    model_col1, model_col2, model_col3 = st.columns(3, gap="medium")
     with model_col1:
         st.html('''<div class="methodology-panel">
                 <h4>Retention Analytics</h4>
@@ -326,13 +334,11 @@ if app_mode == "Methodology":
                 at least two campaigns with participants.</p>
                 <p>For each pair, it counts the accounts present in both campaigns and
                 divides by the number in the first campaign:</p>
-                <div class="formula">returning share = accounts in both ÷ accounts in the first campaign × 100</div>
+                <div class="formula">returning share = |A ∩ B| ÷ |A| × 100%</div>
                 <p>This is directional. A result from 2022 to 2023 can differ from
                 the result from 2023 to 2022 because the two starting groups may have
                 different sizes.</p>
-                <p><b>Views:</b> The table gives exact rows, the heatmap makes strong
-                and weak connections easier to spot, and the world map summarizes
-                country-level retention.</p>
+                <p><b>Views:</b> Tabular matrix, Seaborn heatmap, and choropleth world map.</p>
             </div>''')
     with model_col2:
         st.html('''<div class="methodology-panel">
@@ -340,24 +346,33 @@ if app_mode == "Methodology":
                 <p><b>Purpose:</b> Give one campaign a structured health check compared
                 with a previous campaign and with similar campaigns in its region.</p>
                 <p>The target and baseline must both have participants. If either
-                campaign has not taken place or has no participants, the website stops
-                and displays a message instead of producing a score.</p>
-                <p>The final score is between 0 and 100. It combines five signals:</p>
+                campaign has no participants, evaluation halts to prevent zero-scoring.</p>
+                <p>The final score is between 0 and 100 combining five signals:</p>
                 <ul>
-                    <li><b>Returning contributors (35%):</b> how many baseline
-                    contributors came back.</li>
-                    <li><b>New contributors (20%):</b> how much of the target group
-                    is new compared with the baseline.</li>
-                    <li><b>File usage (20%):</b> how many sampled files are used on
-                    Wikimedia projects.</li>
-                    <li><b>Image quality (15%):</b> how many sampled files are in
-                    Commons quality categories.</li>
-                    <li><b>Contributor spread (10%):</b> whether uploads are shared
-                    across many people or concentrated among a small group.</li>
+                    <li><b>Returning contributors (35%):</b> baseline participants retained.</li>
+                    <li><b>New contributors (20%):</b> first-time newcomer share.</li>
+                    <li><b>File usage (20%):</b> uploads illustrated on Wikipedia.</li>
+                    <li><b>Image quality (15%):</b> recognized quality media share.</li>
+                    <li><b>Contributor diversity (10%):</b> upload spread across community.</li>
                 </ul>
-                <p>Each signal is compared with the strongest available campaigns in
-                the selected region. This makes the result a local comparison, not a
-                claim that one fixed score is good everywhere.</p>
+                <p>Each signal is normalized against regional peer leaders.</p>
+            </div>''')
+    with model_col3:
+        st.html('''<div class="methodology-panel">
+                <h4>New User Influx</h4>
+                <p><b>Purpose:</b> Track community renewal and expansion across consecutive
+                editions of the same campaign series.</p>
+                <p>Measures newcomer acquisition, returning veteran retention, and
+                cumulative community reach over multi-year sequences:</p>
+                <div class="formula">Influx It = |Ut \\ ⋃ U&lt;t|,  Returning Rt = |Ut ∩ ⋃ U&lt;t|</div>
+                <div class="formula">Cumulative Pool = |⋃ Ut|</div>
+                <p><b>Lifecycle Profile:</b> Classifies contributors across the series into:</p>
+                <ul>
+                    <li><b>1-Time Entrants:</b> One-off participants.</li>
+                    <li><b>Repeaters:</b> Active in 2–3 editions.</li>
+                    <li><b>Core Veterans:</b> Sustained active in 4+ editions.</li>
+                </ul>
+                <p><b>Views:</b> Stacked volume bar chart, cumulative curve, and data table.</p>
             </div>''')
 
     st.markdown("### How to use the results responsibly")
@@ -380,13 +395,16 @@ if app_mode == "Methodology":
     st.markdown("### Common workflow")
     st.markdown(
         """
-        1. Start in **Retention Analytics** when you want to compare multiple years
-           or countries.
-        2. Start in **Health Evaluation** when you want one target campaign's summary.
-        3. Use the previous-year baseline for a normal year-over-year comparison, or
-           provide a custom baseline when the usual previous year is not appropriate.
-        4. Open **Methodology** whenever you need to check what a number includes
-           before sharing or interpreting it.
+        1. Start in **Retention Analytics** when you want to compare contributor overlap
+           across multiple years, events, or countries.
+        2. Start in **Health Evaluation** when you want one target campaign's comprehensive
+           5-dimension scorecard relative to regional peers.
+        3. Start in **New User Influx** when you want to track newcomer arrival, returning
+           veteran retention, and community expansion across consecutive editions of a specific campaign.
+        4. Use the previous-year baseline for standard YoY comparisons, or provide a custom
+           baseline when comparing non-consecutive editions.
+        5. Open **Methodology** whenever you need to check the data flow, mathematical
+           formulations, or interpretation limits before sharing or evaluating results.
         """,
     )
     st.info(
@@ -401,12 +419,12 @@ elif app_mode == "Retention Analytics":
 
     if st.session_state.last_valid_countries is None:
         st.markdown("### Quick start")
-        landing_col1, landing_col2, landing_col3 = st.columns(3, gap="medium")
+        landing_col1, landing_col2, landing_col3, landing_col4 = st.columns(4, gap="medium")
         with landing_col1:
             st.markdown(
                 "**Retention Analytics**  \n"
                 "Enter two or more campaign codes in the sidebar, then run the analysis "
-                "to compare returning contributors."
+                "to compare returning contributors across events."
             )
         with landing_col2:
             st.markdown(
@@ -416,9 +434,15 @@ elif app_mode == "Retention Analytics":
             )
         with landing_col3:
             st.markdown(
+                "**New User Influx**  \n"
+                "Switch modes, select a campaign series and year span, then track newcomer "
+                "acquisition, veteran retention, and community expansion."
+            )
+        with landing_col4:
+            st.markdown(
                 "**Methodology**  \n"
-                "Open the third mode for the technical data flow, scoring model, and "
-                "interpretation guidance."
+                "Open the reference layer for the technical data architecture, scoring models, "
+                "mathematical formulations, and interpretation guidance."
             )
     
     if run_retention:
@@ -477,8 +501,8 @@ elif app_mode == "Health Evaluation":
     st.html('<div class="hero-title">Campaign Health Evaluation Suite</div>')
     st.html('<div class=\"hero-subtitle\">Compute analytical structural health indexes relative to real-time regional performance clusters.</div>')
 
-    if not target_event:
-        st.info("System Initialized. Supply an execution identifier (e.g., wlmbd24 or wlmde25) and assign a validation model to begin.")
+    if not analyze_health:
+        st.info("System Initialized. Supply a target campaign code (e.g., wlmbd24 or wlmde25), select a baseline and regional framework in the sidebar, and click **Evaluate Campaign Health** to begin.")
     
     if target_event and analyze_health:
         match = CODE_RE.match(target_event.lower())
@@ -643,72 +667,115 @@ elif app_mode == "Health Evaluation":
                     st.write(f"**Common Intersecting User Core:** {len(target_users & base_users)}")
 
 elif app_mode == "New User Influx":
-    st.html('<div class=\"hero-title\">Year-over-Year New User Influx</div>')
-    st.html('<div class=\"hero-subtitle\">Track newcomer acquisition, returning veteran retention, and community expansion across consecutive campaign editions.</div>')
+    st.html('<div class="hero-title">Year-over-Year New User Influx</div>')
+    st.html('<div class="hero-subtitle">Track newcomer acquisition, returning veteran retention, and community expansion across consecutive campaign editions.</div>')
     
+    if "last_influx_data" not in st.session_state:
+        st.session_state.last_influx_data = None
+        st.session_state.last_influx_meta = None
+
     series_codes = [c for c in custom_series.strip().split() if CODE_RE.match(c)]
     
-    if run_influx or series_codes:
+    if run_influx:
         if len(series_codes) < 2:
             st.warning("Please provide at least two chronological campaign editions to compute Year-over-Year influx.")
         else:
             with st.spinner("Analyzing multi-year campaign cohort influx across Wikimedia Commons..."):
                 influx_data = compute_yoy_influx(series_codes)
-                
-            if not influx_data['records'] or all(r['total_active'] == 0 for r in influx_data['records']):
-                st.info("No participant records identified for this sequence on Wikimedia Commons.")
-            else:
-                summary = influx_data['summary']
-                lifecycle = influx_data['lifecycle']
-                
-                # Metrics Strip
-                m1, m2, m3, m4 = st.columns(4)
-                m1.metric("Cumulative Community", f"{summary['total_unique_community']:,}")
-                m2.metric("Avg Newcomer Influx", f"{summary['avg_newcomer_share_pct']}%")
-                m3.metric("Peak Influx Year", f"{summary['peak_influx_year']} (+{summary['peak_influx_count']:,})")
-                m4.metric("Latest Edition", f"{summary['latest_total']:,} ({summary['latest_year']})")
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                # Plotly Chart
+                st.session_state.last_influx_data = influx_data
                 country_name = country_display_name(influx_country)
-                event_name = EVENT_MAP.get(influx_event, influx_event.upper())
-                chart_title = f"Wiki Loves {event_name} ({country_name}) — Contributor Influx & Growth"
-                fig = create_influx_plotly_chart(influx_data['records'], title=chart_title)
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Contributor Longevity Profile
-                st.markdown("### Contributor Longevity Profile")
-                l1, l2, l3 = st.columns(3)
-                l1.info(f"**1-Time Entrants (One-off):** {lifecycle['one_time']:,}")
-                l2.success(f"**Repeaters (2–3 Editions):** {lifecycle['repeat_2_3']:,}")
-                l3.warning(f"**Core Veterans (4+ Editions):** {lifecycle['core_4_plus']:,}")
-
-                # Data Table
-                st.markdown("### Longitudinal Influx Breakdown")
-                import pandas as pd
-                df_records = pd.DataFrame(influx_data['records'])
-                rename_cols = {
-                    'year': 'Year',
-                    'code': 'Campaign',
-                    'total_active': 'Total Active',
-                    'new_contributors': 'New Entrants (It)',
-                    'returning_contributors': 'Returning (Rt)',
-                    'newcomer_share_pct': 'Newcomer %',
-                    'retention_from_prev_pct': 'Direct Retention %',
-                    'yoy_growth_pct': 'YoY Growth %',
-                    'new_to_veteran_ratio': 'New/Veteran Ratio',
-                    'cumulative_pool': 'Cumulative Pool'
+                if influx_event == 'all':
+                    chart_title = f"All Campaigns Combined ({country_name}) — Contributor Influx & Growth"
+                else:
+                    event_name = EVENT_MAP.get(influx_event, influx_event.upper())
+                    chart_title = f"Wiki Loves {event_name} ({country_name}) — Contributor Influx & Growth"
+                st.session_state.last_influx_meta = {
+                    'title': chart_title,
+                    'country': influx_country,
+                    'event': influx_event,
+                    'years': influx_years
                 }
-                df_display = df_records[list(rename_cols.keys())].rename(columns=rename_cols)
-                st.dataframe(df_display, use_container_width=True, hide_index=True)
-                
-                # Download CSV
-                csv = df_display.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="⬇ Download Influx Matrix (CSV)",
-                    data=csv,
-                    file_name=f"influx_{influx_event}_{influx_country}_{influx_years[0]}_{influx_years[1]}.csv",
-                    mime="text/csv",
-                )
+
+    influx_data = st.session_state.last_influx_data
+
+    if influx_data is None:
+        st.markdown("### Quick start")
+        q1, q2, q3 = st.columns(3, gap="medium")
+        with q1:
+            st.markdown(
+                "**1 · Select Campaign & Country**  \n"
+                "Choose **All Campaigns Combined** or a specific campaign matrix (WLM, WLE, WLF, WLA, WLB, etc.) and a target country in the sidebar."
+            )
+        with q2:
+            st.markdown(
+                "**2 · Define Year Range**  \n"
+                "Specify at least two consecutive editions (e.g. 2020–2024) to establish multi-year baseline tracking."
+            )
+        with q3:
+            st.markdown(
+                "**3 · Run Analysis**  \n"
+                "Click **Evaluate Influx Trends** to generate dual-axis stacked newcomer/veteran volume bars, longevity profile, and cumulative pool."
+            )
+        st.info("System Initialized. Configure your multi-year campaign sequence in the sidebar and click **Evaluate Influx Trends** to begin.")
+    else:
+        if not influx_data['records'] or all(r['total_active'] == 0 for r in influx_data['records']):
+            st.info("No participant records identified for this sequence on Wikimedia Commons.")
+        else:
+            summary = influx_data['summary']
+            lifecycle = influx_data['lifecycle']
+            meta = st.session_state.last_influx_meta or {}
+            
+            # Metrics Strip
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Cumulative Community", f"{summary['total_unique_community']:,}")
+            m2.metric("Avg Newcomer Influx", f"{summary['avg_newcomer_share_pct']}%")
+            m3.metric("Peak Influx Year", f"{summary['peak_influx_year']} (+{summary['peak_influx_count']:,})")
+            m4.metric("Latest Edition", f"{summary['latest_total']:,} ({summary['latest_year']})")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Plotly Chart
+            chart_title = meta.get('title', "Year-over-Year Contributor Influx & Growth")
+            fig = create_influx_plotly_chart(influx_data['records'], title=chart_title)
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Contributor Longevity Profile
+            st.markdown("### Contributor Longevity Profile")
+            l1, l2, l3 = st.columns(3)
+            l1.info(f"**1-Time Entrants (One-off):** {lifecycle['one_time']:,}")
+            l2.success(f"**Repeaters (2–3 Editions):** {lifecycle['repeat_2_3']:,}")
+            l3.warning(f"**Core Veterans (4+ Editions):** {lifecycle['core_4_plus']:,}")
+
+            # Data Table
+            st.markdown("### Longitudinal Influx Breakdown")
+            import pandas as pd
+            df_records = pd.DataFrame(influx_data['records'])
+            rename_cols = {
+                'year': 'Year',
+                'code': 'Campaign',
+                'total_active': 'Total Active',
+                'new_contributors': 'New Entrants (It)',
+                'returning_contributors': 'Returning (Rt)',
+                'newcomer_share_pct': 'Newcomer %',
+                'retention_from_prev_pct': 'Direct Retention %',
+                'yoy_growth_pct': 'YoY Growth %',
+                'new_to_veteran_ratio': 'New/Veteran Ratio',
+                'cumulative_pool': 'Cumulative Pool'
+            }
+            if 'breakdown_str' in df_records.columns and any(df_records['breakdown_str'] != 'Single stream'):
+                rename_cols['breakdown_str'] = 'Campaign Breakdown'
+            df_display = df_records[[c for c in rename_cols.keys() if c in df_records.columns]].rename(columns=rename_cols)
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
+            
+            # Download CSV
+            csv = df_display.to_csv(index=False).encode('utf-8')
+            cur_event = meta.get('event', influx_event)
+            cur_country = meta.get('country', influx_country)
+            cur_years = meta.get('years', influx_years)
+            st.download_button(
+                label="⬇ Download Influx Matrix (CSV)",
+                data=csv,
+                file_name=f"influx_{cur_event}_{cur_country}_{cur_years[0]}_{cur_years[1]}.csv",
+                mime="text/csv",
+            )
 
