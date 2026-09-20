@@ -207,50 +207,32 @@ with st.sidebar:
 st.markdown("<br>", unsafe_allow_html=True)
 
 if app_mode == "Methodology":
-    st.markdown('<div class="hero-title">Methodology &amp; Usage Guide</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="hero-subtitle">Understand how the suite turns Wikimedia Commons campaign data into retention and health signals.</div>',
-        unsafe_allow_html=True,
-    )
+    st.html('<div class=\"hero-title\">Methodology &amp; Usage Guide</div>')
+    st.html('<div class=\"hero-subtitle\">Understand how the suite turns Wikimedia Commons campaign data into retention and health signals.</div>')
 
     st.markdown("### Quick guide")
     guide_col1, guide_col2, guide_col3 = st.columns(3, gap="medium")
     with guide_col1:
-        st.markdown(
-            """
-            <div class="methodology-card">
+        st.html('''<div class="methodology-card">
                 <div class="methodology-card-title">1 · Retention Analytics</div>
                 <p>Enter two or more campaign codes, such as <code>wlmbd22 wlmbd23</code>.
                 Run the analysis, then choose a table, heatmap, or world map to compare
                 contributor overlap across campaigns.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            </div>''')
     with guide_col2:
-        st.markdown(
-            """
-            <div class="methodology-card">
+        st.html('''<div class="methodology-card">
                 <div class="methodology-card-title">2 · Health Evaluation</div>
                 <p>Enter one target code, select a previous-year or custom baseline,
                 choose a region, and evaluate. Review the five weighted indicators and
                 the peer-relative diagnostic insights.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            </div>''')
     with guide_col3:
-        st.markdown(
-            """
-            <div class="methodology-card">
+        st.html('''<div class="methodology-card">
                 <div class="methodology-card-title">3 · Methodology</div>
                 <p>Use this tab as the reference layer: it explains the data sources,
                 processing stages, scoring model, and interpretation limits behind the
                 two analysis modes.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            </div>''')
 
     st.markdown("---")
     st.markdown("### How the website works")
@@ -292,9 +274,7 @@ if app_mode == "Methodology":
     st.markdown("### What each mode measures")
     model_col1, model_col2 = st.columns(2, gap="large")
     with model_col1:
-        st.markdown(
-            """
-            <div class="methodology-panel">
+        st.html('''<div class="methodology-panel">
                 <h4>Retention Analytics</h4>
                 <p><b>Purpose:</b> See whether contributors from one campaign appear
                 again in another campaign.</p>
@@ -310,14 +290,9 @@ if app_mode == "Methodology":
                 <p><b>Views:</b> The table gives exact rows, the heatmap makes strong
                 and weak connections easier to spot, and the world map summarizes
                 country-level retention.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            </div>''')
     with model_col2:
-        st.markdown(
-            """
-            <div class="methodology-panel">
+        st.html('''<div class="methodology-panel">
                 <h4>Health Evaluation</h4>
                 <p><b>Purpose:</b> Give one campaign a structured health check compared
                 with a previous campaign and with similar campaigns in its region.</p>
@@ -340,10 +315,7 @@ if app_mode == "Methodology":
                 <p>Each signal is compared with the strongest available campaigns in
                 the selected region. This makes the result a local comparison, not a
                 claim that one fixed score is good everywhere.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            </div>''')
 
     st.markdown("### How to use the results responsibly")
     st.markdown(
@@ -381,8 +353,8 @@ if app_mode == "Methodology":
     )
 
 elif app_mode == "Retention Analytics":
-    st.markdown('<div class="hero-title">Cross-Event Retention Analytics</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-subtitle">Evaluate longitudinal patterns and ecosystem user migration parameters.</div>', unsafe_allow_html=True)
+    st.html('<div class=\"hero-title\">Cross-Event Retention Analytics</div>')
+    st.html('<div class=\"hero-subtitle\">Evaluate longitudinal patterns and ecosystem user migration parameters.</div>')
 
     if st.session_state.last_valid_countries is None:
         st.markdown("### Quick start")
@@ -459,8 +431,8 @@ elif app_mode == "Retention Analytics":
                 render_worldmap_view(results)
 
 else:
-    st.markdown('<div class="hero-title">Campaign Health Evaluation Suite</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-subtitle">Compute analytical structural health indexes relative to real-time regional performance clusters.</div>', unsafe_allow_html=True)
+    st.html('<div class=\"hero-title\">Campaign Health Evaluation Suite</div>')
+    st.html('<div class=\"hero-subtitle\">Compute analytical structural health indexes relative to real-time regional performance clusters.</div>')
 
     if not target_event:
         st.info("System Initialized. Supply an execution identifier (e.g., wlmbd24 or wlmde25) and assign a validation model to begin.")
@@ -606,7 +578,7 @@ else:
 <div class="metric-label">Overall Weighted Evaluation Score</div>
 <div class="overall-score">{metrics['Overall']}<span style="font-size: 1.2rem; color: #a9b9d8;"> / 100</span></div>
 </div>"""
-                st.markdown(card_html, unsafe_allow_html=True)
+                st.html(card_html)
                 
             with col2:
                 st.markdown("### Diagnostic Context Insights")
@@ -615,11 +587,11 @@ else:
                 insights = generate_insights(metrics, region.split(" (")[0], benchmarks)
 
                 for insight in insights:
-                    st.markdown(f"""
+                    st.html(f"""
                     <div class="insight-box">
                         <p>{insight}</p>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """)
 
                 st.markdown("<br>", unsafe_allow_html=True)
                 with st.expander("View Quantifiable Cohort Footprints"):
