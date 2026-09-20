@@ -618,6 +618,9 @@ class CampaignSuiteTestCase(unittest.TestCase):
         self.assertEqual(analytics.code_to_category('wlfood22'), 'Images_from_Wiki_Loves_Food_2022')
         # Sport uses year-only category
         self.assertEqual(analytics.code_to_category('wls24'), 'Images_from_Wiki_Loves_Sport_2024')
+        # Countryless campaign codes remain canonical even when a country is supplied.
+        self.assertEqual(analytics.code_to_category('wlpbd24'), 'Images_from_Wiki_Loves_Pride_2024')
+        self.assertEqual(analytics.code_to_category('wlbirdsbd24'), 'Images_from_Wiki_Loves_Birds_2024')
         # Public Art renamed to "Public Art and Cemeteries" on Commons
         self.assertEqual(analytics.code_to_category('wlpars24'), 'Images_from_Wiki_Loves_Public_Art_and_Cemeteries_2024_in_Serbia')
         self.assertEqual(analytics.code_to_category('wllhin23'), 'Images_from_Wiki_Loves_Living_Heritage_2023_in_India')

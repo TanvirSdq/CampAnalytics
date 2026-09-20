@@ -10,6 +10,7 @@ from analytics import (
     COUNTRY_MAP,
     COUNTRY_OPTIONS,
     EVENT_MAP,
+    EVENT_COUNTRY_SCOPE,
     EXAMPLE_CODES,
     REGION_COUNTRY_MAPPING,
     build_global_table,
@@ -60,7 +61,11 @@ def add_codes_from_selectors():
     for event in sel_events:
         for country in sel_countries:
             for yr in range(yr_start, yr_end + 1):
-                new_codes.append(f"{event}{country}{yr % 100:02d}")
+                scope = EVENT_COUNTRY_SCOPE.get(event, "*")
+                countryless = isinstance(scope, dict) and scope.get("no_country_suffix", False)
+                code = f"{event}{yr % 100:02d}" if countryless else f"{event}{country}{yr % 100:02d}"
+                if code not in new_codes:
+                    new_codes.append(code)
 
     existing = st.session_state.get("code_input", "").split()
     merged = existing + [c for c in new_codes if c not in existing]
@@ -190,7 +195,12 @@ with st.sidebar:
                 match = CODE_RE.match(target_event.lower())
                 if match:
                     event, cc, yr = match.groups()
-                    baseline_event = f"{event}{cc}{int(yr)-1:02d}"
+                    baseline_event = (
+                        f"{event}{int(yr)-1:02d}"
+                        if isinstance(EVENT_COUNTRY_SCOPE.get(event), dict)
+                        and EVENT_COUNTRY_SCOPE[event].get("no_country_suffix", False)
+                        else f"{event}{cc}{int(yr)-1:02d}"
+                    )
                     st.info(f"Auto-Computed Reference Vector: {baseline_event.upper()}")
                 else:
                     st.warning("Ensure target syntax matches global standards.")
@@ -257,7 +267,8 @@ if app_mode == "Methodology":
     with guide_col1:
         st.html('''<div class="methodology-card">
                 <div class="methodology-card-title">1 · Retention Analytics</div>
-                <p>Enter two or more campaign codes, such as <code>wlmbd22 wlmbd23</code>.
+                <p>Enter two or more campaign codes, such as <code>wlmbd22 wlmbd23</code>
+                or <code>wlp22 wlp23</code>.
                 Run the analysis, then choose a table, heatmap, or world map to compare
                 contributor overlap across campaigns.</p>
             </div>''')
@@ -502,7 +513,7 @@ elif app_mode == "Health Evaluation":
     st.html('<div class=\"hero-subtitle\">Compute analytical structural health indexes relative to real-time regional performance clusters.</div>')
 
     if not analyze_health:
-        st.info("System Initialized. Supply a target campaign code (e.g., wlmbd24 or wlmde25), select a baseline and regional framework in the sidebar, and click **Evaluate Campaign Health** to begin.")
+        st.info("System Initialized. Supply a target campaign code (e.g., wlmbd24 or wlp24), select a baseline and regional framework in the sidebar, and click **Evaluate Campaign Health** to begin.")
     
     if target_event and analyze_health:
         match = CODE_RE.match(target_event.lower())
@@ -778,4 +789,3 @@ elif app_mode == "New User Influx":
                 file_name=f"influx_{cur_event}_{cur_country}_{cur_years[0]}_{cur_years[1]}.csv",
                 mime="text/csv",
             )
-

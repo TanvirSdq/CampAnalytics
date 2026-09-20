@@ -109,7 +109,9 @@ def code_to_category(code):
     # Allow per-event category name override (e.g. wlpa → Public_Art_and_Cemeteries)
     cat_event = CATEGORY_NAME_OVERRIDE.get(event, event_name.replace(' ', '_'))
     category = f"Images_from_Wiki_Loves_{cat_event}_{2000 + int(yr)}"
-    if cc and event not in ('wlb',):
+    event_scope = EVENT_COUNTRY_SCOPE.get(event, '*')
+    countryless_category = isinstance(event_scope, dict) and event_scope.get('no_country_suffix', False)
+    if cc and not countryless_category:
         country_label = COUNTRY_MAP.get(cc)
         if not country_label:
             return None

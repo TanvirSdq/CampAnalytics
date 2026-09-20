@@ -38,6 +38,7 @@ def inject_config():
         'PAGE_ICON': PAGE_ICON,
         'KORIKATH_LOGO_URL': KORIKATH_LOGO_URL,
         'EVENT_MAP': EVENT_MAP,
+        'EVENT_COUNTRY_SCOPE': analytics.EVENT_COUNTRY_SCOPE,
         'COUNTRY_OPTIONS': COUNTRY_OPTIONS,
         'COUNTRY_MAP': COUNTRY_MAP,
         'REGION_COUNTRY_MAPPING': REGION_COUNTRY_MAPPING,
@@ -348,4 +349,3 @@ if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=True, host='0.0.0.0', port=port)
-
