@@ -1,0 +1,276 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.stApp {
+    background: #0f172a !important;
+}
+.stApp, .stApp p, .stApp li, .stApp label {
+    color: #edf3ff !important;
+}
+div[data-testid="stMarkdownContainer"] p {
+    color: #b8c9df !important;
+}
+
+/* Reduce global blank spaces from Streamlit layout engine */
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 1rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+}
+
+/* Reduce gaps globally across all vertical emotion-cache containers */
+div[data-testid="stVerticalBlock"] {
+    gap: 0.8rem !important;
+}
+
+hr {
+    border-color: rgba(255, 255, 255, 0.12);
+    margin: .3rem 0 !important; 
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: #1e293b !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+section[data-testid="stSidebar"] * {
+    color: #edf3ff !important;
+}
+section[data-testid="stSidebar"] img {
+    object-fit: contain !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+}
+section[data-testid="stSidebar"] .stCaption, section[data-testid="stSidebar"] small {
+    color: #c8d7ef !important;
+}
+section[data-testid="stSidebar"] textarea, section[data-testid="stSidebar"] input {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 4px !important;
+    color: #ffffff !important;
+}
+section[data-testid="stSidebar"] textarea::placeholder, section[data-testid="stSidebar"] input::placeholder {
+    color: rgba(255, 255, 255, 0.55) !important;
+}
+section[data-testid="stSidebar"] div[data-testid="stExpander"] {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    border-radius: 4px !important;
+}
+section[data-testid="stSidebar"] span[data-baseweb="tag"] {
+    background: #3366cc !important;
+}
+
+/* Buttons */
+.stButton > button {
+    background: #2e7d6b;
+    color: white !important;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.6em 1em;
+    box-shadow: 0 4px 12px rgba(46, 125, 107, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stButton > button:hover {
+    background: #2855b3;
+    color: white !important;
+}
+.stButton > button p {
+    color: white !important;
+}
+div[data-testid="stDownloadButton"] > button {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 4px;
+    font-weight: 500;
+}
+div[data-testid="stDownloadButton"] > button p {
+    color: __TEXT_LIGHT__ !important;
+}
+
+/* Typography & Display Layouts */
+.hero-title {
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin: 0.4rem 0 0.15rem 0;
+    color: #edf3ff;
+}
+.hero-subtitle {
+    color: #b8c9df !important;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Methodology reference page */
+.methodology-card, .methodology-panel {
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    padding: 1.1rem 1.2rem;
+    height: 100%;
+}
+.methodology-card-title {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.55rem;
+}
+.methodology-card p, .methodology-panel p, .methodology-panel li {
+    color: #b8c9df !important;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+.methodology-panel h4 {
+    color: #ffffff;
+    margin-top: 0;
+    margin-bottom: 0.7rem;
+}
+.methodology-panel ul {
+    padding-left: 1.2rem;
+}
+.formula {
+    background: rgba(51, 102, 204, 0.18);
+    border-left: 3px solid __WIKI_BLUE_LIGHT__;
+    border-radius: 0 5px 5px 0;
+    color: #ffffff;
+    font-family: monospace;
+    font-size: 0.86rem;
+    margin: 0.8rem 0;
+    padding: 0.7rem 0.8rem;
+}
+.methodology-card code {
+    color: #d7e4ff;
+}
+
+/* Radio Selectors */
+div[data-testid="stRadio"] > div {
+    gap: 0.5rem;
+}
+div[data-testid="stRadio"] label {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+}
+div[data-testid="stRadio"] label:hover {
+    border-color: __WIKI_BLUE_LIGHT__;
+}
+div[data-testid="stRadio"] label:has(input:checked) {
+    background: __WIKI_BLUE__;
+    border-color: transparent;
+}
+div[data-testid="stRadio"] label:has(input:checked) p {
+    color: white !important;
+    font-weight: 500;
+}
+
+/* Data Visualization Elements */
+div[data-testid="stMetric"] {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+}
+div[data-testid="stMetricLabel"] p {
+    color: #b8c9df !important;
+    font-weight: 500;
+}
+div[data-testid="stMetricValue"] {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: __CARD_LIGHT__;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0.8rem;
+}
+div[data-testid="stVerticalBlockBorderWrapper"] * {
+    color: __WIKI_INK__ !important;
+}
+div[data-testid="stDataFrame"] {
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+hr {
+    border-color: rgba(255, 255, 255, 0.12);
+    margin: 1.5rem 0;
+}
+
+/* Health Score Layout Cards */
+.health-card {
+    background: rgba(16, 31, 47, 1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-top: 0.5rem;
+}
+.health-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffffff !important;
+    margin-bottom: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding-bottom: 0.8rem;
+}
+.metric-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #edf3ff !important;
+    margin-bottom: 0.2rem;
+    margin-top: 1rem;
+}
+.metric-desc {
+    font-size: 0.85rem;
+    color: #b8c9df !important;
+    margin-bottom: 0.4rem;
+}
+.metric-value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #ffffff !important;
+    margin-bottom: 0.4rem;
+}
+.stars {
+    color: #ffd166 !important;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+}
+.overall-score {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #ffffff !important;
+    margin-top: 0.5rem;
+}
+.insight-box {
+    border-left: 4px solid #2e7d6b;
+    background: rgba(46, 125, 107, 0.12);
+    padding: 1.2rem 1.5rem;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+.insight-box p {
+    margin: 0 !important;
+    color: #edf3ff !important;
+    font-weight: 400;
+    line-height: 1.5;
+}
