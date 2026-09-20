@@ -111,8 +111,8 @@ class CampaignSuiteTestCase(unittest.TestCase):
         # Dark teal top navbar container
         self.assertIn('class="top-navbar"', html)
         
-        # Two-tone brand logo: "Campaign" bold white and "Analytics" accent
-        self.assertIn('class="brand-bold">Campaign</span>', html)
+        # Two-tone brand logo: "Camp" bold white and "Analytics" accent
+        self.assertIn('class="brand-bold">Camp</span>', html)
         self.assertIn('class="brand-accent">Analytics</span>', html)
         
         # Navigation tabs
@@ -121,7 +121,7 @@ class CampaignSuiteTestCase(unittest.TestCase):
         self.assertIn('Methodology', html)
 
         # Working GitHub link icon to repository
-        self.assertIn('https://github.com/siddiquetanvir/WebApp', html)
+        self.assertIn('https://github.com/siddiquetanvir/CampAnalytics', html)
         self.assertIn('GitHub', html)
 
         # Project Korikath Logo with intact source replacing Docs
@@ -187,7 +187,7 @@ class CampaignSuiteTestCase(unittest.TestCase):
         self.assertIn('toolforge-footer', html)
         self.assertIn('Wikimedia Toolforge', html)
         self.assertIn('GNU General Public License v2.0 or later (GPL-2.0+)', html)
-        self.assertIn('https://github.com/siddiquetanvir/WebApp', html)
+        self.assertIn('https://github.com/siddiquetanvir/CampAnalytics', html)
 
     # =========================================================================
     # 5. BUILDER-FIRST RETENTION WORKFLOW & PRESETS

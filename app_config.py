@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # --- GLOBAL PAGE CONFIGURATION STRINGS ---
-PAGE_TITLE = "CampAnalytics"
+PAGE_TITLE = "CampAnalytics - Event Evaluation"
 PAGE_ICON = "📊"
 LAYOUT = "wide"
 INITIAL_SIDEBAR_STATE = "expanded"

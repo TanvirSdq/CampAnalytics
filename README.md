@@ -1,273 +1,219 @@
-# Wikimedia Campaign Suite
+# CampAnalytics — Event Evaluation
 
-A Streamlit-based analytics platform for evaluating Wikimedia campaign participation, contributor retention, and campaign health across regional peer benchmarks.
+> **A high-performance analytics suite for Wikimedia Commons campaigns, longitudinal contributor retention analysis, and regional health benchmarking.**
 
-## Overview
+[![Hosted on Wikimedia Toolforge](https://img.shields.io/badge/Hosted%20on-Wikimedia%20Toolforge-006699?style=flat-square&logo=wikipedia)](https://toolforge.org)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
+[![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0%2B-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-2.0.html)
+[![Affiliation: Project Korikath](https://img.shields.io/badge/Affiliation-Project%20Korikath-183f54?style=flat-square)](https://meta.wikimedia.org/wiki/Project_Korikath)
 
-The Wikimedia Campaign Suite supports organizers, evaluators, and stakeholders working with Wikimedia campaigns such as Wiki Loves Monuments, Wiki Loves Earth, Wiki Loves Folklore, and Wiki Loves Bangla. It combines live Wikimedia metadata with cohort-based analytics to answer two core questions:
+---
 
-- How contributors move across campaigns and years.
-- How healthy a campaign appears relative to regional peer performance.
+## 🌟 Overview
 
-The application has two analysis modes plus a built-in methodology reference:
+**CampAnalytics** is an open-source analytical platform designed for organizers, program evaluators, and Wikimedia community leaders. It provides data-driven intelligence for major international photography campaigns—including **Wiki Loves Monuments (WLM)**, **Wiki Loves Earth (WLE)**, **Wiki Loves Folklore (WLF)**, and **Wiki Loves Bangla (WLB)**.
 
-1. **Retention Analytics**
-   - Compare contributor overlap across years and campaigns.
-   - View retention matrices, summary tables, and world maps.
-2. **Health Evaluation**
-   - Score a campaign using weighted metrics against regional benchmark clusters.
-   - Surface diagnostics and actionable insights for program strategy.
-3. **Methodology**
-   - Explain how campaign codes, Wikimedia data acquisition, retention calculations,
-     and health scoring work.
-   - Provide a compact guide for using all three interface modes.
+By combining real-time metadata from Wikimedia Commons with cohort-based longitudinal analytics, CampAnalytics answers critical programmatic questions:
+1. **Contributor Continuity**: How effectively do campaigns retain participant cohorts across consecutive years and across different event types?
+2. **Ecosystem Vitality**: How healthy is a specific campaign edition compared to top-performing regional peers operating under similar geographic and resource conditions?
 
-## Key Features
+---
 
-- **Reliable Data Acquisition:** Direct extraction of campaign contributors and file metadata from the official Wikimedia Commons Action API with automatic retries and connection pooling.
-- **Regional Peer Benchmarking:** Dynamic benchmark calibration by geographic cluster (South Asia, ESEAP, Europe, LAC, SSA, NA, etc.).
-- **5-Dimension Weighted Health Scoring:** Evaluates Retention (35%), Growth Capacity (20%), Content Utility / Usage (20%), Quality Image Share (15%), and Contributor Diversity (10%).
-- **Interactive Visualizations:** Retention heatmaps, summary data tables, and choropleth world map views.
-- **Exportable Outputs:** Downloadable high-resolution heatmap images (PNG) and data matrices (CSV).
-- **Professional Flat Dark UI:** Streamlit interface styled with flat design principles and Project Korikath / Wikimedia theme colors.
+## 🚀 Deployment Models
+
+CampAnalytics is architected with a shared core analytics engine powering two production-ready interfaces:
+
+| Interface | Runtime | Primary Target | Highlights |
+| :--- | :--- | :--- | :--- |
+| **Flask Web App** | WSGI / Gunicorn | **Wikimedia Toolforge** | Fast, lightweight, GLAMtools visual coherence, custom Marine Petrol (`#183f54`) palette, Project Korikath identity, zero client bloat. |
+| **Streamlit App** | Streamlit Runtime | **Streamlit Cloud / Local** | Interactive prototyping dashboard, flat dark slate aesthetic (`#0f172a`), reactive data explorer. |
+
+Both interfaces consume identical data models and logic via [`analytics.py`](analytics.py) and [`config.json`](config.json).
+
+---
+
+## 🛠️ Key Capabilities
+
+- **Builder-First Retention Analytics**: Frictionless selection controls for event types, target countries (with a one-click **Select All Global** option), and multi-year spans. Generates pairwise retention data tables, high-contrast Seaborn heatmaps, and interactive Plotly choropleth maps.
+- **5-Dimension Weighted Health Scorecard**: Evaluates campaigns on a 0–100 scale:
+  - **Retention Index (35%)**: Proportion of returning participants from the designated baseline edition.
+  - **Growth Capacity (20%)**: Rate of first-time participant acquisition.
+  - **Content Utility (20%)**: Proportion of uploaded media actively illustrated in Wikimedia articles (`prop=globalusage`).
+  - **Quality Images (15%)**: Recognition share under official Commons quality banners (`Category:Quality images`, `Category:Featured pictures`).
+  - **Contributor Diversity (10%)**: Distribution parity measured via top 10% uploader concentration.
+- **Dynamic Regional Peer Normalization**: Replaces static, arbitrary global metrics with dynamic peer envelopes calibrated across 9 geographic clusters (South Asia, ESEAP, Northern & Western Europe, CEE, Latin America & Caribbean, Sub-Saharan Africa, MENA, North America, Southern Europe).
+- **Dual-Channel High-Speed Ingestion**: Real-time querying against Wikimedia Toolforge replica databases with automatic fallback to the official Wikimedia Commons Action API (`categorymembers`, `globalusage`, `imageinfo`).
+- **In-Memory TTL Caching**: Thread-safe memory cache with 1-hour time-to-live to prevent redundant network strain on Wikimedia infrastructure.
+
+---
 
 ## 🏗️ Architecture
 
-### 1. System Overview (ASCII)
-
 ```
 ========================================================================================
-              WIKIMEDIA CAMPAIGN SUITE — SYSTEM ARCHITECTURE
+                          CAMPANALYTICS — SYSTEM ARCHITECTURE
 ========================================================================================
 
-   [ KUET Student / Analyst Browser ]
-                  │
-                  ▼  HTTPS
-   ┌──────────────────────────────────────────────────────────────────────┐
-   │                        STREAMLIT APPLICATION                         │
-   │                            (app.py)                                  │
-   ├──────────────────────┬───────────────────────────────────────────────┤
-   │   Retention Mode     │            Health Evaluation Mode             │
-   │  • Campaign Matrix   │  • 5-Dimension Weighted Scoring (0–100)       │
-   │  • Heatmaps / Maps   │  • Regional Peer Benchmark Calibration        │
-   └──────────┬───────────┴─────────────────────┬─────────────────────────┘
-              │                                 │
-              ▼                                 ▼
-   ┌──────────────────────────────────────────────────────────────────────┐
-   │                       ANALYTICS ENGINE                               │
-   │                         (analytics.py)                               │
-   ├──────────────────────────────────────────────────────────────────────┤
-   │  • Commons Action API client (HTTP, retries, connection pooling)     │
-   │  • Contributor set computation & directional retention math          │
-   │  • Health metric calculation (Retention, Growth, Usage, Quality,     │
-   │    Diversity) & dynamic regional benchmark scoring                   │
-   │  • Visualization generators (Seaborn heatmap, Plotly choropleth)     │
-   └──────────────────────────────────┬───────────────────────────────────┘
-                                      │
-              ┌───────────────────────┴──────────────────────┐
-              ▼                                              ▼
-   ┌─────────────────────────┐                  ┌───────────────────────────┐
-   │  Wikimedia Commons      │                  │   config.json             │
-   │  Action API             │                  │  (Event ↔ Country ↔       │
-   │  (External, live)       │                  │   Regional Cluster Map)   │
-   └─────────────────────────┘                  └───────────────────────────┘
+     [ Wikimedia Community Analyst / Organiser Browser ]
+                            │
+               ┌────────────┴────────────┐
+               ▼ (Port 5001)             ▼ (Port 8501)
+     ┌──────────────────────┐  ┌──────────────────────────────────┐
+     │      FLASK APP       │  │          STREAMLIT APP           │
+     │    (flask_app.py)    │  │       (streamlit_app.py)         │
+     │  • GLAMtools Theme   │  │   • Dark Slate Reactive UI       │
+     │  • Toolforge Ready   │  │   • Quick Exploration Explorer   │
+     └──────────┬───────────┘  └─────────────────┬────────────────┘
+                │                                │
+                └───────────────┬────────────────┘
+                                ▼
+     ┌────────────────────────────────────────────────────────────┐
+     │                  SHARED ANALYTICS ENGINE                   │
+     │                      (analytics.py)                        │
+     ├────────────────────────────────────────────────────────────┤
+     │  • Dual Commons Ingestion: Toolforge DB + Action API       │
+     │  • Directional Contributor Retention Mathematics           │
+     │  • 5-Dimension Health Index & Regional Benchmark Engine    │
+     │  • Visualizations (Agg Matplotlib, Seaborn, Plotly)        │
+     │  • In-Memory Thread-Safe TTL Caching Layer                 │
+     └──────────────────────────┬─────────────────────────────────┘
+                                │
+               ┌────────────────┴────────────────┐
+               ▼                                 ▼
+    ┌────────────────────────┐       ┌────────────────────────────┐
+    │   Wikimedia Commons    │       │        config.json         │
+    │   Action API / DB      │       │   (Event ↔ Country ↔       │
+    │   (Live Meta-data)     │       │    Regional Cluster Map)   │
+    └────────────────────────┘       └────────────────────────────┘
 
 ========================================================================================
 ```
 
----
-
-### 2. Health Evaluation & API Data Flow (Mermaid)
+### Contributor Retention Pipeline
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Analyst
-    participant UI as Streamlit UI (app.py)
-    participant Engine as Analytics Engine (analytics.py)
-    participant Config as config.json
-    participant API as Wikimedia Commons Action API
-
-    User->>UI: Enter campaign code (e.g. wlmbd24) & region
-    UI->>Engine: Call evaluate_health(campaign, region, baseline)
-    Engine->>Config: Load event→country→cluster mappings
-    Config-->>Engine: Return regional peer list
-
-    loop For each peer campaign
-        Engine->>API: GET action=query&list=categorymembers (contributors)
-        API-->>Engine: Return contributor set (JSON)
-        Engine->>API: GET prop=globalusage (file usage)
-        API-->>Engine: Return global usage counts
-    end
-
-    Engine->>Engine: Compute 5 metrics (Retention 35%, Growth 20%,\nUsage 20%, Quality 15%, Diversity 10%)
-    Engine->>Engine: Normalize scores against regional benchmark cluster
-    Engine-->>UI: Return scored health report (0–100)
-    UI-->>User: Display metric scorecard & diagnostic insights
+flowchart LR
+    A["Event Selection\n(WLM, WLE, WLF, WLB)"] --> B["Country & Year Span\n(Single, Region, or Global)"]
+    B --> C["Commons Category Resolution\n(e.g. Images from WLM 2024 in BD)"]
+    C --> D["Contributor Set Extraction\n(Unique Account Hashes)"]
+    D --> E["Longitudinal Matrix Computation\nRetention = |A ∩ B| / |A| × 100"]
+    E --> F["Data Table\n(CSV Export)"]
+    E --> G["Heatmap Matrix\n(PNG Export)"]
+    E --> H["Choropleth Map\n(Plotly World Map)"]
 ```
 
 ---
 
-### 3. Retention Analytics Pipeline (Mermaid)
-
-```mermaid
-flowchart TD
-    subgraph Input["Campaign Input"]
-        CODES["Campaign Code List\n(e.g. wlmbd24, wlmbd23)"]
-    end
-
-    subgraph Fetch["API Data Fetch"]
-        WIKI["Wikimedia Commons\nAction API"]
-        SETS["Per-Campaign\nContributor Sets"]
-    end
-
-    subgraph Compute["Retention Matrix Computation"]
-        MATRIX["Directional Overlap Matrix\nRetention(A→B) = |A∩B| / |A| × 100"]
-        SUMMARY["Summary Table\n(Total contributors, unique, retained)"]
-    end
-
-    subgraph Visualise["Visualisation Layer"]
-        HEAT["Seaborn Heatmap\n(PNG Export)"]
-        TABLE["Pandas DataFrame\n(CSV Export)"]
-        MAP["Plotly Choropleth\n(World Map)"]
-    end
-
-    CODES --> WIKI
-    WIKI --> SETS
-    SETS --> MATRIX
-    SETS --> SUMMARY
-    MATRIX --> HEAT
-    SUMMARY --> TABLE
-    SUMMARY --> MAP
-
-    classDef input fill:#e3f2fd,stroke:#1976d2,stroke-width:2px;
-    classDef fetch fill:#ede7f6,stroke:#5e35b1,stroke-width:2px;
-    classDef compute fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-    classDef viz fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
-    class CODES input;
-    class WIKI,SETS fetch;
-    class MATRIX,SUMMARY compute;
-    class HEAT,TABLE,MAP viz;
-```
-
----
-
-### 4. Tech Stack
-
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **UI Framework** | Streamlit | Interactive Python web app, routing, and component rendering |
-| **Data Engine** | Pandas, NumPy | Contributor set math, retention matrix computation, metric aggregation |
-| **API Client** | `requests` (connection pooling, retries) | Live extraction from Wikimedia Commons Action API |
-| **Visualization** | Seaborn, Plotly, Matplotlib | Heatmaps, choropleth world maps, data tables |
-| **Configuration** | `config.json` | Externalised event → country → regional cluster mapping |
-| **Styling** | CSS (`styles.css`) | Flat dark Wikimedia-themed UI |
-| **Runtime** | Python 3.9+ | Core execution environment |
-
----
-
-## File Structure
-
-- `app.py` — Streamlit application, UI components, and routing.
-- `analytics.py` — Data collection, Commons API integration, metric calculation, scoring engine, and visualization generation.
-- `config.json` — Externalized configuration mapping events, countries, and regional clusters.
-- `styles.css` — Professional flat dark theme stylesheet.
-- `requirements.txt` — Project Python package dependencies.
-- `SCIENTIFIC_REVIEW.md` — Original methodological review and caveats.
-
-## Methodology
-
-### Retention Analytics
-
-Directional campaign retention is calculated as:
-
-$$\text{Retention}(\text{Source} \to \text{Target}) = \left(\frac{|\text{Source} \cap \text{Target}|}{|\text{Source}|}\right) \times 100$$
-
-This supports cross-year and cross-event movement analysis for contributors.
-
-### Health Evaluation
-
-The health score is computed on a 0–100 scale using a weighted composite framework across five structural indicators:
-
-- **Retention (35%):** Percentage of users retained from the baseline campaign.
-- **Growth Capacity (20%):** Percentage of fresh, first-time active contributors.
-- **Usage / Content Utility (20%):** Percentage of uploaded campaign files actively used across Wikimedia wikis (`prop=globalusage`).
-- **Quality Image (15%):** Percentage of uploads recognized under official Commons quality categories (`Category:Quality images`, `Category:Featured pictures`).
-- **Diversity (10%):** Top 10% uploader share (measures upload concentration; lower concentration indicates broader participation).
-
-Health Evaluation requires participant data for both the target campaign and its
-baseline. If either campaign has not taken place or has no participants, the app
-stops and shows a message instead of treating the missing campaign as a zero.
-
-### Regional Benchmarking
-
-The campaign is compared against the strongest peer countries in the same geographic group. The app:
-
-1. Selects the region for the target campaign.
-2. Identifies peer countries in that region.
-3. Computes dynamic benchmark values from the top regional performer cluster.
-4. Normalizes the target campaign against those values.
-
-This reduces unfair comparisons caused by static global thresholds and better reflects regional campaign conditions.
-
-## Installation
+## 💻 Installation & Setup
 
 ### Prerequisites
+- Python 3.9 or higher
+- Git
 
-- Python 3.9+
-- Internet access for Wikimedia API requests
+### Clone the Repository
+```bash
+git clone https://github.com/siddiquetanvir/CampAnalytics.git
+cd CampAnalytics
+```
 
 ### Install Dependencies
-
 ```bash
 pip install -r requirements.txt
 ```
 
-*(Alternatively: `pip install streamlit requests numpy pandas matplotlib seaborn plotly packaging`)*
+---
 
-### Run the App
+## 🚦 Running Locally
+
+### Option 1: Run the Flask App (Toolforge Interface)
+```bash
+python3 app.py
+```
+*Access in browser at:* `http://localhost:5001`
+
+### Option 2: Run the Streamlit App
+```bash
+streamlit run streamlit_app.py
+```
+*Access in browser at:* `http://localhost:8501`
+
+---
+
+## 🧪 Running Automated Tests
+
+CampAnalytics includes a comprehensive unit test suite covering routing, API parameter validation, GLAMtools styling rules, mathematical edge cases, and layout contracts:
 
 ```bash
-streamlit run app.py
+PYTHONPATH=. python3 tests/test_app.py
 ```
 
-## Usage
+---
 
-### Campaign Syntax
+## 🌐 Deploying to Wikimedia Toolforge
 
-Use campaign identifiers in this form:
+CampAnalytics is pre-configured for automated Toolforge deployment via buildpacks or classic webservices:
 
-`[event][country][year]`
+1. **Log in to Toolforge Bastion**:
+   ```bash
+   ssh <username>@login.toolforge.org
+   become <tool-name>
+   ```
 
-Examples:
+2. **Clone and Configure**:
+   ```bash
+   git clone https://github.com/siddiquetanvir/CampAnalytics.git src
+   cd src
+   ```
 
-- `wlmbd24` — Wiki Loves Monuments Bangladesh 2024
-- `wlmde25` — Wiki Loves Monuments Germany 2025
-- `wlein22` — Wiki Loves Earth India 2022
+3. **Start the Web Service**:
+   ```bash
+   toolforge webservice buildpack start
+   ```
+   *The included [`Procfile`](Procfile) and [`app.py`](app.py) expose the WSGI application automatically via Gunicorn.*
 
-### Retention Analytics Workflow
+---
 
-1. Choose **Retention Analytics** in the App Mode.
-2. Enter campaign codes or use the **Selection Builder** helper.
-3. Click **Run Retention Analysis** to compute retention matrices and summary tables.
-4. Switch visualization models (Data Table, Heatmap Matrix, Choropleth) and download outputs.
+## 📐 Mathematical Formulation
 
-### Health Evaluation Workflow
+### 1. Directional Contributor Retention
+Retention from a baseline campaign edition $A$ to a subsequent edition $B$ is non-symmetric and defined as:
 
-1. Choose **Health Evaluation** in the App Mode.
-2. Enter the target campaign code (e.g. `wlmbd24`).
-3. Select the **Benchmark Baseline** (Previous Year Baseline or Custom Baseline Code).
-4. Choose the geographic region.
-5. Click **Evaluate Campaign Health**.
-6. Review the 5-metric scorecard and automated diagnostic insights.
+$$\text{Retention}(A \to B) = \left( \frac{|U_A \cap U_B|}{|U_A|} \right) \times 100\%$$
 
-### Methodology Reference
+where $U_A$ and $U_B$ denote the verified sets of unique upload accounts in each respective Commons category.
 
-1. Choose **Methodology** in the App Mode selector.
-2. Use the three quick-guide cards to orient yourself to each interface.
-3. Read the data-flow, analytical-model, and interpretation sections before
-   comparing results or communicating findings.
+### 2. Contributor Growth Capacity
+New contributor acquisition measures the share of participants in cohort $B$ with no prior record in baseline $A$:
 
-## License
+$$\text{Growth}(A \to B) = \left( \frac{|U_B \setminus U_A|}{|U_B|} \right) \times 100\%$$
 
-This project is intended for research and operational analysis use in Wikimedia campaign monitoring. Please review repository policy and licensing terms before redistribution or deployment in production environments.
+---
+
+## 📁 Repository Layout
+
+```
+CampAnalytics/
+├── app.py                   # Production Toolforge WSGI entrypoint
+├── flask_app.py             # Flask application & GLAMtools route controllers
+├── streamlit_app.py         # Streamlit interactive application
+├── analytics.py             # Core analytical computation & Wikimedia API engine
+├── app_config.py            # Global application settings, palette, and style loaders
+├── config.json              # Event, country, and regional cluster taxonomy
+├── styles.css               # Toolforge Flask GLAMtools stylesheet (770+ lines)
+├── streamlit_styles.css     # Dedicated Streamlit dark-mode stylesheet
+├── Procfile                 # Toolforge / Heroku web process definition
+├── requirements.txt         # Python package dependencies
+├── templates/               # Jinja2 templates for Flask UI
+│   ├── base.html            # Layout shell, top navbar, footer & Korikath brand
+│   └── index.html           # Retention Builder, Health Scorecard, Methodology
+└── tests/                   # Complete automated test suite
+    └── test_app.py          # 27 passing regression and unit test cases
+```
+
+---
+
+## 📜 License & Community Attribution
+
+- **License**: Released under the **[GNU General Public License v2.0 or later (GPL-2.0+)](https://www.gnu.org/licenses/gpl-2.0.html)**.
+- **Affiliation**: Built in support of **[Project Korikath](https://meta.wikimedia.org/wiki/Project_Korikath)**, an open community knowledge initiative on Meta-Wiki.
+- **Data Source**: Live metadata queried directly from **[Wikimedia Commons](https://commons.wikimedia.org)** under open licenses.

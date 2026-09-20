@@ -78,7 +78,7 @@ WORLD_SCALE = ["#eef7fa", "#a8dfed", "#72ded6", "#256d85", "#183f54"]
 
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 COMMONS_HEADERS = {
-    "User-Agent": "WikimediaCampaignSuite/1.0 (https://github.com/siddiquetanvir/WebApp)"
+    "User-Agent": "CampAnalytics/1.0 (https://github.com/siddiquetanvir/CampAnalytics)"
 }
 QUALITY_IMAGE_KEYWORDS = (
     "quality images",
