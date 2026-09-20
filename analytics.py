@@ -19,6 +19,7 @@ from math import ceil
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import requests
 import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
@@ -571,3 +572,276 @@ def generate_insights(metrics, region_name, benchmarks):
         insights.append("Diversity is healthy: upload activity is comparatively spread across a wider contributor base, which supports campaign resilience and participation equity.")
 
     return insights
+
+# =========================================================================
+# YEAR-OVER-YEAR (YoY) INFLUX & NEW CONTRIBUTOR ANALYTICS
+# =========================================================================
+
+def compute_yoy_influx(campaign_codes):
+    """
+    Computes Year-over-Year newcomer influx, returning contributor retention,
+    and cumulative community growth for a chronological sequence of campaign editions.
+    """
+    code_to_users = fetch_all_concurrently(campaign_codes)
+    
+    records = []
+    seen_all_prior = set()
+    user_edition_counts = defaultdict(int)
+    
+    prev_users = set()
+    
+    # Ensure chronological order by year
+    sorted_codes = sorted(
+        campaign_codes,
+        key=lambda c: int(CODE_RE.match(c).group(3)) if CODE_RE.match(c) else 0
+    )
+    
+    for code in sorted_codes:
+        match = CODE_RE.match(code)
+        if not match:
+            continue
+        evt, cc, yy = match.groups()
+        year = 2000 + int(yy)
+        current_users = code_to_users.get(code, set())
+        total_active = len(current_users)
+        
+        for u in current_users:
+            user_edition_counts[u] += 1
+            
+        if not seen_all_prior:
+            # Baseline edition: all active are baseline entrants
+            new_users = total_active
+            returning_users = 0
+            retention_from_prev = 0.0
+            yoy_growth = 0.0
+        else:
+            new_set = current_users - seen_all_prior
+            ret_set = current_users & seen_all_prior
+            new_users = len(new_set)
+            returning_users = len(ret_set)
+            
+            if prev_users:
+                direct_retained = len(current_users & prev_users)
+                retention_from_prev = (direct_retained / len(prev_users)) * 100.0
+                yoy_growth = ((total_active - len(prev_users)) / len(prev_users)) * 100.0
+            else:
+                retention_from_prev = 0.0
+                yoy_growth = 0.0
+                
+        newcomer_share = (new_users / total_active * 100.0) if total_active > 0 else 0.0
+        veteran_share = (returning_users / total_active * 100.0) if total_active > 0 else 0.0
+        ratio = (new_users / returning_users) if returning_users > 0 else float(new_users)
+        
+        seen_all_prior.update(current_users)
+        cumulative_pool = len(seen_all_prior)
+        
+        records.append({
+            'code': code,
+            'year': year,
+            'total_active': total_active,
+            'new_contributors': new_users,
+            'returning_contributors': returning_users,
+            'newcomer_share_pct': round(newcomer_share, 1),
+            'veteran_share_pct': round(veteran_share, 1),
+            'retention_from_prev_pct': round(retention_from_prev, 1),
+            'yoy_growth_pct': round(yoy_growth, 1),
+            'new_to_veteran_ratio': round(ratio, 2),
+            'cumulative_pool': cumulative_pool
+        })
+        
+        prev_users = current_users
+        
+    lifecycle = {
+        'one_time': 0,
+        'repeat_2_3': 0,
+        'core_4_plus': 0
+    }
+    total_distinct = len(user_edition_counts)
+    for u, count in user_edition_counts.items():
+        if count == 1:
+            lifecycle['one_time'] += 1
+        elif count <= 3:
+            lifecycle['repeat_2_3'] += 1
+        else:
+            lifecycle['core_4_plus'] += 1
+            
+    if records:
+        avg_newcomer = sum(r['newcomer_share_pct'] for r in records) / len(records)
+        peak_influx_rec = max(records, key=lambda r: r['new_contributors'])
+        peak_total_rec = max(records, key=lambda r: r['total_active'])
+        summary = {
+            'total_unique_community': total_distinct,
+            'avg_newcomer_share_pct': round(avg_newcomer, 1),
+            'peak_influx_year': peak_influx_rec['year'],
+            'peak_influx_count': peak_influx_rec['new_contributors'],
+            'peak_edition_year': peak_total_rec['year'],
+            'peak_edition_count': peak_total_rec['total_active'],
+            'latest_year': records[-1]['year'],
+            'latest_total': records[-1]['total_active'],
+            'latest_new': records[-1]['new_contributors'],
+            'latest_returning': records[-1]['returning_contributors'],
+        }
+    else:
+        summary = {
+            'total_unique_community': 0,
+            'avg_newcomer_share_pct': 0.0,
+            'peak_influx_year': '-',
+            'peak_influx_count': 0,
+            'peak_edition_year': '-',
+            'peak_edition_count': 0,
+            'latest_year': '-',
+            'latest_total': 0,
+            'latest_new': 0,
+            'latest_returning': 0,
+        }
+        
+    return {
+        'records': records,
+        'summary': summary,
+        'lifecycle': lifecycle
+    }
+
+def create_influx_barchart(records, title="Year-over-Year Contributor Influx"):
+    """
+    Creates a publication-quality stacked bar chart for Flask (Headless Matplotlib).
+    Returning Contributors (Marine Petrol) + New Influx (Cyan Accent), with Cumulative Pool overlay.
+    """
+    if not records:
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.text(0.5, 0.5, "No data available", ha='center', va='center', color=TEXT_MUTED)
+        ax.axis('off')
+        return fig
+
+    years = [str(r['year']) for r in records]
+    returning = [r['returning_contributors'] for r in records]
+    newcomers = [r['new_contributors'] for r in records]
+    cumulative = [r['cumulative_pool'] for r in records]
+
+    fig, ax1 = plt.subplots(figsize=(10, 5), dpi=140)
+    fig.patch.set_facecolor('#ffffff')
+    ax1.set_facecolor('#ffffff')
+
+    width = 0.55
+    x_indices = np.arange(len(years))
+
+    # Stacked Bars
+    p1 = ax1.bar(x_indices, returning, width, label='Returning Contributors', color=NAV_TEAL, edgecolor='#ffffff', linewidth=1)
+    p2 = ax1.bar(x_indices, newcomers, width, bottom=returning, label='First-Time Newcomers', color=NAV_ACCENT, edgecolor='#ffffff', linewidth=1)
+
+    # Annotate total on top of bars
+    for i, r in enumerate(records):
+        total = r['total_active']
+        if total > 0:
+            ax1.annotate(f"{total:,}",
+                         xy=(x_indices[i], total),
+                         xytext=(0, 4),
+                         textcoords="offset points",
+                         ha='center', va='bottom',
+                         fontsize=9, fontweight='600', color=TEXT_INK)
+
+    # Cumulative pool secondary line axis
+    ax2 = ax1.twinx()
+    ax2.plot(x_indices, cumulative, color='#e67300', marker='o', linewidth=2.2, markersize=6, label='Cumulative Community Pool')
+    ax2.set_ylabel('Cumulative Unique Contributors', color='#e67300', fontsize=10, fontweight='600')
+    ax2.tick_params(axis='y', labelcolor='#e67300', labelsize=9)
+    ax2.grid(False)
+
+    ax1.set_xlabel('Campaign Edition (Year)', fontsize=10, fontweight='600', color=TEXT_INK, labelpad=8)
+    ax1.set_ylabel('Active Contributors in Edition', fontsize=10, fontweight='600', color=TEXT_INK, labelpad=8)
+    ax1.set_xticks(x_indices)
+    ax1.set_xticklabels(years, fontsize=10, color=TEXT_INK)
+    ax1.tick_params(axis='x', colors=TEXT_INK)
+    ax1.tick_params(axis='y', colors=TEXT_INK, labelsize=9)
+    ax1.set_title(title, fontsize=12, fontweight='700', color=TEXT_INK, pad=14)
+
+    # Subtle horizontal grid on primary axis
+    ax1.yaxis.grid(True, linestyle='--', alpha=0.35, color=BORDER_COLOR)
+    ax1.xaxis.grid(False)
+    ax1.set_axisbelow(True)
+
+    # Clean borders
+    for spine in ax1.spines.values():
+        spine.set_color(BORDER_COLOR)
+    for spine in ax2.spines.values():
+        spine.set_color(BORDER_COLOR)
+
+    # Combined Legend
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left', frameon=True, facecolor='#ffffff', edgecolor=BORDER_COLOR, fontsize=8.5)
+
+    plt.tight_layout()
+    return fig
+
+def create_influx_plotly_chart(records, title="Year-over-Year Contributor Influx"):
+    """
+    Creates an interactive Plotly stacked bar chart for Streamlit.
+    """
+    if not records:
+        return px.bar(title="No data available")
+
+    df = pd.DataFrame(records)
+    
+    # Melt for stacked bar chart in Plotly
+    df_melted = pd.melt(
+        df,
+        id_vars=['year', 'code', 'total_active', 'newcomer_share_pct', 'cumulative_pool'],
+        value_vars=['returning_contributors', 'new_contributors'],
+        var_name='Contributor Type',
+        value_name='Count'
+    )
+    df_melted['Contributor Type'] = df_melted['Contributor Type'].map({
+        'returning_contributors': 'Returning Contributors',
+        'new_contributors': 'First-Time Newcomers'
+    })
+
+    fig = px.bar(
+        df_melted,
+        x='year',
+        y='Count',
+        color='Contributor Type',
+        color_discrete_map={
+            'Returning Contributors': NAV_TEAL,
+            'First-Time Newcomers': NAV_ACCENT
+        },
+        title=title,
+        labels={'year': 'Campaign Year', 'Count': 'Active Contributors'},
+        hover_data={'total_active': True, 'newcomer_share_pct': ':.1f%'}
+    )
+
+    fig.add_trace(go.Scatter(
+        x=df['year'],
+        y=df['cumulative_pool'],
+        name='Cumulative Community Pool',
+        yaxis='y2',
+        mode='lines+markers',
+        line=dict(color='#e67300', width=2.5),
+        marker=dict(size=7, color='#e67300')
+    ))
+
+    fig.update_layout(
+        barmode='stack',
+        paper_bgcolor='#ffffff',
+        plot_bgcolor='#ffffff',
+        font=dict(color=TEXT_INK, family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        margin=dict(r=40, t=60, l=10, b=10),
+        xaxis=dict(showgrid=False, linecolor=BORDER_COLOR),
+        yaxis=dict(title='Active Contributors', showgrid=True, gridcolor='rgba(0,0,0,0.06)', linecolor=BORDER_COLOR),
+        yaxis2=dict(
+            title='Cumulative Unique Pool',
+            title_font=dict(color='#e67300'),
+            tickfont=dict(color='#e67300'),
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            linecolor='#e67300'
+        )
+    )
+    return fig

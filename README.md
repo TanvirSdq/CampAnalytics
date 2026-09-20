@@ -35,6 +35,7 @@ Both interfaces consume identical data models and logic via [`analytics.py`](ana
 ## 🛠️ Key Capabilities
 
 - **Builder-First Retention Analytics**: Frictionless selection controls for event types, target countries (with a one-click **Select All Global** option), and multi-year spans. Generates pairwise retention data tables, high-contrast Seaborn heatmaps, and interactive Plotly choropleth maps.
+- **Year-over-Year (YoY) New User Influx**: Tracks contributor renewal across multi-year editions of the same campaign. Distinguishes first-time newcomers ($I_t$) from returning veterans ($R_t$), computes YoY expansion rates ($\Delta \text{YoY}$), newcomer-to-veteran ratios, cumulative community pool growth, and contributor longevity profiles (1-time entrants, 2–3 year repeaters, 4+ year core veterans).
 - **5-Dimension Weighted Health Scorecard**: Evaluates campaigns on a 0–100 scale:
   - **Retention Index (35%)**: Proportion of returning participants from the designated baseline edition.
   - **Growth Capacity (20%)**: Rate of first-time participant acquisition.
@@ -187,6 +188,19 @@ New contributor acquisition measures the share of participants in cohort $B$ wit
 
 $$\text{Growth}(A \to B) = \left( \frac{|U_B \setminus U_A|}{|U_B|} \right) \times 100\%$$
 
+### 3. Year-over-Year New User Influx & Retention Dynamics
+For any edition $C_t$ in a chronological sequence $(C_1, C_2, \dots, C_T)$ with participant sets $(U_1, U_2, \dots, U_T)$:
+
+- **First-Time Newcomer Influx ($I_t$)**: Participants appearing for the first time in the series history:
+  $$I_t = \left| U_t \setminus \bigcup_{i=1}^{t-1} U_i \right|$$
+- **Returning Veterans ($R_t$)**: Participants previously recorded in earlier editions:
+  $$R_t = \left| U_t \cap \bigcup_{i=1}^{t-1} U_i \right|$$
+- **Newcomer Influx Share**:
+  $$\text{Newcomer Share} = \left( \frac{I_t}{|U_t|} \right) \times 100\%$$
+- **Cumulative Community Pool ($P_t$)**: Total distinct individuals mobilized through edition $t$:
+  $$P_t = \left| \bigcup_{i=1}^t U_i \right|$$
+- **Contributor Longevity Profile**: Classifies all individuals across the series into **1-Time Entrants** (one-off), **Repeaters** (2–3 editions), and **Core Veterans** (4+ editions).
+
 ---
 
 ## 📁 Repository Layout
@@ -205,9 +219,9 @@ CampAnalytics/
 ├── requirements.txt         # Python package dependencies
 ├── templates/               # Jinja2 templates for Flask UI
 │   ├── base.html            # Layout shell, top navbar, footer & Korikath brand
-│   └── index.html           # Retention Builder, Health Scorecard, Methodology
+│   └── index.html           # Retention Builder, Health Scorecard, Influx, Methodology
 └── tests/                   # Complete automated test suite
-    └── test_app.py          # 27 passing regression and unit test cases
+    └── test_app.py          # 30 passing regression, influx, and unit test cases
 ```
 
 ---

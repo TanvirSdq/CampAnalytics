@@ -24,7 +24,8 @@ from app_config import (
 import analytics
 from analytics import (
     CODE_RE, COUNTRY_MAP, COUNTRY_OPTIONS, EVENT_MAP, EXAMPLE_CODES,
-    REGION_COUNTRY_MAPPING, country_display_name
+    REGION_COUNTRY_MAPPING, country_display_name,
+    compute_yoy_influx, create_influx_barchart
 )
 
 app = Flask(__name__)
@@ -59,11 +60,74 @@ def index():
         return retention()
     elif mode in ('Health Evaluation', 'Health'):
         return health()
+    elif mode in ('New User Influx', 'Influx', 'New Users'):
+        return influx()
     return render_template('index.html', mode='Methodology')
 
 @app.route('/methodology', methods=['GET'])
 def methodology():
     return render_template('index.html', mode='Methodology')
+
+@app.route('/influx', methods=['GET', 'POST'])
+def influx():
+    if request.method == 'POST':
+        event_type = request.form.get('influx_event_type', 'wlm').strip().lower()
+        country = request.form.get('influx_country', 'de').strip().lower()
+        try:
+            yr_start = int(request.form.get('influx_yr_start', 2020))
+            yr_end = int(request.form.get('influx_yr_end', 2024))
+        except (ValueError, TypeError):
+            yr_start, yr_end = 2020, 2024
+        raw_codes = request.form.get('influx_codes', '').strip()
+    else:
+        event_type = request.args.get('influx_event_type', 'wlm').strip().lower()
+        country = request.args.get('influx_country', 'de').strip().lower()
+        try:
+            yr_start = int(request.args.get('influx_yr_start', 2020))
+            yr_end = int(request.args.get('influx_yr_end', 2024))
+        except (ValueError, TypeError):
+            yr_start, yr_end = 2020, 2024
+        raw_codes = request.args.get('influx_codes', '').strip()
+
+    if raw_codes:
+        codes = raw_codes.split()
+    else:
+        codes = [f"{event_type}{country}{y % 100:02d}" for y in range(yr_start, yr_end + 1)]
+
+    valid_codes = [c for c in codes if CODE_RE.match(c)]
+    
+    error = None
+    chart_b64 = ""
+    influx_result = None
+    
+    if not valid_codes or len(valid_codes) < 2:
+        error = "Please specify at least two chronological campaign editions to compute Year-over-Year influx."
+    else:
+        try:
+            influx_result = analytics.compute_yoy_influx(valid_codes)
+            if not influx_result['records'] or all(r['total_active'] == 0 for r in influx_result['records']):
+                error = "No participant records found for the selected campaign series on Wikimedia Commons."
+            else:
+                country_name = COUNTRY_MAP.get(country, country.upper()).replace('_', ' ')
+                event_name = EVENT_MAP.get(event_type, event_type.upper())
+                chart_title = f"Wiki Loves {event_name} ({country_name}) — Contributor Influx & Growth"
+                fig = analytics.create_influx_barchart(influx_result['records'], title=chart_title)
+                chart_b64 = fig_to_base64(fig)
+        except Exception as e:
+            error = f"Error evaluating influx trends: {str(e)}"
+            
+    return render_template(
+        'index.html',
+        mode='New User Influx',
+        influx_event_type=event_type,
+        influx_country=country,
+        influx_yr_start=yr_start,
+        influx_yr_end=yr_end,
+        influx_codes=' '.join(valid_codes) if valid_codes else raw_codes,
+        influx_result=influx_result,
+        chart_b64=chart_b64,
+        error=error
+    )
 
 @app.route('/retention', methods=['GET', 'POST'])
 def retention():

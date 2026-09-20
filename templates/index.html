@@ -464,7 +464,249 @@
         {% endif %}
 
     {# ====================================================================== #}
-    {# 3. METHODOLOGY & USAGE GUIDE VIEW                                      #}
+    {# 3. NEW USER INFLUX VIEW                                                #}
+    {# ====================================================================== #}
+    {% elif mode == 'New User Influx' %}
+        <h1 class="page-title">Year-over-Year New User Influx</h1>
+        <p class="page-subtitle">Track newcomer acquisition, returning veteran retention, and community expansion across consecutive campaign editions.</p>
+
+        <form action="/influx" method="POST" id="influx-form">
+            <!-- Structured Panel: What to look up -->
+            <div class="glam-panel">
+                <div class="glam-panel-header">
+                    <span>What to look up · Campaign Influx Builder</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Step 1: Configure Multi-Year Campaign Series</span>
+                </div>
+                <div class="glam-panel-body">
+                    <div class="builder-layout">
+                        <!-- Left: Builder Form Controls -->
+                        <div>
+                            <!-- Event Type Selector -->
+                            <div class="form-group">
+                                <label class="form-label">Campaign Type</label>
+                                <div class="pill-group" id="influx-event-group">
+                                    {% for event_key, event_val in EVENT_MAP.items() %}
+                                        <input type="radio" name="influx_event_type" value="{{ event_key }}" id="influx-evt-{{ event_key }}" class="pill-checkbox" {% if influx_event_type == event_key or (not influx_event_type and event_key == 'wlm') %}checked{% endif %} onchange="syncInfluxBuilder()">
+                                        <label for="influx-evt-{{ event_key }}" class="pill-label">Wiki Loves {{ event_val }} ({{ event_key|upper }})</label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Target Country & Year Range -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div class="form-group">
+                                    <label for="influx_country" class="form-label">Target Country</label>
+                                    <select id="influx_country" name="influx_country" class="form-control" onchange="syncInfluxBuilder()">
+                                        {% for c_code in COUNTRY_OPTIONS %}
+                                            <option value="{{ c_code }}" {% if influx_country == c_code or (not influx_country and c_code == 'de') %}selected{% endif %}>
+                                                {{ COUNTRY_MAP[c_code]|replace('_', ' ') }} ({{ c_code|upper }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Year Range</label>
+                                    <div class="year-range-row">
+                                        <input type="number" id="influx_yr_start" name="influx_yr_start" class="form-control" value="{{ influx_yr_start|default(2020) }}" min="2010" max="2026" onchange="syncInfluxBuilder()">
+                                        <span class="year-separator">to</span>
+                                        <input type="number" id="influx_yr_end" name="influx_yr_end" class="form-control" value="{{ influx_yr_end|default(2024) }}" min="2010" max="2026" onchange="syncInfluxBuilder()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Synchronized Target Codes Input -->
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="influx_codes" class="form-label">Generated Campaign Sequence</label>
+                                <input type="text" id="influx_codes" name="influx_codes" class="form-control form-control-code" value="{{ influx_codes|default('wlmde20 wlmde21 wlmde22 wlmde23 wlmde24') }}" placeholder="e.g. wlmde20 wlmde21 wlmde22 wlmde23 wlmde24">
+                                <div class="form-hint">Space-separated list of chronological campaign editions to compare.</div>
+                            </div>
+
+                            <button type="submit" class="btn-primary" style="width: auto;">
+                                <span>Compute Influx Trends</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </button>
+                        </div>
+
+                        <!-- Right: Quick Example Presets -->
+                        <div>
+                            <div class="example-box">
+                                <div class="example-box-title">Featured Multi-Year Presets</div>
+                                <div class="preset-tags">
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlm', 'de', 2020, 2024)">
+                                        wlmde20 ... wlmde24
+                                        <span class="preset-tag-label">WLM Germany (5 Years)</span>
+                                    </button>
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlm', 'bd', 2020, 2024)">
+                                        wlmbd20 ... wlmbd24
+                                        <span class="preset-tag-label">WLM Bangladesh (5 Years)</span>
+                                    </button>
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wle', 'in', 2020, 2024)">
+                                        wlein20 ... wlein24
+                                        <span class="preset-tag-label">WLE India (5 Years)</span>
+                                    </button>
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlf', 'it', 2020, 2024)">
+                                        wlfit20 ... wlfit24
+                                        <span class="preset-tag-label">WLF Italy (5 Years)</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% if influx_result and influx_result.records %}
+            <!-- Structured Panel: Trend KPI Summary -->
+            <div class="glam-panel">
+                <div class="glam-panel-header">
+                    <span>Summary Indicators · Contributor Influx &amp; Expansion</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ influx_result.records|length }} Consecutive Editions Analyzed</span>
+                </div>
+                <div class="glam-panel-body">
+                    <div class="scorecard-header-card" style="margin-bottom: 16px;">
+                        <div>
+                            <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Cumulative Community Footprint</div>
+                            <div class="overall-score-display">
+                                <span class="overall-score-number">{{ "{:,}".format(influx_result.summary.total_unique_community) }}</span>
+                                <span class="overall-score-max">distinct individuals mobilized</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px;">Average Newcomer Share</div>
+                            <span style="font-size: 1.8rem; font-weight: 700; color: var(--wiki-blue);">{{ influx_result.summary.avg_newcomer_share_pct }}%</span>
+                        </div>
+                    </div>
+
+                    <!-- Trend KPI Grid -->
+                    <div class="scorecard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+                        <div class="scorecard-card">
+                            <div class="scorecard-card-title">Peak Influx Year</div>
+                            <div class="scorecard-card-value" style="color: var(--nav-teal);">{{ influx_result.summary.peak_influx_year }}</div>
+                            <div class="scorecard-card-score">{{ "{:,}".format(influx_result.summary.peak_influx_count) }} first-time entrants</div>
+                        </div>
+                        <div class="scorecard-card">
+                            <div class="scorecard-card-title">Peak Overall Edition</div>
+                            <div class="scorecard-card-value" style="color: var(--nav-teal);">{{ influx_result.summary.peak_edition_year }}</div>
+                            <div class="scorecard-card-score">{{ "{:,}".format(influx_result.summary.peak_edition_count) }} total participants</div>
+                        </div>
+                        <div class="scorecard-card">
+                            <div class="scorecard-card-title">Latest Edition ({{ influx_result.summary.latest_year }})</div>
+                            <div class="scorecard-card-value" style="color: var(--text-ink);">{{ "{:,}".format(influx_result.summary.latest_total) }}</div>
+                            <div class="scorecard-card-score">{{ "{:,}".format(influx_result.summary.latest_new) }} new · {{ "{:,}".format(influx_result.summary.latest_returning) }} returning</div>
+                        </div>
+                        <div class="scorecard-card">
+                            <div class="scorecard-card-title">Contributor Longevity</div>
+                            <div class="scorecard-card-value" style="color: var(--text-ink); font-size: 1.25rem; margin-top: 12px;">
+                                {{ "{:,}".format(influx_result.lifecycle.repeat_2_3 + influx_result.lifecycle.core_4_plus) }}
+                            </div>
+                            <div class="scorecard-card-score">recurring contributors (2+ years)</div>
+                        </div>
+                    </div>
+
+                    <!-- Contributor Lifecycle Segmentation Strip -->
+                    <div style="background-color: var(--card-subtle); border: 1px solid var(--border-color); border-radius: 4px; padding: 14px 18px;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-ink); margin-bottom: 8px;">Cohort Lifecycle Segmentation</div>
+                        <div class="footprint-strip" style="margin-top: 0;">
+                            <div class="footprint-stat">
+                                <div class="footprint-val" style="color: #64748b;">{{ "{:,}".format(influx_result.lifecycle.one_time) }}</div>
+                                <div class="footprint-lbl">1-Time Entrants (One-off)</div>
+                            </div>
+                            <div class="footprint-stat">
+                                <div class="footprint-val" style="color: var(--wiki-blue);">{{ "{:,}".format(influx_result.lifecycle.repeat_2_3) }}</div>
+                                <div class="footprint-lbl">Repeaters (2–3 Editions)</div>
+                            </div>
+                            <div class="footprint-stat">
+                                <div class="footprint-val" style="color: var(--nav-teal);">{{ "{:,}".format(influx_result.lifecycle.core_4_plus) }}</div>
+                                <div class="footprint-lbl">Core Veterans (4+ Editions)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Structured Panel: Visual Stacked Bar Chart -->
+            {% if chart_b64 %}
+                <div class="glam-panel">
+                    <div class="glam-panel-header">
+                        <span>Visual Influx &amp; Retention Dynamics</span>
+                        <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Stacked Cohort Volumes + Cumulative Footprint</span>
+                    </div>
+                    <div class="glam-panel-body" style="text-align: center;">
+                        <div class="chart-container" style="border: none; padding: 0; margin-bottom: 0;">
+                            <img src="data:image/png;base64,{{ chart_b64 }}" alt="Year-over-Year Contributor Influx Chart" class="chart-img" style="max-height: 480px;">
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Structured Panel: Detailed Data Table -->
+            <div class="glam-panel">
+                <div class="glam-panel-header">
+                    <span>Year-over-Year Influx Breakdown Data Table</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button type="button" class="btn btn-sm" onclick="exportInfluxTableToCSV()" style="padding: 3px 10px; font-size: 0.78rem; background: #ffffff; color: var(--wiki-blue); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-weight: 500;">
+                            ⬇ Export Data (CSV)
+                        </button>
+                    </div>
+                </div>
+                <div class="glam-panel-body" style="padding: 0;">
+                    <div class="table-responsive">
+                        <table class="data-table" id="influx-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Campaign Code</th>
+                                    <th>Total Active</th>
+                                    <th>First-Time Influx</th>
+                                    <th>Returning Veterans</th>
+                                    <th>Newcomer Share</th>
+                                    <th>Direct Retention</th>
+                                    <th>YoY Net Growth</th>
+                                    <th>New-to-Veteran Ratio</th>
+                                    <th>Cumulative Pool</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in influx_result.records %}
+                                    <tr>
+                                        <td style="font-weight: 600;">{{ r.year }}</td>
+                                        <td><code>{{ r.code }}</code></td>
+                                        <td style="font-weight: 600;">{{ "{:,}".format(r.total_active) }}</td>
+                                        <td style="color: #0d9488; font-weight: 600;">+{{ "{:,}".format(r.new_contributors) }}</td>
+                                        <td style="color: var(--nav-teal); font-weight: 600;">{{ "{:,}".format(r.returning_contributors) }}</td>
+                                        <td>
+                                            <span style="display: inline-block; width: 48px;">{{ r.newcomer_share_pct }}%</span>
+                                            <span style="display: inline-block; width: 60px; height: 6px; background-color: #e2e8f0; border-radius: 3px; overflow: hidden; vertical-align: middle;">
+                                                <span style="display: block; width: {{ r.newcomer_share_pct }}%; height: 100%; background-color: var(--nav-accent);"></span>
+                                            </span>
+                                        </td>
+                                        <td>{% if loop.first %}—{% else %}{{ r.retention_from_prev_pct }}%{% endif %}</td>
+                                        <td>
+                                            {% if loop.first %}
+                                                —
+                                            {% elif r.yoy_growth_pct > 0 %}
+                                                <span style="color: #16a34a; font-weight: 600;">+{{ r.yoy_growth_pct }}%</span>
+                                            {% elif r.yoy_growth_pct < 0 %}
+                                                <span style="color: #dc2626; font-weight: 600;">{{ r.yoy_growth_pct }}%</span>
+                                            {% else %}
+                                                0.0%
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ r.new_to_veteran_ratio }}x</td>
+                                        <td style="font-weight: 600; color: var(--nav-teal);">{{ "{:,}".format(r.cumulative_pool) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    {# ====================================================================== #}
+    {# 4. METHODOLOGY & USAGE GUIDE VIEW                                      #}
     {# ====================================================================== #}
     {% else %}
         <h1 class="page-title">Methodology &amp; Usage Guide</h1>
@@ -488,6 +730,15 @@
                     <p class="tool-card-desc">Assesses campaign vitality across five weighted structural indicators calibrated dynamically against regional peer performance benchmarks.</p>
                 </div>
                 <div class="tool-card-action">Launch Health Evaluator →</div>
+            </a>
+
+            <a href="/influx" class="tool-card">
+                <div>
+                    <span class="tool-card-badge">Analytics Tool 03</span>
+                    <h3 class="tool-card-title">New User Influx</h3>
+                    <p class="tool-card-desc">Tracks year-over-year contributor growth, newcomer influx proportions, and recurring veteran retention over consecutive multi-year campaign series.</p>
+                </div>
+                <div class="tool-card-action">Launch Influx Trends →</div>
             </a>
 
             <a href="#pipeline-specs" class="tool-card">
@@ -534,6 +785,16 @@
                     <li><strong>Geographic Standardization Framework:</strong> Assign the appropriate regional cluster (e.g., South Asia, Northern &amp; Western Europe, ESEAP). Dynamic benchmark norms are calculated from the top regional performers in that cluster.</li>
                     <li><strong>Evaluation Output:</strong> Review the weighted composite scorecard (0–100), categorical star ratings, quantitative cohort footprints, and automated diagnostic insights.</li>
                 </ol>
+
+                <h3 style="margin-top: 24px; font-size: 1.05rem; color: var(--text-ink);">3 · Year-over-Year New User Influx</h3>
+                <p style="color: var(--text-muted); line-height: 1.6;">
+                    The Influx Analytics module assesses continuous community renewal and long-term mobilization:
+                </p>
+                <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
+                    <li><strong>Series Selection:</strong> Choose a campaign type, country, and consecutive year span (e.g. 2020–2024).</li>
+                    <li><strong>Newcomer Detection:</strong> Differentiates first-time participants (\(I_t\)) from returning veterans (\(R_t\)) across the series.</li>
+                    <li><strong>Trend Visualizations:</strong> Reviews stacked volume bars, net expansion growth rates (\(\Delta \text{YoY}\)), and cumulative community pool milestones.</li>
+                </ol>
             </div>
         </div>
 
@@ -558,12 +819,22 @@
                 </div>
 
                 <div class="math-panel">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Year-over-Year Newcomer Influx &amp; Retention</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+                        For edition \(C_t\) in a chronological series, newcomer influx isolates contributors not seen in any prior recorded edition \(U_{&lt;t}\):
+                    </p>
+                    <div class="math-formula">
+                        Influx(C_t) = |U_t \setminus U_{&lt;t}|, \quad \text{Newcomer Share} = \left(\frac{Influx(C_t)}{|U_t|}\right) \times 100\%
+                    </div>
+                </div>
+
+                <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Growth Capacity (New Contributor Acquisition)</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
                         Growth capacity measures the proportion of target cohort \(B\) participants who are newly acquired contributors with no recorded uploads in baseline cohort \(A\):
                     </p>
                     <div class="math-formula">
-                        Growth(A → B) = (|U_B \ U_A| / |U_B|) × 100%
+                        Growth(A → B) = (|U_B \setminus U_A| / |U_B|) × 100%
                     </div>
                 </div>
 
@@ -857,6 +1128,67 @@
             if (metricGroup && worldRadio) {
                 metricGroup.style.display = worldRadio.checked ? 'block' : 'none';
             }
+        }
+
+        // Influx Builder helper
+        function syncInfluxBuilder() {
+            const checkedEvt = document.querySelector('input[name="influx_event_type"]:checked');
+            const evt = checkedEvt ? checkedEvt.value : 'wlm';
+            const countrySelect = document.getElementById('influx_country');
+            const cc = countrySelect ? countrySelect.value.toLowerCase() : 'de';
+            const yrStartInput = document.getElementById('influx_yr_start');
+            const yrEndInput = document.getElementById('influx_yr_end');
+            
+            if (!yrStartInput || !yrEndInput) return;
+            const y1 = parseInt(yrStartInput.value, 10) || 2020;
+            const y2 = parseInt(yrEndInput.value, 10) || 2024;
+            
+            const codes = [];
+            for (let y = y1; y <= y2; y++) {
+                const yy = String(y % 100).padStart(2, '0');
+                codes.push(evt + cc + yy);
+            }
+            const codesInput = document.getElementById('influx_codes');
+            if (codesInput) {
+                codesInput.value = codes.join(' ');
+            }
+        }
+
+        // Quick Influx Preset Loader
+        function loadInfluxPreset(evt, cc, y1, y2) {
+            const evtRadio = document.getElementById('influx-evt-' + evt);
+            if (evtRadio) evtRadio.checked = true;
+            const countrySelect = document.getElementById('influx_country');
+            if (countrySelect) countrySelect.value = cc;
+            const yrStartInput = document.getElementById('influx_yr_start');
+            if (yrStartInput) yrStartInput.value = y1;
+            const yrEndInput = document.getElementById('influx_yr_end');
+            if (yrEndInput) yrEndInput.value = y2;
+            syncInfluxBuilder();
+        }
+
+        // Export Influx Data Table to CSV
+        function exportInfluxTableToCSV() {
+            const table = document.getElementById('influx-data-table');
+            if (!table) return;
+            let csv = [];
+            const rows = table.querySelectorAll('tr');
+            for (let i = 0; i < rows.length; i++) {
+                const row = [], cols = rows[i].querySelectorAll('td, th');
+                for (let j = 0; j < cols.length; j++) {
+                    let text = cols[j].innerText.replace(/"/g, '""').trim();
+                    row.push('"' + text + '"');
+                }
+                csv.push(row.join(','));
+            }
+            const csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
+            const downloadLink = document.createElement('a');
+            downloadLink.download = 'campanalytics_influx_trends.csv';
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
         }
     </script>
 {% endblock %}

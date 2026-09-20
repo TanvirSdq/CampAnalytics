@@ -35,7 +35,7 @@ class CampaignSuiteTestCase(unittest.TestCase):
 
     def test_routes_status_get_modes(self):
         """GET / with ?mode= query parameter should return 200 OK for all modes."""
-        for mode in ['Methodology', 'Retention Analytics', 'Health Evaluation']:
+        for mode in ['Methodology', 'Retention Analytics', 'Health Evaluation', 'New User Influx']:
             res = self.client.get(f'/?mode={mode}')
             self.assertEqual(res.status_code, 200)
 
@@ -93,6 +93,31 @@ class CampaignSuiteTestCase(unittest.TestCase):
             html_post = res_post.data.decode('utf-8')
             self.assertIn('Health Evaluation Scorecard', html_post)
             self.assertIn('WLMBD24', html_post)
+
+    def test_routes_status_influx_get_and_post(self):
+        """/influx must accept both GET and POST requests with 200 OK."""
+        # GET request
+        res_get = self.client.get('/influx')
+        self.assertEqual(res_get.status_code, 200)
+        html_get = res_get.data.decode('utf-8')
+        self.assertIn('Year-over-Year New User Influx', html_get)
+        self.assertIn('What to look up · Campaign Influx Builder', html_get)
+
+        # POST request with mock data
+        with patch.object(analytics, 'fetch_all_concurrently') as mock_fetch:
+            mock_fetch.return_value = {
+                'wlmbd22': {'u1', 'u2', 'u3'},
+                'wlmbd23': {'u2', 'u3', 'u4', 'u5'},
+                'wlmbd24': {'u3', 'u5', 'u6'}
+            }
+            res_post = self.client.post('/influx', data={
+                'influx_codes': 'wlmbd22 wlmbd23 wlmbd24'
+            })
+            self.assertEqual(res_post.status_code, 200)
+            html_post = res_post.data.decode('utf-8')
+            self.assertIn('Year-over-Year Influx Breakdown Data Table', html_post)
+            self.assertIn('Cumulative Community Footprint', html_post)
+            self.assertIn('data:image/png;base64,', html_post)
 
     def test_routes_status_methodology(self):
         """GET /methodology route should return 200 OK."""
@@ -431,7 +456,8 @@ class CampaignSuiteTestCase(unittest.TestCase):
 
         # Mathematical formulas documented
         self.assertIn('Retention(A → B) = (|U_A ∩ U_B| / |U_A|) × 100%', html)
-        self.assertIn('Growth(A → B) = (|U_B \\ U_A| / |U_B|) × 100%', html)
+        self.assertIn('Growth(A → B) = (|U_B \\setminus U_A| / |U_B|) × 100%', html)
+        self.assertIn('Influx(C_t)', html)
         self.assertIn('Retention Index (35%)', html)
         self.assertIn('Growth Capacity (20%)', html)
         self.assertIn('Content Utility (20%)', html)
@@ -493,6 +519,97 @@ class CampaignSuiteTestCase(unittest.TestCase):
         res2 = sample_func(5)
         self.assertEqual(res2, 10)
         self.assertEqual(call_count, 1)
+
+    # =========================================================================
+    # 13. YEAR-OVER-YEAR INFLUX ANALYTICS
+    # =========================================================================
+    def test_compute_yoy_influx(self):
+        """Test compute_yoy_influx algorithm with multi-year mock data."""
+        with patch.object(analytics, 'fetch_all_concurrently') as mock_fetch:
+            mock_fetch.return_value = {
+                'wlmbd22': {'alice', 'bob', 'charlie'},
+                'wlmbd23': {'bob', 'charlie', 'david', 'eve'},
+                'wlmbd24': {'charlie', 'eve', 'frank'}
+            }
+            res = analytics.compute_yoy_influx(['wlmbd22', 'wlmbd23', 'wlmbd24'])
+            
+            self.assertEqual(len(res['records']), 3)
+            # Year 22: 3 total, all 3 new, 0 returning
+            r0 = res['records'][0]
+            self.assertEqual(r0['year'], 2022)
+            self.assertEqual(r0['total_active'], 3)
+            self.assertEqual(r0['new_contributors'], 3)
+            self.assertEqual(r0['returning_contributors'], 0)
+            self.assertEqual(r0['newcomer_share_pct'], 100.0)
+            self.assertEqual(r0['cumulative_pool'], 3)
+
+            # Year 23: 4 total, 2 returning (bob, charlie), 2 new (david, eve)
+            r1 = res['records'][1]
+            self.assertEqual(r1['year'], 2023)
+            self.assertEqual(r1['total_active'], 4)
+            self.assertEqual(r1['new_contributors'], 2)
+            self.assertEqual(r1['returning_contributors'], 2)
+            self.assertEqual(r1['newcomer_share_pct'], 50.0)
+            self.assertEqual(r1['retention_from_prev_pct'], 66.7) # 2/3
+            self.assertEqual(r1['cumulative_pool'], 5) # alice, bob, charlie, david, eve
+
+            # Year 24: 3 total, 2 returning (charlie, eve), 1 new (frank)
+            r2 = res['records'][2]
+            self.assertEqual(r2['year'], 2024)
+            self.assertEqual(r2['total_active'], 3)
+            self.assertEqual(r2['new_contributors'], 1)
+            self.assertEqual(r2['returning_contributors'], 2)
+            self.assertEqual(r2['cumulative_pool'], 6)
+
+            # Lifecycle profile
+            # alice: 1 time
+            # bob: 2 times (22, 23)
+            # charlie: 3 times (22, 23, 24)
+            # david: 1 time
+            # eve: 2 times (23, 24)
+            # frank: 1 time
+            # 1-time: 3 (alice, david, frank)
+            # repeat 2-3: 3 (bob, charlie, eve)
+            # core 4+: 0
+            lifecycle = res['lifecycle']
+            self.assertEqual(lifecycle['one_time'], 3)
+            self.assertEqual(lifecycle['repeat_2_3'], 3)
+            self.assertEqual(lifecycle['core_4_plus'], 0)
+
+            # Summary metrics
+            summary = res['summary']
+            self.assertEqual(summary['total_unique_community'], 6)
+            self.assertEqual(summary['latest_total'], 3)
+
+    def test_influx_charts_generation(self):
+        """Test Matplotlib base64 and Plotly chart generation for Influx."""
+        records = [
+            {
+                'year': 2022, 'code': 'wlmbd22', 'total_active': 10,
+                'new_contributors': 10, 'returning_contributors': 0,
+                'newcomer_share_pct': 100.0, 'retention_from_prev_pct': 0.0,
+                'yoy_growth_pct': 0.0, 'new_to_veteran_ratio': 'N/A',
+                'cumulative_pool': 10
+            },
+            {
+                'year': 2023, 'code': 'wlmbd23', 'total_active': 15,
+                'new_contributors': 8, 'returning_contributors': 7,
+                'newcomer_share_pct': 53.3, 'retention_from_prev_pct': 70.0,
+                'yoy_growth_pct': 50.0, 'new_to_veteran_ratio': '1.14',
+                'cumulative_pool': 18
+            }
+        ]
+        # Matplotlib PNG Base64
+        import flask_app
+        fig = analytics.create_influx_barchart(records, title="Test Influx Chart")
+        self.assertIsNotNone(fig)
+        chart_b64 = f"data:image/png;base64,{flask_app.fig_to_base64(fig)}"
+        self.assertTrue(chart_b64.startswith("data:image/png;base64,"))
+
+        # Plotly Figure
+        fig = analytics.create_influx_plotly_chart(records, title="Test Plotly Influx")
+        self.assertIsNotNone(fig)
+        self.assertEqual(len(fig.data), 3) # New, Returning, Cumulative line
 
 if __name__ == '__main__':
     unittest.main()

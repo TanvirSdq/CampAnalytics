@@ -23,6 +23,8 @@ from analytics import (
     generate_health_metrics,
     generate_insights,
     get_participants,
+    compute_yoy_influx,
+    create_influx_plotly_chart,
 )
 
 from app_config import (
@@ -137,7 +139,7 @@ with st.sidebar:
     st.title("App Mode")
     app_mode = st.radio(
         "Select Suite Interface",
-        ["Retention Analytics", "Health Evaluation", "Methodology"],
+        ["Retention Analytics", "Health Evaluation", "New User Influx", "Methodology"],
         horizontal=False,
     )
     
@@ -200,6 +202,40 @@ with st.sidebar:
         st.markdown("---")
         analyze_health = st.button("Evaluate Campaign Health", type="primary", use_container_width=True)
 
+    elif app_mode == "New User Influx":
+        st.subheader("Series Configuration")
+        influx_event = st.selectbox(
+            "Campaign Type",
+            options=list(EVENT_MAP.keys()),
+            format_func=lambda k: f"Wiki Loves {EVENT_MAP[k]} ({k.upper()})",
+            key="influx_event"
+        )
+        default_country_idx = COUNTRY_OPTIONS.index('de') if 'de' in COUNTRY_OPTIONS else 0
+        influx_country = st.selectbox(
+            "Target Country",
+            options=COUNTRY_OPTIONS,
+            index=default_country_idx,
+            format_func=country_display_name,
+            key="influx_country"
+        )
+        influx_years = st.slider(
+            "Year Span",
+            2010, 2026, (2020, 2024),
+            key="influx_years"
+        )
+        
+        generated_influx_codes = " ".join(
+            f"{influx_event}{influx_country}{y % 100:02d}"
+            for y in range(influx_years[0], influx_years[1] + 1)
+        )
+        custom_series = st.text_input(
+            "Campaign Sequence",
+            value=generated_influx_codes,
+            key="custom_influx_series"
+        )
+        st.markdown("---")
+        run_influx = st.button("Evaluate Influx Trends", type="primary", use_container_width=True)
+
     st.markdown("---")
     st.caption("Integrated Analytics Platform Engine")
 
@@ -211,7 +247,7 @@ if app_mode == "Methodology":
     st.html('<div class=\"hero-subtitle\">Understand how the suite turns Wikimedia Commons campaign data into retention and health signals.</div>')
 
     st.markdown("### Quick guide")
-    guide_col1, guide_col2, guide_col3 = st.columns(3, gap="medium")
+    guide_col1, guide_col2, guide_col3, guide_col4 = st.columns(4, gap="medium")
     with guide_col1:
         st.html('''<div class="methodology-card">
                 <div class="methodology-card-title">1 · Retention Analytics</div>
@@ -228,10 +264,17 @@ if app_mode == "Methodology":
             </div>''')
     with guide_col3:
         st.html('''<div class="methodology-card">
-                <div class="methodology-card-title">3 · Methodology</div>
+                <div class="methodology-card-title">3 · New User Influx</div>
+                <p>Select a campaign type, country, and multi-year range.
+                Examine stacked newcomer vs returning volumes, YoY growth trends,
+                and cumulative community expansion.</p>
+            </div>''')
+    with guide_col4:
+        st.html('''<div class="methodology-card">
+                <div class="methodology-card-title">4 · Methodology</div>
                 <p>Use this tab as the reference layer: it explains the data sources,
-                processing stages, scoring model, and interpretation limits behind the
-                two analysis modes.</p>
+                processing stages, scoring model, and interpretation limits behind all
+                three analysis modes.</p>
             </div>''')
 
     st.markdown("---")
@@ -430,8 +473,8 @@ elif app_mode == "Retention Analytics":
             else:
                 render_worldmap_view(results)
 
-else:
-    st.html('<div class=\"hero-title\">Campaign Health Evaluation Suite</div>')
+elif app_mode == "Health Evaluation":
+    st.html('<div class="hero-title">Campaign Health Evaluation Suite</div>')
     st.html('<div class=\"hero-subtitle\">Compute analytical structural health indexes relative to real-time regional performance clusters.</div>')
 
     if not target_event:
@@ -598,3 +641,74 @@ else:
                     st.write(f"**Target Campaign Total Contributors:** {len(target_users)}")
                     st.write(f"**Historical Baseline Group Size:** {len(base_users)}")
                     st.write(f"**Common Intersecting User Core:** {len(target_users & base_users)}")
+
+elif app_mode == "New User Influx":
+    st.html('<div class=\"hero-title\">Year-over-Year New User Influx</div>')
+    st.html('<div class=\"hero-subtitle\">Track newcomer acquisition, returning veteran retention, and community expansion across consecutive campaign editions.</div>')
+    
+    series_codes = [c for c in custom_series.strip().split() if CODE_RE.match(c)]
+    
+    if run_influx or series_codes:
+        if len(series_codes) < 2:
+            st.warning("Please provide at least two chronological campaign editions to compute Year-over-Year influx.")
+        else:
+            with st.spinner("Analyzing multi-year campaign cohort influx across Wikimedia Commons..."):
+                influx_data = compute_yoy_influx(series_codes)
+                
+            if not influx_data['records'] or all(r['total_active'] == 0 for r in influx_data['records']):
+                st.info("No participant records identified for this sequence on Wikimedia Commons.")
+            else:
+                summary = influx_data['summary']
+                lifecycle = influx_data['lifecycle']
+                
+                # Metrics Strip
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("Cumulative Community", f"{summary['total_unique_community']:,}")
+                m2.metric("Avg Newcomer Influx", f"{summary['avg_newcomer_share_pct']}%")
+                m3.metric("Peak Influx Year", f"{summary['peak_influx_year']} (+{summary['peak_influx_count']:,})")
+                m4.metric("Latest Edition", f"{summary['latest_total']:,} ({summary['latest_year']})")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # Plotly Chart
+                country_name = country_display_name(influx_country)
+                event_name = EVENT_MAP.get(influx_event, influx_event.upper())
+                chart_title = f"Wiki Loves {event_name} ({country_name}) — Contributor Influx & Growth"
+                fig = create_influx_plotly_chart(influx_data['records'], title=chart_title)
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Contributor Longevity Profile
+                st.markdown("### Contributor Longevity Profile")
+                l1, l2, l3 = st.columns(3)
+                l1.info(f"**1-Time Entrants (One-off):** {lifecycle['one_time']:,}")
+                l2.success(f"**Repeaters (2–3 Editions):** {lifecycle['repeat_2_3']:,}")
+                l3.warning(f"**Core Veterans (4+ Editions):** {lifecycle['core_4_plus']:,}")
+
+                # Data Table
+                st.markdown("### Longitudinal Influx Breakdown")
+                import pandas as pd
+                df_records = pd.DataFrame(influx_data['records'])
+                rename_cols = {
+                    'year': 'Year',
+                    'code': 'Campaign',
+                    'total_active': 'Total Active',
+                    'new_contributors': 'New Entrants (It)',
+                    'returning_contributors': 'Returning (Rt)',
+                    'newcomer_share_pct': 'Newcomer %',
+                    'retention_from_prev_pct': 'Direct Retention %',
+                    'yoy_growth_pct': 'YoY Growth %',
+                    'new_to_veteran_ratio': 'New/Veteran Ratio',
+                    'cumulative_pool': 'Cumulative Pool'
+                }
+                df_display = df_records[list(rename_cols.keys())].rename(columns=rename_cols)
+                st.dataframe(df_display, use_container_width=True, hide_index=True)
+                
+                # Download CSV
+                csv = df_display.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="⬇ Download Influx Matrix (CSV)",
+                    data=csv,
+                    file_name=f"influx_{influx_event}_{influx_country}_{influx_years[0]}_{influx_years[1]}.csv",
+                    mime="text/csv",
+                )
+

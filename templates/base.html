@@ -26,6 +26,9 @@
                             <a href="/health" class="nav-tab-link {% if mode == 'Health Evaluation' or request.path == '/health' %}active{% endif %}">Health Evaluation</a>
                         </li>
                         <li class="nav-tab-item">
+                            <a href="/influx" class="nav-tab-link {% if mode == 'New User Influx' or request.path == '/influx' %}active{% endif %}">New User Influx</a>
+                        </li>
+                        <li class="nav-tab-item">
                             <a href="/?mode=Methodology" class="nav-tab-link {% if mode in ('Methodology', 'Methodology & Usage') or request.path == '/methodology' or (request.path == '/' and (not request.args.get('mode') or request.args.get('mode') in ('Methodology', 'Methodology & Usage'))) %}active{% endif %}">Methodology</a>
                         </li>
                     </ul>
