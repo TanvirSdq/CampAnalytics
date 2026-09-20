@@ -83,7 +83,7 @@ WORLD_SCALE = ["#eef7fa", "#a8dfed", "#72ded6", "#256d85", "#183f54"]
 
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 COMMONS_HEADERS = {
-    "User-Agent": "CampAnalytics/1.0 (https://github.com/siddiquetanvir/CampAnalytics)"
+    "User-Agent": "CampAnalytics/1.0 (https://github.com/siddiquetanvir/CampAnalytics; tanvirsiddique@gmail.com)"
 }
 QUALITY_IMAGE_KEYWORDS = (
     "quality images",
@@ -104,7 +104,8 @@ def code_to_category(code):
     event_name = EVENT_MAP.get(event)
     if not event_name:
         return None
-    category = f"Images_from_Wiki_Loves_{event_name}_{2000 + int(yr)}"
+    cat_event = event_name.replace(' ', '_')
+    category = f"Images_from_Wiki_Loves_{cat_event}_{2000 + int(yr)}"
     if cc and event not in ('wlb',):
         country_label = COUNTRY_MAP.get(cc)
         if not country_label:
@@ -116,7 +117,7 @@ def code_to_category(code):
 def _fetch_toolforge_data(category):
     try:
         url = f"https://ptools.toolforge.org/uploadersincat.php?category={category}"
-        response = http_session.get(url, timeout=8)
+        response = http_session.get(url, headers=COMMONS_HEADERS, timeout=8)
         if response.status_code != 200:
             return None
         matches = re.findall(r'User:([^"\'<>#]+)</a>\s*:\s*(\d+)\s*files', response.text)

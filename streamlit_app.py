@@ -207,8 +207,8 @@ with st.sidebar:
         influx_options = ["all"] + list(EVENT_MAP.keys())
         def format_influx_event(k):
             if k == "all":
-                return "🌟 All Campaigns Combined (Ecosystem Overview)"
-            return f"Wiki Loves {EVENT_MAP[k]} ({k.upper()})"
+                return "All Campaigns"
+            return EVENT_MAP[k]
 
         influx_event = st.selectbox(
             "Campaign Type",
@@ -685,10 +685,10 @@ elif app_mode == "New User Influx":
                 st.session_state.last_influx_data = influx_data
                 country_name = country_display_name(influx_country)
                 if influx_event == 'all':
-                    chart_title = f"All Campaigns Combined ({country_name}) — Contributor Influx & Growth"
+                    chart_title = f"All Campaigns · {country_name}"
                 else:
                     event_name = EVENT_MAP.get(influx_event, influx_event.upper())
-                    chart_title = f"Wiki Loves {event_name} ({country_name}) — Contributor Influx & Growth"
+                    chart_title = f"Wiki Loves {event_name} · {country_name}"
                 st.session_state.last_influx_meta = {
                     'title': chart_title,
                     'country': influx_country,
@@ -704,7 +704,7 @@ elif app_mode == "New User Influx":
         with q1:
             st.markdown(
                 "**1 · Select Campaign & Country**  \n"
-                "Choose **All Campaigns Combined** or a specific campaign matrix (WLM, WLE, WLF, WLA, WLB, etc.) and a target country in the sidebar."
+                "Choose **All Campaigns** or a specific campaign and a target country in the sidebar."
             )
         with q2:
             st.markdown(

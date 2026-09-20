@@ -33,7 +33,7 @@
                                 <div class="pill-group" id="event-pill-group">
                                     {% for event_key, event_val in EVENT_MAP.items() %}
                                         <input type="checkbox" name="builder_events" value="{{ event_key }}" id="evt-{{ event_key }}" class="pill-checkbox" onchange="syncBuilderToCodes()">
-                                        <label for="evt-{{ event_key }}" class="pill-label">Wiki Loves {{ event_val }} ({{ event_key|upper }})</label>
+                                        <label for="evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
                                     {% endfor %}
                                 </div>
                                 <div class="form-hint">Select one or more campaign types to compare.</div>
@@ -235,7 +235,7 @@
                                 <div class="pills-container">
                                     {% for event_key, event_val in EVENT_MAP.items() %}
                                         <input type="radio" name="health_event_type" value="{{ event_key }}" id="health-evt-{{ event_key }}" class="pill-checkbox" {% if event_key == 'wlm' %}checked{% endif %} onchange="syncHealthBuilderToCode()">
-                                        <label for="health-evt-{{ event_key }}" class="pill-label">Wiki Loves {{ event_val }} ({{ event_key|upper }})</label>
+                                        <label for="health-evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
                                     {% endfor %}
                                 </div>
                                 <div class="form-hint">Select the Wikimedia campaign program to audit.</div>
@@ -486,10 +486,10 @@
                                 <label class="form-label">Campaign Type</label>
                                 <div class="pill-group" id="influx-event-group">
                                     <input type="radio" name="influx_event_type" value="all" id="influx-evt-all" class="pill-checkbox" {% if influx_event_type == 'all' %}checked{% endif %} onchange="syncInfluxBuilder()">
-                                    <label for="influx-evt-all" class="pill-label" style="font-weight: 600; border-color: var(--nav-accent); background: #f0fdf4;">🌟 All Campaigns Combined (Ecosystem Overview)</label>
+                                    <label for="influx-evt-all" class="pill-label">All Campaigns</label>
                                     {% for event_key, event_val in EVENT_MAP.items() %}
                                         <input type="radio" name="influx_event_type" value="{{ event_key }}" id="influx-evt-{{ event_key }}" class="pill-checkbox" {% if influx_event_type == event_key or (not influx_event_type and event_key == 'wlm') %}checked{% endif %} onchange="syncInfluxBuilder()">
-                                        <label for="influx-evt-{{ event_key }}" class="pill-label">Wiki Loves {{ event_val }} ({{ event_key|upper }})</label>
+                                        <label for="influx-evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
                                     {% endfor %}
                                 </div>
                             </div>
@@ -501,7 +501,7 @@
                                     <select id="influx_country" name="influx_country" class="form-control" onchange="syncInfluxBuilder()">
                                         {% for c_code in COUNTRY_OPTIONS %}
                                             <option value="{{ c_code }}" {% if influx_country == c_code or (not influx_country and c_code == 'de') %}selected{% endif %}>
-                                                {{ COUNTRY_MAP[c_code]|replace('_', ' ') }} ({{ c_code|upper }})
+                                                {{ COUNTRY_MAP[c_code]|replace('_', ' ') }}
                                             </option>
                                         {% endfor %}
                                     </select>
@@ -521,7 +521,7 @@
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label for="influx_codes" class="form-label">Generated Campaign Sequence</label>
                                 <input type="text" id="influx_codes" name="influx_codes" class="form-control form-control-code" value="{{ influx_codes|default('wlmde20 wlmde21 wlmde22 wlmde23 wlmde24') }}" placeholder="e.g. wlmde20 wlmde21 wlmde22 wlmde23 wlmde24">
-                                <div class="form-hint">Space-separated list of chronological campaign editions or <code>all[country][year]</code> composite codes.</div>
+                                <div class="form-hint">Chronological campaign sequence to evaluate.</div>
                             </div>
 
                             <button type="submit" class="btn-primary" style="width: auto;">
@@ -537,27 +537,27 @@
                                 <div class="preset-tags">
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'bd', 2020, 2024)">
                                         allbd20 ... allbd24
-                                        <span class="preset-tag-label">All Campaigns · Bangladesh (5 Years)</span>
+                                        <span class="preset-tag-label">All Campaigns · Bangladesh</span>
                                     </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'de', 2020, 2024)">
                                         allde20 ... allde24
-                                        <span class="preset-tag-label">All Campaigns · Germany (5 Years)</span>
+                                        <span class="preset-tag-label">All Campaigns · Germany</span>
                                     </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wla', 'ng', 2020, 2024)">
                                         wlang20 ... wlang24
-                                        <span class="preset-tag-label">WL Africa Nigeria (5 Years)</span>
+                                        <span class="preset-tag-label">Africa · Nigeria</span>
                                     </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlm', 'de', 2020, 2024)">
                                         wlmde20 ... wlmde24
-                                        <span class="preset-tag-label">WLM Germany (5 Years)</span>
+                                        <span class="preset-tag-label">Monuments · Germany</span>
                                     </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wle', 'in', 2020, 2024)">
                                         wlein20 ... wlein24
-                                        <span class="preset-tag-label">WLE India (5 Years)</span>
+                                        <span class="preset-tag-label">Earth · India</span>
                                     </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlf', 'it', 2020, 2024)">
                                         wlfit20 ... wlfit24
-                                        <span class="preset-tag-label">WLF Italy (5 Years)</span>
+                                        <span class="preset-tag-label">Folklore · Italy</span>
                                     </button>
                                 </div>
                             </div>

@@ -112,10 +112,10 @@ def influx():
                 else:
                     country_name = COUNTRY_MAP.get(country, country.upper()).replace('_', ' ')
                     if event_type == 'all':
-                        chart_title = f"All Campaigns Combined ({country_name}) — Contributor Influx & Growth"
+                        chart_title = f"All Campaigns · {country_name}"
                     else:
                         event_name = EVENT_MAP.get(event_type, event_type.upper())
-                        chart_title = f"Wiki Loves {event_name} ({country_name}) — Contributor Influx & Growth"
+                        chart_title = f"Wiki Loves {event_name} · {country_name}"
                     fig = analytics.create_influx_barchart(influx_result['records'], title=chart_title)
                     chart_b64 = fig_to_base64(fig)
             except Exception as e:

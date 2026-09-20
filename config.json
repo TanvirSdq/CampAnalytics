@@ -7,26 +7,26 @@
     "wlb": "Bangla",
     "wlp": "Pride",
     "wlfood": "Food",
-    "wlpa": "Public_Art",
-    "wllh": "Living_Heritage",
+    "wlpa": "Public Art",
+    "wllh": "Living Heritage",
     "wls": "Sport",
     "wlbf": "Butterfly",
     "wlbirds": "Birds"
   },
   "EVENT_DISPLAY_MAP": {
-    "all": "All Campaigns Combined (Ecosystem Overview)",
-    "wlm": "Wiki Loves Monuments (WLM)",
-    "wle": "Wiki Loves Earth (WLE)",
-    "wlf": "Wiki Loves Folklore (WLF)",
-    "wla": "Wiki Loves Africa (WLA)",
-    "wlb": "Wiki Loves Bangla (WLB)",
-    "wlp": "Wiki Loves Pride (WLP)",
-    "wlfood": "Wiki Loves Food (WLFood)",
-    "wlpa": "Wiki Loves Public Art (WLPA)",
-    "wllh": "Wiki Loves Living Heritage (WLLH)",
-    "wls": "Wiki Loves Sport (WLS)",
-    "wlbf": "Wiki Loves Butterfly (WLBF)",
-    "wlbirds": "Wiki Loves Birds (WLBirds)"
+    "all": "All Campaigns",
+    "wlm": "Wiki Loves Monuments",
+    "wle": "Wiki Loves Earth",
+    "wlf": "Wiki Loves Folklore",
+    "wla": "Wiki Loves Africa",
+    "wlb": "Wiki Loves Bangla",
+    "wlp": "Wiki Loves Pride",
+    "wlfood": "Wiki Loves Food",
+    "wlpa": "Wiki Loves Public Art",
+    "wllh": "Wiki Loves Living Heritage",
+    "wls": "Wiki Loves Sport",
+    "wlbf": "Wiki Loves Butterfly",
+    "wlbirds": "Wiki Loves Birds"
   },
   "COUNTRY_MAP": {
     "bd": "Bangladesh", "in": "India", "de": "Germany", "it": "Italy",
@@ -44,14 +44,14 @@
     "cz": "Czech_Republic", "ro": "Romania", "hu": "Hungary"
   },
   "REGION_COUNTRY_MAPPING": {
-    "South Asia (SA)": ["bd", "in", "pk", "np", "lk"],
-    "East, Southeast Asia, Pacific (ESEAP)": ["id", "ph", "my", "au", "nz", "th"],
-    "Northern & Western Europe (NWE)": ["de", "fr", "uk", "nl", "se", "no", "fi", "be", "at", "ch"],
-    "Southern Europe (SE)": ["it", "es", "pt", "gr"],
-    "Central & Eastern Europe (CEE)": ["pl", "ua", "ru", "cz", "ro", "hu"],
-    "Middle East & North Africa (MENA)": ["tr", "eg", "tn", "ma", "dz"],
-    "Latin America & Caribbean (LAC)": ["br", "mx", "ar", "co", "pe", "cl", "ve"],
-    "Sub-Saharan Africa (SSA)": ["ng", "ke", "za", "gh", "tz"],
-    "North America (NA)": ["us", "ca"]
+    "South Asia": ["bd", "in", "pk", "np", "lk"],
+    "East, Southeast Asia, Pacific": ["id", "ph", "my", "au", "nz", "th"],
+    "Northern & Western Europe": ["de", "fr", "uk", "nl", "se", "no", "fi", "be", "at", "ch"],
+    "Southern Europe": ["it", "es", "pt", "gr"],
+    "Central & Eastern Europe": ["pl", "ua", "ru", "cz", "ro", "hu"],
+    "Middle East & North Africa": ["tr", "eg", "tn", "ma", "dz"],
+    "Latin America & Caribbean": ["br", "mx", "ar", "co", "pe", "cl", "ve"],
+    "Sub-Saharan Africa": ["ng", "ke", "za", "gh", "tz"],
+    "North America": ["us", "ca"]
   }
 }

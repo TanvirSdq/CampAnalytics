@@ -670,7 +670,7 @@ class CampaignSuiteTestCase(unittest.TestCase):
             })
             self.assertEqual(res_post.status_code, 200)
             html = res_post.data.decode('utf-8')
-            self.assertIn('All Campaigns Combined', html)
+            self.assertIn('All Campaigns', html)
             self.assertIn('Year-over-Year Influx Breakdown Data Table', html)
             self.assertIn('Cumulative Community Footprint', html)
 
