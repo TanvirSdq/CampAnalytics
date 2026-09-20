@@ -26,6 +26,7 @@ from analytics import (
     get_participants,
     compute_yoy_influx,
     create_influx_plotly_chart,
+    get_campaign_scope_notice,
 )
 
 from app_config import (
@@ -227,6 +228,9 @@ with st.sidebar:
             format_func=country_display_name,
             key="influx_country"
         )
+        scope_notice_sb = get_campaign_scope_notice(influx_event, influx_country)
+        if scope_notice_sb:
+            st.caption(f"ℹ️ {scope_notice_sb}")
         influx_years = st.slider(
             "Year Span",
             2010, 2040, (2020, 2024),
@@ -480,7 +484,19 @@ elif app_mode == "Retention Analytics":
 
     if results is not None:
         if not results:
-            st.info("No comparative vectors resolved. Verify that overlapping temporal pairs exist for your selected countries.")
+            raw_input = user_input.strip() or EXAMPLE_CODES
+            scope_notices = []
+            for c in raw_input.split():
+                m = CODE_RE.match(c.lower())
+                if m:
+                    sn = get_campaign_scope_notice(m.group(1), m.group(2))
+                    if sn and sn not in scope_notices:
+                        scope_notices.append(sn)
+            if scope_notices:
+                for sn in scope_notices:
+                    st.info(sn)
+            else:
+                st.info("No comparative vectors resolved. Verify that overlapping temporal pairs exist for your selected countries.")
         else:
             st.markdown("---")
             total_events = sum(len(events) for events in results.values())
@@ -546,12 +562,16 @@ elif app_mode == "Health Evaluation":
             if not target_users:
                 missing_campaigns.append(f"target campaign {target_event.upper()}")
             if missing_campaigns:
-                st.warning(
-                    "No participants were found for the "
-                    + " and ".join(missing_campaigns)
-                    + ". The campaign may not have taken place, or its participant data "
-                      "is not available, so a health score cannot be calculated."
-                )
+                scope_notice = get_campaign_scope_notice(event_type, target_cc)
+                if scope_notice:
+                    st.info(scope_notice)
+                else:
+                    st.warning(
+                        "No participants were found for the "
+                        + " and ".join(missing_campaigns)
+                        + ". The campaign may not have taken place, or its participant data "
+                          "is not available, so a health score cannot be calculated."
+                    )
                 st.stop()
             
             # Sort peers transparently based on verified registration footprint volumes
@@ -722,7 +742,11 @@ elif app_mode == "New User Influx":
         st.info("System Initialized. Configure your multi-year campaign sequence in the sidebar and click **Evaluate Influx Trends** to begin.")
     else:
         if not influx_data['records'] or all(r['total_active'] == 0 for r in influx_data['records']):
-            st.info("No participant records identified for this sequence on Wikimedia Commons.")
+            scope_notice = get_campaign_scope_notice(influx_event, influx_country)
+            if scope_notice:
+                st.info(scope_notice)
+            else:
+                st.info("No participant records identified for this sequence on Wikimedia Commons.")
         else:
             summary = influx_data['summary']
             lifecycle = influx_data['lifecycle']

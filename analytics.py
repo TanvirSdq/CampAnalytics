@@ -95,6 +95,39 @@ QUALITY_IMAGE_KEYWORDS = (
 def country_display_name(cc):
     return COUNTRY_MAP.get(cc, cc).replace('_', ' ')
 
+def get_campaign_scope_notice(event, country_code=None):
+    """
+    Returns a contextual notice when a campaign is evaluated for an out-of-scope country.
+    Returns None if the country is within the campaign's documented geographic scope.
+    """
+    if not event or event == 'all':
+        return None
+    scope = EVENT_COUNTRY_SCOPE.get(event, '*')
+    if scope == '*':
+        return None
+
+    country_name = COUNTRY_MAP.get(country_code, country_code.upper() if country_code else 'this region').replace('_', ' ')
+
+    if event == 'wlb':
+        allowed = scope.get('countries', ['bd', 'in']) if isinstance(scope, dict) else scope
+        if country_code and country_code not in allowed:
+            return (
+                f"Wiki Loves Bangla is a linguistic and cultural campaign dedicated to the global Bengali community "
+                f"(primarily Bangladesh and India). It does not hold separate national editions in {country_name}."
+            )
+    elif event == 'wla':
+        allowed = scope if isinstance(scope, list) else []
+        if country_code and country_code not in allowed:
+            return (
+                f"Wiki Loves Africa is a continental initiative organized exclusively within African nations. "
+                f"It does not operate national competitions in {country_name}."
+            )
+    elif isinstance(scope, list) and country_code and country_code not in scope:
+        event_title = EVENT_MAP.get(event, event.upper())
+        return f"Wiki Loves {event_title} does not operate official editions in {country_name}."
+
+    return None
+
 def code_to_category(code):
     code = re.sub(r'\s+', '', code).lower()
     match = CODE_RE.match(code)

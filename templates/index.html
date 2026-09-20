@@ -266,7 +266,7 @@
                                     <span style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">(Auto-assembled from selection or editable)</span>
                                 </label>
                                 <input type="text" id="target_event" name="target_event" value="{{ target_event if target_event else 'wlmbd24' }}" placeholder="e.g., wlmbd24" class="form-control form-control-code" required oninput="parseCodeToHealthBuilder()">
-                                <div class="form-hint">Standard event code syntax: prefix (wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmbd24, wlede22, wlang23).</div>
+                                <div class="form-hint" id="health-scope-hint">Standard event code syntax: prefix (wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmbd24, wlede22, wlang23).</div>
                             </div>
 
                             <div class="form-group">
@@ -521,7 +521,7 @@
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label for="influx_codes" class="form-label">Generated Campaign Sequence</label>
                                 <input type="text" id="influx_codes" name="influx_codes" class="form-control form-control-code" value="{{ influx_codes|default('wlmde20 wlmde21 wlmde22 wlmde23 wlmde24') }}" placeholder="e.g. wlmde20 wlmde21 wlmde22 wlmde23 wlmde24">
-                                <div class="form-hint">Chronological campaign sequence to evaluate.</div>
+                                <div class="form-hint" id="influx-scope-hint">Chronological campaign sequence to evaluate.</div>
                             </div>
 
                             <button type="submit" class="btn-primary" style="width: auto;">
@@ -937,6 +937,27 @@
     {# ====================================================================== #}
     <script>
         const ALL_COUNTRY_CODES = {{ COUNTRY_OPTIONS | tojson }};
+        const EVENT_SCOPE_MAP = {{ EVENT_COUNTRY_SCOPE | tojson }};
+        const COUNTRY_NAME_MAP = {{ COUNTRY_MAP | tojson }};
+
+        function getScopeNoticeJS(evt, cc) {
+            if (!evt || evt === 'all' || !cc) return null;
+            const scope = EVENT_SCOPE_MAP[evt];
+            if (!scope || scope === '*') return null;
+            const cName = (COUNTRY_NAME_MAP[cc] || cc.toUpperCase()).replace(/_/g, ' ');
+            if (evt === 'wlb') {
+                const allowed = (scope && typeof scope === 'object' && scope.countries) ? scope.countries : scope;
+                if (!allowed.includes(cc)) {
+                    return `Wiki Loves Bangla is dedicated to the global Bengali community (primarily Bangladesh and India). It does not hold separate national editions in ${cName}.`;
+                }
+            } else if (evt === 'wla') {
+                const allowed = Array.isArray(scope) ? scope : [];
+                if (!allowed.includes(cc)) {
+                    return `Wiki Loves Africa is a continental initiative organized exclusively within African nations. It does not operate national competitions in ${cName}.`;
+                }
+            }
+            return null;
+        }
 
         // Select All Countries helper (Global analysis)
         function selectAllCountries() {
@@ -1089,6 +1110,16 @@
                         }
                     }
                 }
+
+                const healthHint = document.getElementById('health-scope-hint');
+                if (healthHint) {
+                    const notice = getScopeNoticeJS(evt, cc);
+                    if (notice) {
+                        healthHint.innerHTML = '<span style="color: #d97706; font-weight: 500;">ℹ️ ' + notice + '</span>';
+                    } else {
+                        healthHint.innerText = 'Standard event code syntax: prefix (wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmbd24, wlede22, wlang23).';
+                    }
+                }
             }
         }
 
@@ -1207,6 +1238,16 @@
             const codesInput = document.getElementById('influx_codes');
             if (codesInput) {
                 codesInput.value = codes.join(' ');
+            }
+
+            const influxHint = document.getElementById('influx-scope-hint');
+            if (influxHint) {
+                const notice = getScopeNoticeJS(evt, cc);
+                if (notice) {
+                    influxHint.innerHTML = '<span style="color: #d97706; font-weight: 500;">ℹ️ ' + notice + '</span>';
+                } else {
+                    influxHint.innerText = 'Chronological campaign sequence to evaluate.';
+                }
             }
         }
 

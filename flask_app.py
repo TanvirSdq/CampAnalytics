@@ -109,7 +109,8 @@ def influx():
             try:
                 influx_result = analytics.compute_yoy_influx(valid_codes)
                 if not influx_result['records'] or all(r['total_active'] == 0 for r in influx_result['records']):
-                    error = "No participant records found for the selected campaign series on Wikimedia Commons."
+                    scope_notice = analytics.get_campaign_scope_notice(event_type, country)
+                    error = scope_notice if scope_notice else "No participant records found for the selected campaign series on Wikimedia Commons."
                 else:
                     country_name = COUNTRY_MAP.get(country, country.upper()).replace('_', ' ')
                     if event_type == 'all':
@@ -187,7 +188,18 @@ def retention():
         valid_countries = {code: events for code, events in country_events.items() if len(events) >= 2}
 
         if not valid_countries:
-            error = "No comparative vectors resolved. Verify that at least two overlapping temporal editions exist for your selected countries."
+            scope_notices = []
+            for c in valid:
+                m = CODE_RE.match(c)
+                if m:
+                    e, cc, _ = m.groups()
+                    sn = analytics.get_campaign_scope_notice(e, cc)
+                    if sn and sn not in scope_notices:
+                        scope_notices.append(sn)
+            if scope_notices:
+                error = " ".join(scope_notices)
+            else:
+                error = "No comparative vectors resolved. Verify that at least two overlapping temporal editions exist for your selected countries."
         else:
             if view_mode == 'Table':
                 df = analytics.build_global_table(valid_countries)
@@ -279,7 +291,11 @@ def health():
                 base_users = all_fetched_data.get(baseline_event.lower(), set())
 
                 if not base_users or not target_users:
-                    error = f"Data acquisition notice: Could not retrieve participant data for baseline ({baseline_event}) or target ({target_event}). Please verify the campaign codes or network connectivity."
+                    scope_notice = analytics.get_campaign_scope_notice(event_type, target_cc)
+                    if scope_notice:
+                        error = scope_notice
+                    else:
+                        error = f"Data acquisition notice: Could not retrieve participant data for baseline ({baseline_event}) or target ({target_event}). Please verify the campaign codes or network connectivity."
                 else:
                     target_users_count = len(target_users)
                     base_users_count = len(base_users)

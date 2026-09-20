@@ -6,7 +6,6 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
 [![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0%2B-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-2.0.html)
 [![Affiliation: Project Korikath](https://img.shields.io/badge/Affiliation-Project%20Korikath-183f54?style=flat-square)](https://meta.wikimedia.org/wiki/Project_Korikath)
-[![Test Suite: 33 Passing](https://img.shields.io/badge/tests-33%20passed-success.svg?style=flat-square)](tests/test_app.py)
 
 ---
 
@@ -202,24 +201,6 @@ Visit: `http://localhost:8501`
 
 ---
 
-## Automated Test Suite
-
-```bash
-PYTHONPATH=. python3 tests/test_app.py
-```
-
-```
-.................................
-----------------------------------------------------------------------
-Ran 33 tests in ~0.5s
-
-OK
-```
-
-The suite covers route correctness, input normalization, GLAMtools CSS compliance, regional calibration, scope filtering, Commons category name resolution, ecosystem aggregation, and chart generation.
-
----
-
 ## Toolforge Deployment
 
 ```bash
@@ -241,19 +222,17 @@ CampAnalytics/
 ├── streamlit_app.py         # Streamlit interactive dashboard
 ├── analytics.py             # Core engine: caching, Commons API, math, charts
 ├── app_config.py            # Global palette and settings
-├── config.json              # 12 campaigns · 51 countries · 9 regional clusters
+├── config.json              # 5 campaigns · 51 countries · 9 regional clusters
 │                            #   EVENT_MAP · EVENT_DISPLAY_MAP
-│                            #   EVENT_COUNTRY_SCOPE · CATEGORY_NAME_OVERRIDE
-│                            #   COUNTRY_MAP · REGION_COUNTRY_MAPPING
+│                            #   EVENT_COUNTRY_SCOPE · COUNTRY_MAP
+│                            #   REGION_COUNTRY_MAPPING
 ├── styles.css               # Flask GLAMtools stylesheet
 ├── streamlit_styles.css     # Streamlit theme and sidebar stylesheet
 ├── Procfile                 # Web process definition
 ├── requirements.txt         # Python dependencies
-├── templates/
-│   ├── base.html            # Layout shell, top navbar, Project Korikath brand
-│   └── index.html           # 4-mode suite: Retention · Health · Influx · Methodology
-└── tests/
-    └── test_app.py          # 33 regression, influx, and unit test cases
+└── templates/
+    ├── base.html            # Layout shell, top navbar, Project Korikath brand
+    └── index.html           # 4-mode suite: Retention · Health · Influx · Methodology
 ```
 
 ---
