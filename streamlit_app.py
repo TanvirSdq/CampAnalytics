@@ -6,8 +6,6 @@ import numpy as np
 import streamlit as st
 
 from analytics import (
-    add_codes_from_selectors,
-    clear_code_input,
     CODE_RE,
     COUNTRY_MAP,
     COUNTRY_OPTIONS,
@@ -25,9 +23,6 @@ from analytics import (
     generate_health_metrics,
     generate_insights,
     get_participants,
-    render_heatmap_view,
-    render_table_view,
-    render_worldmap_view,
 )
 
 from app_config import (
@@ -49,6 +44,78 @@ CUSTOM_CSS = get_custom_css()
 st.markdown(f"<style>{CUSTOM_CSS}</style>", unsafe_allow_html=True)
 
 # --- MAPS & CONSTANTS ---
+
+def add_codes_from_selectors():
+    sel_events = st.session_state.get("sel_events", [])
+    sel_countries = st.session_state.get("sel_countries", [])
+    yr_start, yr_end = st.session_state.get("yr_range", (2021, 2023))
+
+    if not sel_events or not sel_countries:
+        st.toast("Select at least one event type and one target country.", icon="⚠️")
+        return
+
+    new_codes = []
+    for event in sel_events:
+        for country in sel_countries:
+            for yr in range(yr_start, yr_end + 1):
+                new_codes.append(f"{event}{country}{yr % 100:02d}")
+
+    existing = st.session_state.get("code_input", "").split()
+    merged = existing + [c for c in new_codes if c not in existing]
+    st.session_state.code_input = " ".join(merged)
+    st.toast(f"Merged {len(new_codes)} validation vectors.")
+
+def clear_code_input():
+    st.session_state.code_input = ""
+    st.toast("Input registry cleared.")
+
+import io
+import matplotlib.pyplot as plt
+
+def _figure_to_png(fig):
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format="png", dpi=200, bbox_inches="tight")
+    buffer.seek(0)
+    return buffer
+
+def render_heatmap_view(valid_countries):
+    cols = st.columns(2)
+    for idx, (country_code, events) in enumerate(valid_countries.items()):
+        fig = create_heatmap(events, COUNTRY_MAP.get(country_code, country_code))
+        with cols[idx % 2]:
+            with st.container(border=True):
+                st.pyplot(fig, use_container_width=True, clear_figure=True)
+                png_bytes = _figure_to_png(fig)
+                st.download_button(
+                    "Download heatmap image",
+                    data=png_bytes,
+                    file_name=f"{country_code}_retention_heatmap.png",
+                    mime="image/png",
+                    use_container_width=True,
+                )
+                plt.close(fig)
+
+def render_table_view(valid_countries):
+    table_df = build_global_table(valid_countries)
+    if table_df.empty:
+        st.info("Insufficient longitudinal data found to populate records.")
+        return
+    st.dataframe(table_df, use_container_width=True)
+    csv_bytes = table_df.to_csv(index=True, index_label="Rank").encode("utf-8")
+    st.download_button(
+        "Download Data Array (CSV)", data=csv_bytes,
+        file_name="wikimedia_retention_suite.csv", mime="text/csv"
+    )
+
+def render_worldmap_view(valid_countries):
+    metric_choice = st.radio("Metric Vector Selection", ["Average", "Median"], horizontal=True, key="worldmap_metric")
+    world_df = build_world_data(valid_countries, metric_choice)
+    if world_df.empty:
+        st.info("Geographic coordinates unavailable for the current selection.")
+        return
+    fig = create_worldmap(world_df, metric_choice)
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(world_df, use_container_width=True, hide_index=True)
 
 # --- SESSION STATE INITIALIZATION ---
 if "code_input" not in st.session_state:

@@ -4,6 +4,7 @@ from pathlib import Path
 PAGE_TITLE = "Campaign Analytics"
 PAGE_ICON = "📊"
 LAYOUT = "wide"
+INITIAL_SIDEBAR_STATE = "expanded"
 
 # --- DISTINCTIVE REFINED TOOL PALETTE ---
 NAV_TEAL = "#183f54"
