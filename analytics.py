@@ -44,7 +44,7 @@ CATEGORY_NAME_OVERRIDE = config.get('CATEGORY_NAME_OVERRIDE', {})
 COUNTRY_MAP = config['COUNTRY_MAP']
 REGION_COUNTRY_MAPPING = config['REGION_COUNTRY_MAPPING']
 
-CODE_RE = re.compile(r'^(all|wlfood|wlbirds|wllh|wlpa|wlbf|wlf|wle|wlm|wlb|wla|wlp|wls)([a-z]{0,2})(\d{2})$')
+CODE_RE = re.compile(r'^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$')
 EXAMPLE_CODES = "wlmde21 wlmde22 wlmbd22 wlmbd23"
 COUNTRY_OPTIONS = sorted(COUNTRY_MAP.keys(), key=lambda k: COUNTRY_MAP[k])
 

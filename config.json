@@ -4,14 +4,7 @@
     "wle": "Earth",
     "wlf": "Folklore",
     "wla": "Africa",
-    "wlb": "Bangla",
-    "wlp": "Pride",
-    "wlfood": "Food",
-    "wlpa": "Public Art",
-    "wllh": "Living Heritage",
-    "wls": "Sport",
-    "wlbf": "Butterfly",
-    "wlbirds": "Birds"
+    "wlb": "Bangla"
   },
   "EVENT_DISPLAY_MAP": {
     "all": "All Campaigns",
@@ -19,32 +12,16 @@
     "wle": "Wiki Loves Earth",
     "wlf": "Wiki Loves Folklore",
     "wla": "Wiki Loves Africa",
-    "wlb": "Wiki Loves Bangla",
-    "wlp": "Wiki Loves Pride",
-    "wlfood": "Wiki Loves Food",
-    "wlpa": "Wiki Loves Public Art",
-    "wllh": "Wiki Loves Living Heritage",
-    "wls": "Wiki Loves Sport",
-    "wlbf": "Wiki Loves Butterfly",
-    "wlbirds": "Wiki Loves Birds"
+    "wlb": "Wiki Loves Bangla"
   },
   "EVENT_COUNTRY_SCOPE": {
     "wlm": "*",
     "wle": "*",
     "wlf": "*",
     "wla": ["ng", "ke", "za", "gh", "tz", "eg", "tn", "ma", "dz", "sn", "ci", "rw", "ug"],
-    "wlb": {"countries": ["bd", "in"], "no_country_suffix": true},
-    "wlp": {"countries": ["de", "fr", "nl", "be", "se", "no", "fi", "uk", "us", "ca", "au", "nz", "it", "es", "at", "ch", "br", "ar", "pl"], "no_country_suffix": true},
-    "wlfood": {"countries": ["in", "id", "pk", "np", "bd", "tr", "it", "es", "ng", "ke", "eg"], "no_country_suffix": true},
-    "wlpa": ["rs", "in", "es", "fr", "pl", "ua", "ru", "br", "mx", "nl", "be", "at"],
-    "wllh": ["in", "id", "ph", "my", "th", "bd", "pk", "np", "lk", "ke", "ng"],
-    "wls": {"countries": ["ng", "in", "pk", "bd", "id", "ph", "ke"], "no_country_suffix": true},
-    "wlbf": {"countries": ["in", "bd"], "no_country_suffix": true},
-    "wlbirds": {"countries": ["in", "bd", "pk", "np", "lk", "id", "ph", "ke", "za", "ng", "au"], "no_country_suffix": true}
+    "wlb": {"countries": ["bd", "in"], "no_country_suffix": true}
   },
-  "CATEGORY_NAME_OVERRIDE": {
-    "wlpa": "Public_Art_and_Cemeteries"
-  },
+  "CATEGORY_NAME_OVERRIDE": {},
   "COUNTRY_MAP": {
     "bd": "Bangladesh", "in": "India", "de": "Germany", "it": "Italy",
     "fr": "France", "us": "United_States", "ca": "Canada", "uk": "United_Kingdom",

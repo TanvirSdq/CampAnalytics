@@ -612,18 +612,13 @@ class CampaignSuiteTestCase(unittest.TestCase):
         self.assertEqual(len(fig.data), 3) # New, Returning, Cumulative line
 
     def test_new_wiki_loves_events_taxonomy(self):
-        """Test category resolution for newly added Wiki Loves campaigns."""
+        """Test category resolution for supported Wiki Loves campaigns."""
         self.assertEqual(analytics.code_to_category('wlang22'), 'Images_from_Wiki_Loves_Africa_2022_in_Nigeria')
-        # Food uses year-only category (no per-country Commons category)
-        self.assertEqual(analytics.code_to_category('wlfood22'), 'Images_from_Wiki_Loves_Food_2022')
-        # Sport uses year-only category
-        self.assertEqual(analytics.code_to_category('wls24'), 'Images_from_Wiki_Loves_Sport_2024')
-        # Countryless campaign codes remain canonical even when a country is supplied.
-        self.assertEqual(analytics.code_to_category('wlpbd24'), 'Images_from_Wiki_Loves_Pride_2024')
-        self.assertEqual(analytics.code_to_category('wlbirdsbd24'), 'Images_from_Wiki_Loves_Birds_2024')
-        # Public Art renamed to "Public Art and Cemeteries" on Commons
-        self.assertEqual(analytics.code_to_category('wlpars24'), 'Images_from_Wiki_Loves_Public_Art_and_Cemeteries_2024_in_Serbia')
-        self.assertEqual(analytics.code_to_category('wllhin23'), 'Images_from_Wiki_Loves_Living_Heritage_2023_in_India')
+        self.assertEqual(analytics.code_to_category('wlmbd24'), 'Images_from_Wiki_Loves_Monuments_2024_in_Bangladesh')
+        self.assertEqual(analytics.code_to_category('wlede22'), 'Images_from_Wiki_Loves_Earth_2022_in_Germany')
+        self.assertEqual(analytics.code_to_category('wlfde22'), 'Images_from_Wiki_Loves_Folklore_2022_in_Germany')
+        self.assertEqual(analytics.code_to_category('wlbbd24'), 'Images_from_Wiki_Loves_Bangla_2024')
+        self.assertEqual(analytics.code_to_category('wlb24'), 'Images_from_Wiki_Loves_Bangla_2024')
         # Composite pseudo-event 'all' should resolve to None for category
         self.assertIsNone(analytics.code_to_category('allbd22'))
 

@@ -266,7 +266,7 @@
                                     <span style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">(Auto-assembled from selection or editable)</span>
                                 </label>
                                 <input type="text" id="target_event" name="target_event" value="{{ target_event if target_event else 'wlmbd24' }}" placeholder="e.g., wlmbd24" class="form-control form-control-code" required oninput="parseCodeToHealthBuilder()">
-                                <div class="form-hint">Campaign code: prefix + optional country code + 2-digit year. Countryless campaigns such as wlp and wlfood use year-only codes (e.g. wlp24); country editions use codes such as wlmbd24 or wlede22.</div>
+                                <div class="form-hint">Standard event code syntax: prefix (wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmbd24, wlede22, wlang23).</div>
                             </div>
 
                             <div class="form-group">
@@ -803,7 +803,7 @@
                     The Retention Analytics interface evaluates participant continuity between successive campaign editions and cross-event contributor migration:
                 </p>
                 <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
-                    <li><strong>Campaign Selection:</strong> Select one or more configured Wiki Loves campaigns. Country editions use codes such as <code>wlmbd24</code>; countryless campaigns such as Wiki Loves Pride and Wiki Loves Food use year-only codes such as <code>wlp24</code>.</li>
+                    <li><strong>Campaign Selection:</strong> Select one or more configured Wiki Loves campaigns (such as Monuments, Earth, Folklore, Africa, or Bangla). Query codes follow the standard format <code>[event][country][year]</code> (e.g. <code>wlmbd24</code>, <code>wlede22</code>).</li>
                     <li><strong>Geographic &amp; Temporal Parameters:</strong> Select a target country, regional cluster, or all available countries, and define the longitudinal year span. Target query codes are automatically synchronized.</li>
                     <li><strong>Quick Presets:</strong> Pre-configured comparison vectors are available in the presets panel for common evaluation pairs.</li>
                     <li><strong>Analytical Projection:</strong> Choose the desired output format:
@@ -820,7 +820,7 @@
                     The Health Evaluation module computes a multi-dimensional health index (0–100) relative to contemporary regional peer performance:
                 </p>
                 <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
-                    <li><strong>Target Campaign Code:</strong> Provide the standardized identifier for the evaluated edition. Country editions use <code>event + country + year</code> (for example, <code>wlmbd24</code>); countryless editions use <code>event + year</code> (for example, <code>wlp24</code>).</li>
+                    <li><strong>Target Campaign Code:</strong> Provide the standardized identifier for the evaluated edition (for example, <code>wlmbd24</code> or <code>wlede22</code>).</li>
                     <li><strong>Baseline Reference:</strong> Designate either the automated previous-year edition or specify a custom comparison code. Both target and baseline cohorts must contain valid participant data.</li>
                     <li><strong>Geographic Standardization Framework:</strong> Assign the appropriate regional cluster (e.g., South Asia, Northern &amp; Western Europe, ESEAP). Dynamic benchmark norms are calculated from the top regional performers in that cluster.</li>
                     <li><strong>Evaluation Output:</strong> Review the weighted composite scorecard (0–100), categorical star ratings, quantitative cohort footprints, and automated diagnostic insights.</li>
@@ -831,7 +831,7 @@
                     The Influx Analytics module assesses continuous community renewal and long-term mobilization:
                 </p>
                 <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
-                    <li><strong>Series Selection:</strong> Choose a campaign type, country where applicable, and consecutive year span (e.g. 2020–2024). The builder automatically omits the country segment for countryless campaigns.</li>
+                    <li><strong>Series Selection:</strong> Choose a campaign type (or All Campaigns), country, and consecutive year span (e.g. 2020–2024).</li>
                     <li><strong>Newcomer Detection:</strong> Differentiates first-time participants (\(I_t\)) from returning veterans (\(R_t\)) across the series.</li>
                     <li><strong>Trend Visualizations:</strong> Reviews stacked volume bars, net expansion growth rates (\(\Delta \text{YoY}\)), and cumulative community pool milestones.</li>
                 </ol>
@@ -877,7 +877,7 @@
                         U_t = \bigcup_{e \in E} U_{e, t}, \quad I_t = U_t \setminus \bigcup_{j < t} U_j, \quad R_t = U_t \cap \bigcup_{j < t} U_j
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
-                        Where \(E = \{\text{WLM}, \text{WLE}, \text{WLF}, \text{WLA}, \text{WLB}, \text{WLP}, \text{WLFood}, \text{WLPA}, \text{WLLH}, \text{WLS}, \dots\}\). Contributor cross-participation across contests is de-duplicated, measuring the total net new individuals brought into the Wikimedia movement annually.
+                        Where \(E = \{\text{WLM}, \text{WLE}, \text{WLF}, \text{WLA}, \text{WLB}\}\). Contributor cross-participation across contests is de-duplicated, measuring the total net new individuals brought into the Wikimedia movement annually.
                     </p>
                 </div>
 
@@ -937,12 +937,6 @@
     {# ====================================================================== #}
     <script>
         const ALL_COUNTRY_CODES = {{ COUNTRY_OPTIONS | tojson }};
-        const EVENT_COUNTRY_SCOPE = {{ EVENT_COUNTRY_SCOPE | tojson }};
-        const COUNTRYLESS_EVENTS = new Set(
-            Object.entries(EVENT_COUNTRY_SCOPE)
-                .filter(([, scope]) => scope && typeof scope === 'object' && scope.no_country_suffix)
-                .map(([event]) => event)
-        );
 
         // Select All Countries helper (Global analysis)
         function selectAllCountries() {
@@ -999,9 +993,7 @@
                     for (const cc of targetCountries) {
                         for (let yr = yrStart; yr <= yrEnd; yr++) {
                             const yy = String(yr % 100).padStart(2, '0');
-                            const code = COUNTRYLESS_EVENTS.has(evt)
-                                ? evt + yy
-                                : evt + cc.trim().toLowerCase() + yy;
+                            const code = evt + cc.trim().toLowerCase() + yy;
                             if (!generatedCodes.includes(code)) {
                                 generatedCodes.push(code);
                             }
@@ -1023,7 +1015,7 @@
             }
             const codesArr = codes.trim().split(/\s+/);
             if (codesArr.length > 0) {
-                const match = codesArr[0].match(/^(all|wlfood|wlbirds|wllh|wlpa|wlbf|wlf|wle|wlm|wlb|wla|wlp|wls)([a-z]{0,2})(\d{2})/);
+                const match = codesArr[0].match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})/);
                 if (match) {
                     const evt = match[1];
                     const cc = match[2];
@@ -1041,7 +1033,7 @@
                     let minYr = yr1;
                     let maxYr = yr1;
                     for (const cd of codesArr) {
-                        const m = cd.match(/^(all|wlfood|wlbirds|wllh|wlpa|wlbf|wlf|wle|wlm|wlb|wla|wlp|wls)([a-z]{0,2})(\d{2})/);
+                        const m = cd.match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})/);
                         if (m) {
                             const y = parseInt(m[3], 10);
                             if (y < minYr) minYr = y;
@@ -1083,7 +1075,7 @@
                 const yy = String(yr % 100).padStart(2, '0');
                 const targetInput = document.getElementById('target_event');
                 if (targetInput) {
-                    targetInput.value = COUNTRYLESS_EVENTS.has(evt) ? evt + yy : evt + cc + yy;
+                    targetInput.value = evt + cc + yy;
                 }
 
                 // Automatically align regional standardization framework
@@ -1105,7 +1097,7 @@
             const targetInput = document.getElementById('target_event');
             if (!targetInput) return;
             const val = targetInput.value.trim().toLowerCase();
-            const match = val.match(/^(all|wlfood|wlbirds|wllh|wlpa|wlbf|wlf|wle|wlm|wlb|wla|wlp|wls)([a-z]{0,2})(\d{2})$/);
+            const match = val.match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$/);
             if (match) {
                 const evt = match[1];
                 const cc = match[2];
@@ -1210,7 +1202,7 @@
             const codes = [];
             for (let y = y1; y <= y2; y++) {
                 const yy = String(y % 100).padStart(2, '0');
-                codes.push(COUNTRYLESS_EVENTS.has(evt) ? evt + yy : evt + cc + yy);
+                codes.push(evt + cc + yy);
             }
             const codesInput = document.getElementById('influx_codes');
             if (codesInput) {

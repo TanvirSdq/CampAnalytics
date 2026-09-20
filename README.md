@@ -12,23 +12,16 @@
 
 ## Overview
 
-**CampAnalytics** is an open-source analytical platform for campaign organizers, program evaluators, and Wikimedia community leaders. It provides data-driven intelligence across 12 major international Wiki Loves campaigns by querying live metadata directly from Wikimedia Commons and Toolforge replica databases.
+**CampAnalytics** is an open-source analytical platform for campaign organizers, program evaluators, and Wikimedia community leaders. It provides data-driven intelligence across the major recurring international Wiki Loves photography campaigns by querying live metadata directly from Wikimedia Commons and Toolforge replica databases.
 
-| Code | Campaign | Commons Category Pattern |
-|:---|:---|:---|
-| `wlm` | Wiki Loves Monuments | `Images_from_Wiki_Loves_Monuments_YYYY_in_Country` |
-| `wle` | Wiki Loves Earth | `Images_from_Wiki_Loves_Earth_YYYY_in_Country` |
-| `wlf` | Wiki Loves Folklore | `Images_from_Wiki_Loves_Folklore_YYYY_in_Country` |
-| `wla` | Wiki Loves Africa | `Images_from_Wiki_Loves_Africa_YYYY_in_Country` |
-| `wlb` | Wiki Loves Bangla | `Images_from_Wiki_Loves_Bangla_YYYY` *(no country suffix)* |
-| `wlp` | Wiki Loves Pride | `Images_from_Wiki_Loves_Pride_YYYY` *(global year-only)* |
-| `wlfood` | Wiki Loves Food | `Images_from_Wiki_Loves_Food_YYYY` *(global year-only)* |
-| `wlpa` | Wiki Loves Public Art | `Images_from_Wiki_Loves_Public_Art_and_Cemeteries_YYYY_in_Country` |
-| `wllh` | Wiki Loves Living Heritage | `Images_from_Wiki_Loves_Living_Heritage_YYYY_in_Country` |
-| `wls` | Wiki Loves Sport | `Images_from_Wiki_Loves_Sport_YYYY` *(global year-only)* |
-| `wlbf` | Wiki Loves Butterfly | `Images_from_Wiki_Loves_Butterfly_YYYY` *(global year-only)* |
-| `wlbirds` | Wiki Loves Birds | `Images_from_Wiki_Loves_Birds_YYYY` *(global year-only)* |
-| `all` | All Campaigns | Scoped aggregate across all valid campaigns for the country |
+| Code | Campaign | Focus | Commons Category Pattern |
+|:---|:---|:---|:---|
+| `wlm` | Wiki Loves Monuments | Built & architectural cultural heritage | `Images_from_Wiki_Loves_Monuments_YYYY_in_Country` |
+| `wle` | Wiki Loves Earth | Natural heritage & protected areas | `Images_from_Wiki_Loves_Earth_YYYY_in_Country` |
+| `wlf` | Wiki Loves Folklore | Intangible culture, traditions, festivals | `Images_from_Wiki_Loves_Folklore_YYYY_in_Country` |
+| `wla` | Wiki Loves Africa | African cultural heritage & daily life | `Images_from_Wiki_Loves_Africa_YYYY_in_Country` |
+| `wlb` | Wiki Loves Bangla | Regional cultural & biodiversity heritage | `Images_from_Wiki_Loves_Bangla_YYYY` |
+| `all` | All Campaigns | Ecosystem combination per country | Scoped aggregate across all active campaigns for the target country |
 
 CampAnalytics answers three core programmatic questions:
 
@@ -126,10 +119,9 @@ Transparent mathematical formulations, regional normalization criteria, Commons 
                 ▼                                 ▼
      ┌────────────────────────┐       ┌────────────────────────────┐
      │   Wikimedia Commons    │       │        config.json         │
-     │   Action API / DB      │       │  12 Campaigns · 51 Nations │
+     │   Action API / DB      │       │  5 Campaigns · 51 Nations  │
      │   (Live Metadata)      │       │  9 Regional Clusters       │
      └────────────────────────┘       │  Country Scope Map         │
-                                      │  Category Name Overrides   │
                                       └────────────────────────────┘
 
 ========================================================================================
@@ -167,15 +159,15 @@ where $E_{cc}$ is the subset of campaigns with documented editions in country $c
 
 ## Campaign Code Format
 
-Input codes use one of two patterns: `[event][country][YY]` for country editions, or `[event][YY]` for campaigns whose Commons categories are year-only.
+Standard query codes follow the pattern: `[event][country][YY]`
 
 ```
 wlm de 24   →  Wiki Loves Monuments · Germany · 2024
+wle in 23   →  Wiki Loves Earth · India · 2023
 wlf bd 22   →  Wiki Loves Folklore · Bangladesh · 2022
-all ng 23   →  All Campaigns · Nigeria · 2023
-wlb 24      →  Wiki Loves Bangla · 2024  (no country suffix — year-only category)
-wlp 25      →  Wiki Loves Pride · 2025   (no country suffix — year-only category)
-wlfood 25  →  Wiki Loves Food · 2025    (no country suffix — year-only category)
+wla ng 23   →  Wiki Loves Africa · Nigeria · 2023
+wlb bd 24   →  Wiki Loves Bangla · Bangladesh · 2024
+all de 24   →  All Campaigns · Germany · 2024
 ```
 
 Supported country codes: `bd` `in` `de` `it` `fr` `us` `ca` `uk` `nl` `pl` `br` `mx` `es` `pt` `pk` `np` `ng` `ke` `id` `rs` `ph` `my` `tr` `eg` `ua` `ru` `ch` `se` `no` `fi` `be` `at` `ar` `co` `lk` `au` `nz` `th` `gr` `tn` `ma` `dz` `za` `gh` `tz` `pe` `cl` `ve` `cz` `ro` `hu`
