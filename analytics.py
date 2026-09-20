@@ -39,6 +39,7 @@ EVENT_MAP = config['EVENT_MAP']
 EVENT_DISPLAY_MAP = config.get('EVENT_DISPLAY_MAP', {
     k: f"Wiki Loves {v}" for k, v in EVENT_MAP.items()
 })
+EVENT_COUNTRY_SCOPE = config.get('EVENT_COUNTRY_SCOPE', {k: '*' for k in EVENT_MAP})
 COUNTRY_MAP = config['COUNTRY_MAP']
 REGION_COUNTRY_MAPPING = config['REGION_COUNTRY_MAPPING']
 
@@ -177,9 +178,18 @@ def get_participants(code):
 
     event, cc, yr = match.groups()
     if event == 'all':
-        sub_events = [k for k in EVENT_MAP.keys() if k != 'all']
-        sub_codes = [f"{e}{cc}{yr}" for e in sub_events]
-        sub_results = fetch_all_concurrently(sub_codes)
+        sub_codes = []
+        no_cc_codes = []  # campaigns that have no per-country editions
+        for e in EVENT_MAP.keys():
+            scope = EVENT_COUNTRY_SCOPE.get(e, '*')
+            if scope == 'no-cc':
+                # e.g. wlb24 — year-only category, no country suffix
+                no_cc_codes.append(f"{e}{yr}")
+            elif scope == '*' or (isinstance(scope, list) and cc in scope):
+                sub_codes.append(f"{e}{cc}{yr}")
+
+        all_codes = sub_codes + no_cc_codes
+        sub_results = fetch_all_concurrently(all_codes)
         combined_users = set()
         breakdown = {}
         for sc, users in sub_results.items():

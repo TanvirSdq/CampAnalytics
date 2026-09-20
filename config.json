@@ -28,6 +28,20 @@
     "wlbf": "Wiki Loves Butterfly",
     "wlbirds": "Wiki Loves Birds"
   },
+  "EVENT_COUNTRY_SCOPE": {
+    "wlm": "*",
+    "wle": "*",
+    "wlf": "*",
+    "wla": ["ng", "ke", "za", "gh", "tz", "eg", "tn", "ma", "dz", "sn", "ci", "rw", "ug"],
+    "wlb": "no-cc",
+    "wlp": ["de", "fr", "nl", "be", "se", "no", "fi", "uk", "us", "ca", "au", "nz", "it", "es", "at", "ch", "br", "ar", "pl"],
+    "wlfood": ["in", "id", "my", "ph", "th", "tr", "it", "es", "fr", "de", "nl", "br", "mx", "eg", "tn", "ma"],
+    "wlpa": ["in", "de", "it", "es", "fr", "pl", "ua", "ru", "br", "mx", "us", "ca", "nl", "be", "at"],
+    "wllh": ["in", "id", "ph", "my", "th", "bd", "pk", "np", "lk", "ke", "ng", "tz", "gh", "eg"],
+    "wls": ["de", "fr", "it", "es", "pl", "in", "br", "ru", "ua", "nl", "uk"],
+    "wlbf": ["in", "bd", "pk", "np", "lk", "id", "ph", "my", "th"],
+    "wlbirds": ["in", "bd", "pk", "np", "lk", "id", "ph", "my", "th", "ke", "za", "ng", "au"]
+  },
   "COUNTRY_MAP": {
     "bd": "Bangladesh", "in": "India", "de": "Germany", "it": "Italy",
     "fr": "France", "us": "United_States", "ca": "Canada", "uk": "United_Kingdom",
