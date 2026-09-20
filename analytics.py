@@ -106,7 +106,7 @@ def code_to_category(code):
     event_name = EVENT_MAP.get(event)
     if not event_name:
         return None
-    # Allow per-event category name override (e.g. wlpa → Public_Art_and_Cemeteries)
+    # Allow per-event category name override if configured
     cat_event = CATEGORY_NAME_OVERRIDE.get(event, event_name.replace(' ', '_'))
     category = f"Images_from_Wiki_Loves_{cat_event}_{2000 + int(yr)}"
     event_scope = EVENT_COUNTRY_SCOPE.get(event, '*')
