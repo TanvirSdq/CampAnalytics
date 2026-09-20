@@ -40,6 +40,7 @@ EVENT_DISPLAY_MAP = config.get('EVENT_DISPLAY_MAP', {
     k: f"Wiki Loves {v}" for k, v in EVENT_MAP.items()
 })
 EVENT_COUNTRY_SCOPE = config.get('EVENT_COUNTRY_SCOPE', {k: '*' for k in EVENT_MAP})
+CATEGORY_NAME_OVERRIDE = config.get('CATEGORY_NAME_OVERRIDE', {})
 COUNTRY_MAP = config['COUNTRY_MAP']
 REGION_COUNTRY_MAPPING = config['REGION_COUNTRY_MAPPING']
 
@@ -105,7 +106,8 @@ def code_to_category(code):
     event_name = EVENT_MAP.get(event)
     if not event_name:
         return None
-    cat_event = event_name.replace(' ', '_')
+    # Allow per-event category name override (e.g. wlpa → Public_Art_and_Cemeteries)
+    cat_event = CATEGORY_NAME_OVERRIDE.get(event, event_name.replace(' ', '_'))
     category = f"Images_from_Wiki_Loves_{cat_event}_{2000 + int(yr)}"
     if cc and event not in ('wlb',):
         country_label = COUNTRY_MAP.get(cc)

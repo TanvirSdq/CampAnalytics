@@ -614,10 +614,13 @@ class CampaignSuiteTestCase(unittest.TestCase):
     def test_new_wiki_loves_events_taxonomy(self):
         """Test category resolution for newly added Wiki Loves campaigns."""
         self.assertEqual(analytics.code_to_category('wlang22'), 'Images_from_Wiki_Loves_Africa_2022_in_Nigeria')
-        self.assertEqual(analytics.code_to_category('wlfoodin22'), 'Images_from_Wiki_Loves_Food_2022_in_India')
-        self.assertEqual(analytics.code_to_category('wlsde24'), 'Images_from_Wiki_Loves_Sport_2024_in_Germany')
-        self.assertEqual(analytics.code_to_category('wlpa21'), 'Images_from_Wiki_Loves_Public_Art_2021')
-        self.assertEqual(analytics.code_to_category('wllh23'), 'Images_from_Wiki_Loves_Living_Heritage_2023')
+        # Food uses year-only category (no per-country Commons category)
+        self.assertEqual(analytics.code_to_category('wlfood22'), 'Images_from_Wiki_Loves_Food_2022')
+        # Sport uses year-only category
+        self.assertEqual(analytics.code_to_category('wls24'), 'Images_from_Wiki_Loves_Sport_2024')
+        # Public Art renamed to "Public Art and Cemeteries" on Commons
+        self.assertEqual(analytics.code_to_category('wlpars24'), 'Images_from_Wiki_Loves_Public_Art_and_Cemeteries_2024_in_Serbia')
+        self.assertEqual(analytics.code_to_category('wllhin23'), 'Images_from_Wiki_Loves_Living_Heritage_2023_in_India')
         # Composite pseudo-event 'all' should resolve to None for category
         self.assertIsNone(analytics.code_to_category('allbd22'))
 
