@@ -54,6 +54,10 @@ def fig_to_base64(fig):
     plt.close(fig)
     return base64.b64encode(img.getvalue()).decode()
 
+@app.route('/healthz', methods=['GET'])
+def healthz():
+    return 'OK', 200
+
 @app.route('/', methods=['GET'])
 def index():
     mode = request.args.get('mode', 'Methodology')
