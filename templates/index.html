@@ -16,7 +16,7 @@
         <h1 class="page-title">Retention Analytics</h1>
         <p class="page-subtitle">Longitudinal contributor retention and cohort overlap across Wiki Loves campaigns.</p>
 
-        <form action="/retention" method="POST" id="retention-form">
+        <form action="/retention" method="GET" id="retention-form">
             <!-- Structured Panel: What to look up -->
             <div class="glam-panel">
                 <div class="glam-panel-header">
@@ -171,7 +171,7 @@
                         </div>
 
                         <div>
-                            <button type="submit" class="btn-primary">Run Retention Analysis</button>
+                            <button type="submit" class="btn-primary" onclick="setLoadingState(this, 'Fetching Wikimedia data…')">Run Retention Analysis</button>
                         </div>
                     </div>
                 </div>
@@ -183,7 +183,12 @@
             <div class="glam-panel">
                 <div class="glam-panel-header">
                     <span>Analysis Output: {{ view_mode }} Model</span>
-                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Longitudinal Contributor Overlap</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Longitudinal Contributor Overlap</span>
+                        <button type="button" class="share-btn" onclick="copyCurrentURL(this)" title="Copy shareable link to these results">
+                            🔗 Share Results
+                        </button>
+                    </div>
                 </div>
                 <div class="glam-panel-body">
                     {% if worldmap_html %}
@@ -218,7 +223,7 @@
         <h1 class="page-title">Health Evaluation</h1>
         <p class="page-subtitle">Multi-dimensional performance scorecard calibrated against regional geographic cohorts.</p>
 
-        <form action="/health" method="POST" id="health-form">
+        <form action="/health" method="GET" id="health-form">
             <!-- Structured Panel: What to look up -->
             <div class="glam-panel">
                 <div class="glam-panel-header">
@@ -300,7 +305,7 @@
                             </div>
 
                             <div style="margin-top: 20px;">
-                                <button type="submit" class="btn-primary">Evaluate Campaign Health</button>
+                                <button type="submit" class="btn-primary" onclick="setLoadingState(this, 'Fetching Wikimedia data…')">Evaluate Campaign Health</button>
                             </div>
                         </div>
 
@@ -347,9 +352,14 @@
                     <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-ink);">Campaign: {{ target_event|upper }}</div>
                     <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 2px;">Regional Calibration Framework: {{ region }}</div>
                 </div>
-                <div class="overall-score-display">
-                    <span class="overall-score-number">{{ metrics['Overall'] }}</span>
-                    <span class="overall-score-max">/ 100</span>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                    <div class="overall-score-display">
+                        <span class="overall-score-number">{{ metrics['Overall'] }}</span>
+                        <span class="overall-score-max">/ 100</span>
+                    </div>
+                    <button type="button" class="share-btn" onclick="copyCurrentURL(this)" title="Copy shareable link to this scorecard">
+                        🔗 Share Scorecard
+                    </button>
                 </div>
             </div>
 
@@ -470,7 +480,7 @@
         <h1 class="page-title">Year-over-Year New User Influx</h1>
         <p class="page-subtitle">Track newcomer acquisition, returning veteran retention, and community expansion across consecutive campaign editions.</p>
 
-        <form action="/influx" method="POST" id="influx-form">
+        <form action="/influx" method="GET" id="influx-form">
             <!-- Structured Panel: What to look up -->
             <div class="glam-panel">
                 <div class="glam-panel-header">
@@ -524,7 +534,7 @@
                                 <div class="form-hint" id="influx-scope-hint">Chronological campaign sequence to evaluate.</div>
                             </div>
 
-                            <button type="submit" class="btn-primary" style="width: auto;">
+                            <button type="submit" class="btn-primary" style="width: auto;" onclick="setLoadingState(this, 'Fetching Wikimedia data…')">
                                 <span>Compute Influx Trends</span>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                             </button>
@@ -597,7 +607,12 @@
             <div class="glam-panel">
                 <div class="glam-panel-header">
                     <span>Summary Indicators · Contributor Influx &amp; Expansion</span>
-                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ influx_result.records|length }} Consecutive Editions Analyzed</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ influx_result.records|length }} Consecutive Editions Analyzed</span>
+                        <button type="button" class="share-btn" onclick="copyCurrentURL(this)" title="Copy shareable link to these results">
+                            🔗 Share Results
+                        </button>
+                    </div>
                 </div>
                 <div class="glam-panel-body">
                     <div class="scorecard-header-card" style="margin-bottom: 16px;">
@@ -1286,6 +1301,49 @@
             document.body.appendChild(downloadLink);
             downloadLink.click();
             document.body.removeChild(downloadLink);
+        }
+        // ── SHARE DEEP-LINK ────────────────────────────────────────────────────
+        // Copies the current page URL (including GET query params) to clipboard
+        // and briefly shows "✓ Copied!" feedback on the button.
+        function copyCurrentURL(btn) {
+            const url = window.location.href;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => flashShareBtn(btn));
+            } else {
+                // Fallback for older browsers
+                const ta = document.createElement('textarea');
+                ta.value = url;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                document.body.removeChild(ta);
+                flashShareBtn(btn);
+            }
+        }
+
+        function flashShareBtn(btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✓ Link copied!';
+            btn.classList.add('share-btn--copied');
+            setTimeout(() => {
+                btn.innerHTML = orig;
+                btn.classList.remove('share-btn--copied');
+            }, 2200);
+        }
+
+        // ── LOADING STATE ──────────────────────────────────────────────────────
+        // Disables the submit button and updates text to prevent double-clicks
+        // while the Wikimedia API query is in flight.
+        function setLoadingState(btn, label) {
+            // Small delay lets the form submit before we update the DOM
+            setTimeout(() => {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner"></span>' + label;
+                btn.style.opacity = '0.75';
+                btn.style.cursor = 'not-allowed';
+            }, 10);
         }
     </script>
 {% endblock %}

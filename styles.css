@@ -917,3 +917,50 @@ table.data-table tbody tr:hover {
         gap: 8px 12px;
     }
 }
+
+/* ── SHARE DEEP-LINK BUTTON ──────────────────────────────────────────────── */
+.share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 0.76rem;
+    font-weight: 500;
+    font-family: inherit;
+    background: #ffffff;
+    color: var(--wiki-blue);
+    border: 1px solid #c8dafc;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    line-height: 1.5;
+}
+
+.share-btn:hover {
+    background: #eef6ff;
+    border-color: var(--wiki-blue);
+}
+
+.share-btn--copied {
+    background: #f0fdf4;
+    color: #16a34a;
+    border-color: #86efac;
+}
+
+/* ── SUBMIT LOADING SPINNER ──────────────────────────────────────────────── */
+.loading-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 7px;
+    vertical-align: -2px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
