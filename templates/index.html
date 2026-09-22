@@ -32,7 +32,7 @@
                                 <label class="form-label">Event Matrix</label>
                                 <div class="pill-group" id="event-pill-group">
                                     {% for event_key, event_val in EVENT_MAP.items() %}
-                                        <input type="checkbox" name="builder_events" value="{{ event_key }}" id="evt-{{ event_key }}" class="pill-checkbox" onchange="syncBuilderToCodes()">
+                                        <input type="checkbox" name="builder_events" value="{{ event_key }}" id="evt-{{ event_key }}" class="pill-checkbox">
                                         <label for="evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
                                     {% endfor %}
                                 </div>
@@ -53,7 +53,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <select id="builder_country" name="builder_country" class="form-control" onchange="syncBuilderToCodes()">
+                                    <select id="builder_country" name="builder_country" class="form-control">
                                         <option value="">-- Select Country Matrix --</option>
                                         <option value="ALL" style="font-weight: 600; color: var(--wiki-blue);">🌐 All Countries (Global Analysis — 50+ Countries)</option>
                                         <optgroup label="Regional Clusters">
@@ -72,21 +72,36 @@
                                 <div class="form-group">
                                     <label class="form-label">Longitudinal Year Range</label>
                                     <div class="year-range-row">
-                                        <input type="number" id="builder_yr_start" name="builder_yr_start" value="{{ CURRENT_YEAR - 2 }}" min="2010" max="2040" class="form-control" onchange="syncBuilderToCodes()">
+                                        <input type="number" id="builder_yr_start" name="builder_yr_start" value="{{ CURRENT_YEAR - 2 }}" min="2010" max="2040" class="form-control">
                                         <span class="year-separator">to</span>
-                                        <input type="number" id="builder_yr_end" name="builder_yr_end" value="{{ CURRENT_YEAR }}" min="2010" max="2040" class="form-control" onchange="syncBuilderToCodes()">
+                                        <input type="number" id="builder_yr_end" name="builder_yr_end" value="{{ CURRENT_YEAR }}" min="2010" max="2040" class="form-control">
                                     </div>
                                 </div>
+                                
+                            </div>
+                            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 12px;">
+                                    <button type="button" class="btn-primary" style="background-color:white;color: var(--wiki-blue);" onclick="replaceBuilderCodes()">
+                                        Replace
+                                    </button>
+                                    <button type="button" class="btn-primary" onclick="appendBuilderCodes()">
+                                        Append
+                                    </button>
                             </div>
 
-                            <!-- Auto-Synced Target Campaign Codes -->
+                            <!-- Generated Target Campaign Codes -->
                             <div class="form-group" style="margin-bottom: 0;">
-                                <label for="target_campaigns" class="form-label">
-                                    Target Campaign Codes
-                                    <span style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">(Auto-synced from builder or editable)</span>
-                                </label>
-                                <input type="text" id="target_campaigns" name="target_campaigns" value="{{ target_campaigns if target_campaigns else '' }}" placeholder="e.g. wlmde21 wlmde22 wlmde23" class="form-control form-control-code">
-                                <div class="form-hint">Codes update automatically as you adjust controls above. Manual edits or custom codes are also accepted.</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                        <label for="target_campaigns" class="form-label">
+                                            Target Campaign Codes
+                                        </label>
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        <button type="button" class="btn btn-sm" onclick="clearTargetCampaigns()" title="Clear target campaigns" style="padding: 2px 8px; font-size: 0.78rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer;">
+                                                Clear
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea id="target_campaigns" name="target_campaigns" rows="3" placeholder="e.g. wlmde21 wlmde22 wlmde23" class="form-control form-control-code">{{ target_campaigns if target_campaigns else '' }}</textarea>
+                                <div class="form-hint">Codes can be generated using the builder above, or edited manually.</div>
                             </div>
                         </div>
 
@@ -94,7 +109,7 @@
                         <div class="example-box">
                             <div class="example-box-title">Quick Preset Examples</div>
                             <div class="preset-tags">
-                                <button type="button" class="preset-tag-btn" onclick="selectAllCountries(); syncBuilderToCodes();" style="border-color: #bcd4f7; background: #f0f6ff;">
+                                <button type="button" class="preset-tag-btn" onclick="selectAllCountries(); replaceBuilderCodes();" style="border-color: #bcd4f7; background: #f0f6ff;">
                                     <strong style="color: var(--wiki-blue); display: inline-flex; align-items: center; gap: 5px;">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                                         All Countries (Global)
@@ -986,7 +1001,6 @@
                 const wlmCb = document.getElementById('evt-wlm');
                 if (wlmCb) wlmCb.checked = true;
             }
-            syncBuilderToCodes();
         }
 
         // Clear country selection
@@ -1001,22 +1015,24 @@
             }
         }
 
-        // Synchronize Selection Builder controls to Target Codes input
-        function syncBuilderToCodes() {
+        function clearTargetCampaigns() {
+            const countrySelect = document.getElementById('target_campaigns');
+            if (countrySelect) {
+                countrySelect.value = '';
+            }
+        }
+
+        // Extract generated codes from builder selections
+        function getCodesFromBuilder() {
             const checkedEvents = Array.from(document.querySelectorAll('input[name="builder_events"]:checked')).map(cb => cb.value);
             const countrySelect = document.getElementById('builder_country');
             const selectedVal = countrySelect ? countrySelect.value : '';
             const yrStartInput = document.getElementById('builder_yr_start');
             const yrEndInput = document.getElementById('builder_yr_end');
-            const targetInput = document.getElementById('target_campaigns');
 
-            if (!countrySelect || !targetInput) return;
+            if (!countrySelect) return '';
 
-            const cVal = countrySelect.value;
-            if (!cVal) {
-                targetInput.value = '';
-                return;
-            }
+            if (!selectedVal) return '';
 
             const yrStart = parseInt(yrStartInput.value, 10) || ({{ CURRENT_YEAR }} - 2);
             const yrEnd = parseInt(yrEndInput.value, 10) || {{ CURRENT_YEAR }};
@@ -1043,9 +1059,33 @@
                         }
                     }
                 }
+                return generatedCodes.join(' ');
+            }
+            return '';
+        }
+
+        // Replace the target campaigns input with codes from builder
+        function replaceBuilderCodes() {
+            const codes = getCodesFromBuilder();
+            if (codes) {
                 const targetInput = document.getElementById('target_campaigns');
                 if (targetInput) {
-                    targetInput.value = generatedCodes.join(' ');
+                    targetInput.value = codes;
+                }
+            }
+        }
+
+        // Append codes from builder to the existing target campaigns input
+        function appendBuilderCodes() {
+            const codes = getCodesFromBuilder();
+            if (codes) {
+                const targetInput = document.getElementById('target_campaigns');
+                if (targetInput) {
+                    if (targetInput.value.trim() === '') {
+                        targetInput.value = codes;
+                    } else {
+                        targetInput.value = targetInput.value.trim() + ' ' + codes;
+                    }
                 }
             }
         }

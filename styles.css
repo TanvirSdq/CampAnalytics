@@ -328,6 +328,12 @@ html, body {
     background-color: var(--bg-subtle);
 }
 
+textarea.form-control {
+    min-height: calc(1.5em * 3 + 18px);
+    line-height: 1.5;
+    resize: vertical;
+}
+
 /* Year Range Grid */
 .year-range-row {
     display: grid;
