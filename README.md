@@ -29,19 +29,20 @@ CampAnalytics answers three core programmatic questions:
 3. **True Newcomer Influx** — Across all campaigns in a year and country, how many genuinely new people entered the Wikimedia movement?
 
 ---
-
+<!--
 ## Two Interfaces
 
 CampAnalytics is built on a single shared analytical core powering two deployment models:
 
-| Interface | Runtime | Target | Notes |
-|:---|:---|:---|:---|
-| **Flask Web App** | WSGI / Gunicorn | Wikimedia Toolforge | GLAMtools visual coherence, Marine Petrol `#183f54` + Cyan `#72ded6` palette, zero client-side bloat |
-| **Streamlit App** | Streamlit Runtime | Streamlit Cloud / Local | Interactive Plotly charts, reactive series builder, dark slate aesthetic, sidebar-driven controls |
+| Interface | Runtime | Target | 
+|:---|:---|:---|
+| **Flask Web App** | WSGI / Gunicorn | Wikimedia Toolforge |
+| **Streamlit App** | Streamlit Runtime | Streamlit Cloud / Local |
 
 Both consume identical data pipelines via [`analytics.py`](analytics.py) and [`config.json`](config.json).
 
 ---
+-->
 
 ## Four Analytical Modules
 
@@ -95,7 +96,7 @@ Transparent mathematical formulations, regional normalization criteria, Commons 
       ┌──────────────────────┐  ┌──────────────────────────────────┐
       │      FLASK APP       │  │          STREAMLIT APP           │
       │    (flask_app.py)    │  │       (streamlit_app.py)         │
-      │  • GLAMtools Theme   │  │   • Dark Slate Reactive UI       │
+      │  • User Friendly UX  │  │   • Dark Slate Reactive UI       │
       │  • Toolforge Ready   │  │   • Prototyping Explorer         │
       └──────────┬───────────┘  └─────────────────┬────────────────┘
                  │                                │
@@ -218,7 +219,7 @@ toolforge webservice buildpack start
 ```
 CampAnalytics/
 ├── app.py                   # Production Toolforge WSGI entrypoint
-├── flask_app.py             # Flask route controllers & GLAMtools UI
+├── flask_app.py             # Flask route controllers & UI
 ├── streamlit_app.py         # Streamlit interactive dashboard
 ├── analytics.py             # Core engine: caching, Commons API, math, charts
 ├── app_config.py            # Global palette and settings
@@ -226,7 +227,7 @@ CampAnalytics/
 │                            #   EVENT_MAP · EVENT_DISPLAY_MAP
 │                            #   EVENT_COUNTRY_SCOPE · COUNTRY_MAP
 │                            #   REGION_COUNTRY_MAPPING
-├── styles.css               # Flask GLAMtools stylesheet
+├── styles.css               # Flask stylesheet
 ├── streamlit_styles.css     # Streamlit theme and sidebar stylesheet
 ├── Procfile                 # Web process definition
 ├── requirements.txt         # Python dependencies
