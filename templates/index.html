@@ -18,12 +18,12 @@
 
         <form action="/retention" method="GET" id="retention-form">
             <!-- Structured Panel: What to look up -->
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>What to look up · Selection Builder</span>
                     <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Step 1: Configure Cohort Vectors</span>
                 </div>
-                <div class="glam-panel-body">
+                <div class="display-panel-body">
                     <div class="builder-layout">
                         <!-- Left: Builder Form Controls -->
                         <div>
@@ -131,12 +131,12 @@
             </div>
 
             <!-- Structured Panel: Output & Visualization Model -->
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>Output Options &amp; Visualization Model</span>
                     <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Step 2: Choose Analytical Projection</span>
                 </div>
-                <div class="glam-panel-body">
+                <div class="display-panel-body">
                     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
                         <div>
                             <label class="form-label" style="margin-bottom: 8px;">Visualization Model</label>
@@ -180,8 +180,8 @@
 
         {# Analytical Results Panel #}
         {% if tables or heatmaps or worldmap_html %}
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>Analysis Output: {{ view_mode }} Model</span>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Longitudinal Contributor Overlap</span>
@@ -190,7 +190,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="glam-panel-body">
+                <div class="display-panel-body">
                     {% if worldmap_html %}
                         <div class="chart-container">
                             {{ worldmap_html | safe }}
@@ -225,12 +225,12 @@
 
         <form action="/health" method="GET" id="health-form">
             <!-- Structured Panel: What to look up -->
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>What to look up · Campaign Benchmark Parameters</span>
                     <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Step 1: Configure Target &amp; Calibration Baseline</span>
                 </div>
-                <div class="glam-panel-body">
+                <div class="display-panel-body">
                     <div class="builder-layout">
                         <!-- Left: Form Controls with Selection Builder -->
                         <div>
@@ -433,12 +433,12 @@
 
             <!-- Diagnostic Insights Panel -->
             {% if insights %}
-                <div class="glam-panel">
-                    <div class="glam-panel-header">
+                <div class="display-panel">
+                    <div class="display-panel-header">
                         <span>Peer-Relative Diagnostic Insights</span>
                         <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Automated Evaluation</span>
                     </div>
-                    <div class="glam-panel-body">
+                    <div class="display-panel-body">
                         {% for insight in insights %}
                             <div class="insight-callout">
                                 {{ insight }}
@@ -449,12 +449,12 @@
             {% endif %}
 
             <!-- Longitudinal Footprints & Contributor Volume -->
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>Longitudinal Footprints &amp; Contributor Volumes</span>
                     <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Quantified Pool Metrics</span>
                 </div>
-                <div class="glam-panel-body">
+                <div class="display-panel-body">
                     <div class="footprint-strip">
                         <div class="footprint-stat">
                             <div class="footprint-val">{{ target_users_count }}</div>
@@ -482,12 +482,12 @@
 
         <form action="/influx" method="GET" id="influx-form">
             <!-- Structured Panel: What to look up -->
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>What to look up · Campaign Influx Builder</span>
                     <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Step 1: Configure Multi-Year Campaign Series</span>
                 </div>
-                <div class="glam-panel-body">
+                <div class="display-panel-body">
                     <div class="builder-layout">
                         <!-- Left: Builder Form Controls -->
                         <div>
@@ -578,12 +578,12 @@
         </form>
 
         {% if not influx_result and not error %}
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>Quick start · Multi-Year Influx Analysis</span>
                     <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">How to use this tool</span>
                 </div>
-                <div class="glam-panel-body">
+                <div class="display-panel-body">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 8px;">
                         <div style="background: var(--card-subtle); border: 1px solid var(--border-color); border-radius: 4px; padding: 14px 16px;">
                             <div style="font-weight: 600; color: var(--text-ink); font-size: 0.92rem; margin-bottom: 6px;">1 · Choose Campaign &amp; Country</div>
@@ -604,8 +604,8 @@
 
         {% if influx_result and influx_result.records %}
             <!-- Structured Panel: Trend KPI Summary -->
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>Summary Indicators · Contributor Influx &amp; Expansion</span>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ influx_result.records|length }} Consecutive Editions Analyzed</span>
@@ -614,7 +614,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="glam-panel-body">
+                <div class="display-panel-body">
                     <div class="scorecard-header-card" style="margin-bottom: 16px;">
                         <div>
                             <div style="font-size: 0.88rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Cumulative Community Footprint</div>
@@ -678,12 +678,12 @@
 
             <!-- Structured Panel: Visual Stacked Bar Chart -->
             {% if chart_b64 %}
-                <div class="glam-panel">
-                    <div class="glam-panel-header">
+                <div class="display-panel">
+                    <div class="display-panel-header">
                         <span>Visual Influx &amp; Retention Dynamics</span>
                         <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Stacked Cohort Volumes + Cumulative Footprint</span>
                     </div>
-                    <div class="glam-panel-body" style="text-align: center;">
+                    <div class="display-panel-body" style="text-align: center;">
                         <div class="chart-container" style="border: none; padding: 0; margin-bottom: 0;">
                             <img src="data:image/png;base64,{{ chart_b64 }}" alt="Year-over-Year Contributor Influx Chart" class="chart-img" style="max-height: 480px;">
                         </div>
@@ -692,8 +692,8 @@
             {% endif %}
 
             <!-- Structured Panel: Detailed Data Table -->
-            <div class="glam-panel">
-                <div class="glam-panel-header">
+            <div class="display-panel">
+                <div class="display-panel-header">
                     <span>Year-over-Year Influx Breakdown Data Table</span>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <button type="button" class="btn btn-sm" onclick="exportInfluxTableToCSV()" style="padding: 3px 10px; font-size: 0.78rem; background: #ffffff; color: var(--wiki-blue); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-weight: 500;">
@@ -701,7 +701,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="glam-panel-body" style="padding: 0;">
+                <div class="display-panel-body" style="padding: 0;">
                     <div class="table-responsive">
                         <table class="data-table" id="influx-data-table">
                             <thead>
@@ -767,7 +767,7 @@
         <h1 class="page-title">Methodology &amp; Usage Guide</h1>
         <p class="page-subtitle">Technical specifications, analytical formulations, and operational guidelines for the Campaign Analytics platform.</p>
 
-        <!-- GLAMtools Home View Style Quick-Start Cards -->
+        <!-- Home View Style Quick-Start Cards -->
         <div class="methodology-cards-grid">
             <a href="/retention" class="tool-card">
                 <div>
@@ -807,12 +807,12 @@
         </div>
 
         <!-- Operational Guidelines Panel -->
-        <div class="glam-panel">
-            <div class="glam-panel-header">
+        <div class="display-panel">
+            <div class="display-panel-header">
                 <span>Operational Guidelines</span>
                 <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Usage Documentation</span>
             </div>
-            <div class="glam-panel-body">
+            <div class="display-panel-body">
                 <h3 style="margin-top: 0; font-size: 1.05rem; color: var(--text-ink);">1 · Retention Analytics</h3>
                 <p style="color: var(--text-muted); line-height: 1.6;">
                     The Retention Analytics interface evaluates participant continuity between successive campaign editions and cross-event contributor migration:
@@ -854,12 +854,12 @@
         </div>
 
         <!-- Analytical Formulations & Standards Panel -->
-        <div class="glam-panel" id="pipeline-specs">
-            <div class="glam-panel-header">
+        <div class="display-panel" id="pipeline-specs">
+            <div class="display-panel-header">
                 <span>Analytical Formulations &amp; Calibration Standards</span>
                 <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Methodological Rigor</span>
             </div>
-            <div class="glam-panel-body">
+            <div class="display-panel-body">
                 <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Directional Longitudinal Retention</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
