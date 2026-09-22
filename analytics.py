@@ -9,6 +9,7 @@ import base64
 import html
 import io
 import json
+import logging
 import re
 import time
 from collections import defaultdict
@@ -30,6 +31,8 @@ from app_config import (
     NAV_TEAL, NAV_ACCENT, BG_CANVAS, TEXT_INK, TEXT_MUTED, BORDER_COLOR,
     WIKI_BLUE, WIKI_BLUE_HOVER, CARD_LIGHT, CARD_SUBTLE
 )
+
+logger = logging.getLogger(__name__)
 
 # Load configuration
 with open(os.path.join(os.path.dirname(__file__), 'config.json'), 'r') as f:
@@ -203,7 +206,7 @@ def _fetch_participants_from_api(category):
 
         return users
     except Exception as e:
-        print(f"Error fetching participants from API for {category}: {e}")
+        logger.error(f"Error fetching participants from API for {category}: {e}")
         return set()
 
 @timed_cache(ttl=3600)
@@ -282,7 +285,7 @@ def _fetch_file_sample_metrics(category, max_sample=1500):
             response.raise_for_status()
             payload = response.json()
         except Exception as e:
-            print(f"Error sampling files for {category}: {e}")
+            logger.error(f"Error sampling files for {category}: {e}")
             break
 
         pages = payload.get("query", {}).get("pages", {})
