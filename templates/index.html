@@ -370,7 +370,7 @@
                     <div>
                         <div class="scorecard-card-title">
                             <span>Retention Index</span>
-                            <span class="scorecard-card-weight">Weight 35%</span>
+                            <span class="scorecard-card-weight">Weight 32%</span>
                         </div>
                         <div class="scorecard-card-value">{{ metrics['Retention']['raw'] }}</div>
                         <div class="scorecard-card-stars">{{ metrics['Retention']['stars'] }}</div>
@@ -378,25 +378,12 @@
                     <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Retention']['score']) }} / 100</div>
                 </div>
 
-                <!-- Dimension 2: Growth -->
-                <div class="scorecard-card">
-                    <div>
-                        <div class="scorecard-card-title">
-                            <span>Growth Capacity</span>
-                            <span class="scorecard-card-weight">Weight 20%</span>
-                        </div>
-                        <div class="scorecard-card-value">{{ metrics['Growth']['raw'] }}</div>
-                        <div class="scorecard-card-stars">{{ metrics['Growth']['stars'] }}</div>
-                    </div>
-                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Growth']['score']) }} / 100</div>
-                </div>
-
-                <!-- Dimension 3: Usage / Content Utility -->
+                <!-- Dimension 2: Content Utility -->
                 <div class="scorecard-card">
                     <div>
                         <div class="scorecard-card-title">
                             <span>Content Utility</span>
-                            <span class="scorecard-card-weight">Weight 20%</span>
+                            <span class="scorecard-card-weight">Weight 25%</span>
                         </div>
                         <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Usage']['raw']) }}%</div>
                         <div class="scorecard-card-stars">{{ metrics['Usage']['stars'] }}</div>
@@ -404,30 +391,43 @@
                     <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Usage']['score']) }} / 100</div>
                 </div>
 
-                <!-- Dimension 4: Quality Image Share -->
+                <!-- Dimension 3: Growth Capacity -->
                 <div class="scorecard-card">
                     <div>
                         <div class="scorecard-card-title">
-                            <span>Quality Images</span>
-                            <span class="scorecard-card-weight">Weight 15%</span>
+                            <span>Growth Capacity</span>
+                            <span class="scorecard-card-weight">Weight 18%</span>
                         </div>
-                        <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Quality']['raw']) }}%</div>
-                        <div class="scorecard-card-stars">{{ metrics['Quality']['stars'] }}</div>
+                        <div class="scorecard-card-value">{{ metrics['Growth']['raw'] }}</div>
+                        <div class="scorecard-card-stars">{{ metrics['Growth']['stars'] }}</div>
                     </div>
-                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Quality']['score']) }} / 100</div>
+                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Growth']['score']) }} / 100</div>
                 </div>
 
-                <!-- Dimension 5: Diversity / Concentration -->
+                <!-- Dimension 4: Contributor Diversity -->
                 <div class="scorecard-card">
                     <div>
                         <div class="scorecard-card-title">
-                            <span>Diversity Index</span>
-                            <span class="scorecard-card-weight">Weight 10%</span>
+                            <span>Contributor Diversity</span>
+                            <span class="scorecard-card-weight">Weight 15%</span>
                         </div>
                         <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Diversity']['raw']) }}%</div>
                         <div class="scorecard-card-stars">{{ metrics['Diversity']['stars'] }}</div>
                     </div>
                     <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Diversity']['score']) }} / 100</div>
+                </div>
+
+                <!-- Dimension 5: Quality Recognition -->
+                <div class="scorecard-card">
+                    <div>
+                        <div class="scorecard-card-title">
+                            <span>Quality Recognition</span>
+                            <span class="scorecard-card-weight">Weight 10%</span>
+                        </div>
+                        <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Quality']['raw']) }}%</div>
+                        <div class="scorecard-card-stars">{{ metrics['Quality']['stars'] }}</div>
+                    </div>
+                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Quality']['score']) }} / 100</div>
                 </div>
             </div>
 
@@ -909,14 +909,14 @@
                 <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Health Evaluation Weighting Model</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 10px 0;">
-                        The composite health score is computed on a 0–100 scale using a five-dimension weighted framework normalized against dynamic regional peer benchmarks:
+                        The composite health score is computed on a 0–100 scale across five dimensions, each normalized against the upper-quartile performance of peer campaigns in the same geographic cluster. Weights reflect the relative predictive power of each dimension for long-term community sustainability:
                     </p>
-                    <ul style="color: var(--text-ink); font-size: 0.88rem; line-height: 1.6; margin: 0; padding-left: 20px;">
-                        <li><strong>Retention Index (35%):</strong> Ratio of returning contributors from the baseline edition relative to regional peer performance norms.</li>
-                        <li><strong>Growth Capacity (20%):</strong> Share of first-time active contributors relative to regional acquisition benchmarks.</li>
-                        <li><strong>Content Utility (20%):</strong> Percentage of uploaded files actively deployed in Wikipedia articles across projects (<code>prop=globalusage</code>).</li>
-                        <li><strong>Quality Images (15%):</strong> Share of submissions formally recognized under Commons quality categories (<code>Category:Quality images</code>, <code>Category:Featured pictures</code>).</li>
-                        <li><strong>Contributor Diversity (10%):</strong> Aggregate upload share of the top 10% uploaders (concentration proxy; lower concentration indicates broader community distribution).</li>
+                    <ul style="color: var(--text-ink); font-size: 0.88rem; line-height: 1.7; margin: 0; padding-left: 20px;">
+                        <li><strong>Retention Index (32%):</strong> Proportion of prior-edition contributors who return in the target edition. The strongest single predictor of whether a campaign community survives across years rather than requiring constant re-acquisition.</li>
+                        <li><strong>Content Utility (25%):</strong> Share of uploaded files actively deployed across Wikimedia projects (<code>prop=globalusage</code>). This is the Wikimedia-specific mission proxy — files that get used in articles deliver encyclopaedic value; files that don't are production without impact.</li>
+                        <li><strong>Growth Capacity (18%):</strong> Share of the target cohort comprising first-time participants. Growth matters, but is weighted below retention and utility because a campaign that recruits heavily but retains nobody is structurally fragile.</li>
+                        <li><strong>Contributor Diversity (15%):</strong> Concentration of upload activity among the top 10% of uploaders (lower concentration = higher score). Raised to reflect its role as a leading fragility indicator — campaigns dominated by a handful of power users are vulnerable to collapse when those users disengage.</li>
+                        <li><strong>Quality Recognition (10%):</strong> Share of submissions formally recognized under Commons quality standards (<code>Category:Quality images</code>, <code>Category:Featured pictures</code>). Kept intentionally modest because QI/FP rates are noisy at small upload volumes and tend to favour niche campaigns over large-participation ones.</li>
                     </ul>
                 </div>
 

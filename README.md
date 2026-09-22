@@ -54,17 +54,17 @@ Both consume identical data pipelines via [`analytics.py`](analytics.py) and [`c
 
 ### 2. Health Evaluation (5-Dimension Scorecard)
 
-Scores a campaign edition on a 0–100 scale across five weighted dimensions:
+Scores a campaign edition on a 0–100 scale across five dimensions, each benchmarked against the upper-quartile of peer campaigns in the same geographic cluster:
 
-| Dimension | Weight | Metric |
-|:---|:---|:---|
-| Retention Index | 35% | Returning participants from prior edition |
-| Growth Capacity | 20% | First-time participant share |
-| Content Utility | 20% | Files illustrated across Wikimedia projects |
-| Quality Recognition | 15% | Commons quality/featured image rate |
-| Contributor Diversity | 10% | Upload distribution equity (top-10% uploader share) |
+| Dimension | Weight | What it measures |
+|:---|:---:|:---|
+| Retention Index | **32%** | Returning contributors from the prior edition — the primary sustainability signal |
+| Content Utility | **25%** | Files actively used across Wikimedia projects (`prop=globalusage`) — the mission-alignment proxy |
+| Growth Capacity | **18%** | First-time participant share — important, but weighted below retention to avoid rewarding high-churn campaigns |
+| Contributor Diversity | **15%** | Upload concentration (top-10% uploader share) — raised to reflect its value as a fragility early-warning indicator |
+| Quality Recognition | **10%** | Commons QI/FP recognition rate — kept modest as QI rates are noisy at small upload volumes |
 
-Regional benchmarks are computed dynamically from upper-quartile peer campaigns across 9 geographic clusters — not arbitrary global thresholds.
+Weights are ordered by their relative predictive power for long-term community sustainability. Regional benchmarks are computed dynamically — not against arbitrary global thresholds.
 
 ### 3. New User Influx & Growth
 

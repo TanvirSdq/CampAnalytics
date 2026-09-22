@@ -607,12 +607,18 @@ def generate_health_metrics(
         'score': relative_score(raw_diversity, diversity_baseline, positive_is_higher=False)
     }
 
+    # Weights grounded in open-source community health literature:
+    # Retention (32%) — dominant predictor of sustainability (Halfaker et al. 2013)
+    # Content Utility (25%) — mission-alignment proxy unique to Wikimedia (reuse = encyclopaedic value)
+    # Growth (18%) — necessary but subordinate; growth without retention is a leaky bucket
+    # Contributor Diversity (15%) — raised: HHI concentration is a leading fragility indicator
+    # Quality Recognition (10%) — demoted: QI/FP rates are noisy at small upload N
     overall = (
-        (metrics['Retention']['score'] * 0.35) +
-        (metrics['Growth']['score'] * 0.20) +
-        (metrics['Usage']['score'] * 0.20) +
-        (metrics['Quality']['score'] * 0.15) +
-        (metrics['Diversity']['score'] * 0.10)
+        (metrics['Retention']['score'] * 0.32) +
+        (metrics['Growth']['score'] * 0.18) +
+        (metrics['Usage']['score'] * 0.25) +
+        (metrics['Quality']['score'] * 0.10) +
+        (metrics['Diversity']['score'] * 0.15)
     )
     metrics['Overall'] = round(overall)
 
