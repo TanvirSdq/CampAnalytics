@@ -172,8 +172,17 @@ def retention():
     if not target_campaigns:
         target_campaigns = EXAMPLE_CODES
         
-    codes = target_campaigns.split()
-    valid = [c for c in (re.sub(r'\s+', '', cd).lower() for cd in codes) if CODE_RE.match(c)]
+    raw_codes = target_campaigns.split()
+    codes = []
+    for c in (re.sub(r'\s+', '', cd).lower() for cd in raw_codes):
+        m_wild = re.match(r'^(all|wla|wlf|wle|wlm|wlb)(\*|all)(\d{2})$', c)
+        if m_wild:
+            evt, _, yr = m_wild.groups()
+            for cc in COUNTRY_OPTIONS:
+                codes.append(f"{evt}{cc}{yr}")
+        else:
+            codes.append(c)
+    valid = [c for c in codes if CODE_RE.match(c)]
 
     error = None
     results_html = ""

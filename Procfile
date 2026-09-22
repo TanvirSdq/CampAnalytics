@@ -1,1 +1,1 @@
-web: gunicorn --workers=4 --bind=0.0.0.0:8000 --forwarded-allow-ips=* flask_app:app
+web: gunicorn --workers=4 --bind=0.0.0.0:8000 --limit-request-line=8190 --forwarded-allow-ips=* flask_app:app

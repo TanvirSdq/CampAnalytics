@@ -16,7 +16,7 @@
         <h1 class="page-title">Retention Analytics</h1>
         <p class="page-subtitle">Longitudinal contributor retention and cohort overlap across Wiki Loves campaigns.</p>
 
-        <form action="/retention" method="GET" id="retention-form">
+        <form action="/retention" method="GET" id="retention-form" onsubmit="handleFormSubmit(this)">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -238,7 +238,7 @@
         <h1 class="page-title">Health Evaluation</h1>
         <p class="page-subtitle">Multi-dimensional performance scorecard calibrated against regional geographic cohorts.</p>
 
-        <form action="/health" method="GET" id="health-form">
+        <form action="/health" method="POST" id="health-form">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -495,7 +495,7 @@
         <h1 class="page-title">Year-over-Year New User Influx</h1>
         <p class="page-subtitle">Track newcomer acquisition, returning veteran retention, and community expansion across consecutive campaign editions.</p>
 
-        <form action="/influx" method="GET" id="influx-form">
+        <form action="/influx" method="POST" id="influx-form">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -1037,17 +1037,25 @@
             const yrStart = parseInt(yrStartInput.value, 10) || ({{ CURRENT_YEAR }} - 2);
             const yrEnd = parseInt(yrEndInput.value, 10) || {{ CURRENT_YEAR }};
 
-            let targetCountries = [];
-            if (selectedVal === 'ALL') {
-                targetCountries = ALL_COUNTRY_CODES;
-            } else if (selectedVal.startsWith('REG:')) {
-                targetCountries = selectedVal.substring(4).split(',');
-            } else {
-                targetCountries = [selectedVal];
-            }
-
-            if (checkedEvents.length > 0 && targetCountries.length > 0) {
+            if (checkedEvents.length > 0 && selectedVal) {
                 const generatedCodes = [];
+                if (selectedVal === 'ALL') {
+                    for (const evt of checkedEvents) {
+                        for (let yr = yrStart; yr <= yrEnd; yr++) {
+                            const yy = String(yr % 100).padStart(2, '0');
+                            generatedCodes.push(`${evt}*${yy}`);
+                        }
+                    }
+                    return generatedCodes.join(' ');
+                }
+
+                let targetCountries = [];
+                if (selectedVal.startsWith('REG:')) {
+                    targetCountries = selectedVal.substring(4).split(',');
+                } else {
+                    targetCountries = [selectedVal];
+                }
+
                 for (const evt of checkedEvents) {
                     for (const cc of targetCountries) {
                         for (let yr = yrStart; yr <= yrEnd; yr++) {
@@ -1358,12 +1366,36 @@
             document.body.removeChild(downloadLink);
         }
         // ── SHARE DEEP-LINK ────────────────────────────────────────────────────
-        // Copies the current page URL (including GET query params) to clipboard
-        // and briefly shows "✓ Copied!" feedback on the button.
+        // Copies the current page URL or reconstructs shareable GET query params from form
+        // and briefly shows feedback on the button.
         function copyCurrentURL(btn) {
-            const url = window.location.href;
+            let url = window.location.href;
+            if (!window.location.search || window.location.search === '') {
+                const activeForm = document.getElementById('retention-form') || 
+                                   document.getElementById('health-form') || 
+                                   document.getElementById('influx-form');
+                if (activeForm) {
+                    const formData = new FormData(activeForm);
+                    const params = new URLSearchParams();
+                    for (const [key, val] of formData.entries()) {
+                        if (val && typeof val === 'string' && val.trim()) {
+                            params.append(key, val.trim());
+                        }
+                    }
+                    const qs = params.toString();
+                    if (qs) {
+                        url = window.location.origin + activeForm.getAttribute('action') + '?' + qs;
+                    }
+                }
+            }
+
+            if (url.length > 4000) {
+                flashShareBtn(btn, '⚠️ Query too large to share via URL');
+                return;
+            }
+
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(() => flashShareBtn(btn));
+                navigator.clipboard.writeText(url).then(() => flashShareBtn(btn, '✓ Link copied!'));
             } else {
                 // Fallback for older browsers
                 const ta = document.createElement('textarea');
@@ -1374,18 +1406,28 @@
                 ta.select();
                 try { document.execCommand('copy'); } catch (e) {}
                 document.body.removeChild(ta);
-                flashShareBtn(btn);
+                flashShareBtn(btn, '✓ Link copied!');
             }
         }
 
-        function flashShareBtn(btn) {
+        function flashShareBtn(btn, msg = '✓ Link copied!') {
             const orig = btn.innerHTML;
-            btn.innerHTML = '✓ Link copied!';
+            btn.innerHTML = msg;
             btn.classList.add('share-btn--copied');
             setTimeout(() => {
                 btn.innerHTML = orig;
                 btn.classList.remove('share-btn--copied');
-            }, 2200);
+            }, 2500);
+        }
+
+        // Automatically submit via POST only if manually entered codes exceed GET URL safe limits
+        function handleFormSubmit(form) {
+            const targetInput = form.querySelector('[name="target_campaigns"]');
+            if (targetInput && targetInput.value.length > 3000) {
+                form.method = 'POST';
+            } else {
+                form.method = 'GET';
+            }
         }
 
         // ── LOADING STATE ──────────────────────────────────────────────────────
