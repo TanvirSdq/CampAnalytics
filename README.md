@@ -2,10 +2,24 @@
 
 > **A high-performance analytics suite for Wikimedia Commons campaigns, longitudinal contributor retention analysis, cross-campaign ecosystem influx, and regional health benchmarking.**
 
-[![Hosted on Wikimedia Toolforge](https://img.shields.io/badge/Hosted%20on-Wikimedia%20Toolforge-006699?style=flat-square&logo=wikipedia)](https://toolforge.org)
+[![Hosted on Wikimedia Toolforge](https://img.shields.io/badge/Hosted%20on-Wikimedia%20Toolforge-006699?style=flat-square&logo=wikipedia)](https://campanalytics.toolforge.org/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://campanalytics.streamlit.app/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg?style=flat-square)](https://www.python.org/downloads/)
 [![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0%2B-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-2.0.html)
 [![Affiliation: Project Korikath](https://img.shields.io/badge/Affiliation-Project%20Korikath-183f54?style=flat-square)](https://meta.wikimedia.org/wiki/Project_Korikath)
+
+---
+
+## Live Deployments
+
+CampAnalytics is accessible online through two official live web deployments:
+
+| Platform | Live URL | Description |
+|:---|:---|:---|
+| **Wikimedia Toolforge** | [campanalytics.toolforge.org](https://campanalytics.toolforge.org/) | Production Flask web application integrated with the Wikimedia ecosystem |
+| **Streamlit Community Cloud** | [campanalytics.streamlit.app](https://campanalytics.streamlit.app/) | Interactive reactive dashboard with sidebar controls and exploratory charts |
+
+Both interfaces run on the identical core analytics engine ([`analytics.py`](analytics.py)).
 
 ---
 
@@ -29,20 +43,6 @@ CampAnalytics answers three core programmatic questions:
 3. **True Newcomer Influx** — Across all campaigns in a year and country, how many genuinely new people entered the Wikimedia movement?
 
 ---
-<!--
-## Two Interfaces
-
-CampAnalytics is built on a single shared analytical core powering two deployment models:
-
-| Interface | Runtime | Target | 
-|:---|:---|:---|
-| **Flask Web App** | WSGI / Gunicorn | Wikimedia Toolforge |
-| **Streamlit App** | Streamlit Runtime | Streamlit Cloud / Local |
-
-Both consume identical data pipelines via [`analytics.py`](analytics.py) and [`config.json`](config.json).
-
----
--->
 
 ## Four Analytical Modules
 
@@ -199,18 +199,6 @@ The `Procfile` runs the same Flask application through Gunicorn on port `8000` f
 streamlit run streamlit_app.py
 ```
 Visit: `http://localhost:8501`
-
----
-
-## Toolforge Deployment
-
-```bash
-ssh <username>@login.toolforge.org
-become <toolname>
-git clone https://github.com/siddiquetanvir/CampAnalytics.git src
-cd src
-toolforge webservice buildpack start
-```
 
 ---
 
