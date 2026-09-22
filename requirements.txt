@@ -8,3 +8,4 @@ pandas
 packaging
 flask
 gunicorn
+PyMySQL

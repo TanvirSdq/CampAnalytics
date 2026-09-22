@@ -26,6 +26,7 @@ import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import campaign_cache
 
 from app_config import (
     NAV_TEAL, NAV_ACCENT, BG_CANVAS, TEXT_INK, TEXT_MUTED, BORDER_COLOR,
@@ -204,10 +205,10 @@ def _fetch_participants_from_api(category):
             params["gcmcontinue"] = continuation.get("gcmcontinue")
             params["continue"] = continuation.get("continue", "gcmcontinue||")
 
-        return users
+        return users, True
     except Exception as e:
         logger.error(f"Error fetching participants from API for {category}: {e}")
-        return set()
+        return set(), False
 
 @timed_cache(ttl=3600)
 def get_participants(code):
@@ -217,6 +218,10 @@ def get_participants(code):
         return set()
 
     event, cc, yr = match.groups()
+    cached_users = campaign_cache.get_participants(code_clean) if event != 'all' else None
+    if cached_users is not None:
+        return cached_users
+
     if event == 'all':
         sub_codes = []
         for e in EVENT_MAP.keys():
@@ -257,10 +262,15 @@ def get_participants(code):
     # 1. High-speed primary: Toolforge replica scraper
     toolforge_uploaders = _fetch_toolforge_data(category)
     if toolforge_uploaders is not None:
-        return set(toolforge_uploaders.keys())
+        users = set(toolforge_uploaders.keys())
+        campaign_cache.put_participants(code_clean, users)
+        return users
 
     # 2. Resilient fallback: Commons Action API
-    return _fetch_participants_from_api(category)
+    users, success = _fetch_participants_from_api(category)
+    if success:
+        campaign_cache.put_participants(code_clean, users)
+    return users
 
 def _fetch_file_sample_metrics(category, max_sample=1500):
     params = {
@@ -278,6 +288,7 @@ def _fetch_file_sample_metrics(category, max_sample=1500):
     total_sampled = 0
     quality_count = 0
     used_count = 0
+    success = True
 
     while total_sampled < max_sample:
         try:
@@ -286,6 +297,7 @@ def _fetch_file_sample_metrics(category, max_sample=1500):
             payload = response.json()
         except Exception as e:
             logger.error(f"Error sampling files for {category}: {e}")
+            success = False
             break
 
         pages = payload.get("query", {}).get("pages", {})
@@ -308,11 +320,17 @@ def _fetch_file_sample_metrics(category, max_sample=1500):
     return {
         "sampled": total_sampled,
         "quality_count": quality_count,
-        "used_count": used_count
+        "used_count": used_count,
+        "success": success,
     }
 
 @timed_cache(ttl=3600)
 def get_campaign_structural_metrics(code):
+    code_clean = re.sub(r'\s+', '', code).lower()
+    cached_metrics = campaign_cache.get_metrics(code_clean)
+    if cached_metrics is not None:
+        return cached_metrics
+
     category = code_to_category(code)
     if not category:
         return {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "usage_share": 0.0, "total_uploads": 0}
@@ -348,12 +366,17 @@ def get_campaign_structural_metrics(code):
     if total_uploads == 0:
         total_uploads = sample_size
 
-    return {
+    metrics = {
         "quality_image_share": quality_image_share,
         "top10_uploader_share": top10_uploader_share,
         "usage_share": usage_share,
         "total_uploads": total_uploads,
     }
+    # Cache only when at least one source completed successfully. An empty
+    # Toolforge result is valid; None means the scraper failed.
+    if toolforge_uploaders is not None or sample["success"]:
+        campaign_cache.put_metrics(code_clean, metrics)
+    return metrics
 
 def fetch_structural_metrics_concurrently(codes, threads=8):
     results = {}

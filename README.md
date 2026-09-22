@@ -21,8 +21,6 @@ CampAnalytics is accessible online through two official live web deployments:
 
 Both interfaces run on the identical core analytics engine ([`analytics.py`](analytics.py)).
 
----
-
 ## Overview
 
 **CampAnalytics** is an open-source analytical platform for campaign organizers, program evaluators, and Wikimedia community leaders. It provides data-driven intelligence across the major recurring international Wiki Loves photography campaigns by querying live metadata directly from Wikimedia Commons and Toolforge replica databases.
