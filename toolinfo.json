@@ -4,6 +4,7 @@
   "description": "High-performance analytics suite for Wikimedia Commons campaigns (Wiki Loves Monuments, Earth, Folklore, Africa, Bangla). Evaluates longitudinal participant retention, newcomer influx, and 5-dimension regional health benchmarking.",
   "url": "https://campanalytics.toolforge.org/",
   "repository": "https://github.com/siddiquetanvir/CampAnalytics",
+  "issue_tracker_url": "https://github.com/siddiquetanvir/CampAnalytics/issues",
   "license": "GPL-2.0-or-later",
   "author": "Tanvir Siddique",
   "developer_docs_url": "https://github.com/siddiquetanvir/CampAnalytics#readme",
