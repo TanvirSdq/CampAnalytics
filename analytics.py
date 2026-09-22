@@ -468,7 +468,7 @@ def build_global_table(valid_countries):
         })
     if not rows:
         return pd.DataFrame()
-    df = pd.DataFrame(rows).sort_values("Avg Retention (%)", ascending=False).reset_index(drop=True)
+    df = pd.DataFrame(rows).sort_values("Country", key=lambda values: values.str.casefold()).reset_index(drop=True)
     df.index += 1
     return df
 
@@ -486,7 +486,7 @@ def build_world_data(valid_countries, metric):
         })
     if not rows:
         return pd.DataFrame()
-    return pd.DataFrame(rows).sort_values("Retention (%)", ascending=False).reset_index(drop=True)
+    return pd.DataFrame(rows).sort_values("Country", key=lambda values: values.str.casefold()).reset_index(drop=True)
 
 def create_worldmap(df, metric_label):
     """Plotly Choropleth map themed to bright natural earth aesthetic matching GLAMtools."""
