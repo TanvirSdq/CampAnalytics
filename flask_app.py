@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg') # Ensure matplotlib can run headlessly
 import matplotlib.pyplot as plt
+import datetime
 
 # Import configurations
 import app_config
@@ -44,7 +45,9 @@ def inject_config():
         'REGION_COUNTRY_MAPPING': REGION_COUNTRY_MAPPING,
         'EXAMPLE_CODES': EXAMPLE_CODES,
         'CUSTOM_CSS': app_config.get_custom_css(),
-        'TEXT_MUTED': TEXT_MUTED
+        'TEXT_MUTED': TEXT_MUTED,
+        'CURRENT_YEAR': datetime.date.today().year,
+        'DEFAULT_START_YEAR': datetime.date.today().year - 4
     }
 
 def fig_to_base64(fig):
@@ -75,24 +78,26 @@ def methodology():
 
 @app.route('/influx', methods=['GET', 'POST'])
 def influx():
+    current_year = datetime.date.today().year - 1
+    default_start = current_year - 4
     if request.method == 'POST':
         event_type = request.form.get('influx_event_type', 'wlm').strip().lower()
         country = request.form.get('influx_country', 'de').strip().lower()
         try:
-            yr_start = int(request.form.get('influx_yr_start', 2020))
-            yr_end = int(request.form.get('influx_yr_end', 2024))
+            yr_start = int(request.form.get('influx_yr_start', default_start))
+            yr_end = int(request.form.get('influx_yr_end', current_year))
         except (ValueError, TypeError):
-            yr_start, yr_end = 2020, 2024
+            yr_start, yr_end = default_start, current_year
         raw_codes = request.form.get('influx_codes', '').strip()
         should_compute = True
     else:
         event_type = request.args.get('influx_event_type', 'wlm').strip().lower()
         country = request.args.get('influx_country', 'de').strip().lower()
         try:
-            yr_start = int(request.args.get('influx_yr_start', 2020))
-            yr_end = int(request.args.get('influx_yr_end', 2024))
+            yr_start = int(request.args.get('influx_yr_start', default_start))
+            yr_end = int(request.args.get('influx_yr_end', current_year))
         except (ValueError, TypeError):
-            yr_start, yr_end = 2020, 2024
+            yr_start, yr_end = default_start, current_year
         raw_codes = request.args.get('influx_codes', '').strip()
         should_compute = bool(request.args.get('influx_codes'))
 
@@ -240,10 +245,11 @@ def health():
         region = request.args.get('region', 'South Asia')
         # If bare GET request with no parameters, show form ready to use
         if not target_event and not request.args.get('target_event'):
+            current_year_short = str(datetime.date.today().year - 1)[-2:]
             return render_template(
                 'index.html',
                 mode='Health Evaluation',
-                target_event='wlmbd24',
+                target_event=f'wlmbd{current_year_short}',
                 comp_mode='Previous Year Baseline',
                 baseline_event='',
                 region='South Asia',

@@ -72,9 +72,9 @@
                                 <div class="form-group">
                                     <label class="form-label">Longitudinal Year Range</label>
                                     <div class="year-range-row">
-                                        <input type="number" id="builder_yr_start" name="builder_yr_start" value="2021" min="2010" max="2040" class="form-control" onchange="syncBuilderToCodes()">
+                                        <input type="number" id="builder_yr_start" name="builder_yr_start" value="{{ CURRENT_YEAR - 2 }}" min="2010" max="2040" class="form-control" onchange="syncBuilderToCodes()">
                                         <span class="year-separator">to</span>
-                                        <input type="number" id="builder_yr_end" name="builder_yr_end" value="2023" min="2010" max="2040" class="form-control" onchange="syncBuilderToCodes()">
+                                        <input type="number" id="builder_yr_end" name="builder_yr_end" value="{{ CURRENT_YEAR }}" min="2010" max="2040" class="form-control" onchange="syncBuilderToCodes()">
                                     </div>
                                 </div>
                             </div>
@@ -260,7 +260,7 @@
 
                                 <div class="form-group">
                                     <label for="health_year" class="form-label">Campaign Year</label>
-                                    <input type="number" id="health_year" name="health_year" value="2024" min="2010" max="2040" class="form-control" onchange="syncHealthBuilderToCode()">
+                                    <input type="number" id="health_year" name="health_year" value="{{ CURRENT_YEAR }}" min="2010" max="2040" class="form-control" onchange="syncHealthBuilderToCode()">
                                 </div>
                             </div>
 
@@ -313,8 +313,8 @@
                         <div class="example-box">
                             <div class="example-box-title">Preset Benchmarks</div>
                             <div class="preset-tags">
-                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmbd24', 'South Asia', '')">
-                                    <strong>wlmbd24</strong>
+                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmbd{{ CURRENT_YEAR % 100 }}', 'South Asia', '')">
+                                    <strong>wlmbd{{ CURRENT_YEAR % 100 }}</strong>
                                     <span class="preset-tag-label">Monuments Bangladesh (South Asia)</span>
                                 </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmde22', 'Northern & Western Europe', '')">
@@ -520,9 +520,9 @@
                                 <div class="form-group">
                                     <label class="form-label">Year Range</label>
                                     <div class="year-range-row">
-                                        <input type="number" id="influx_yr_start" name="influx_yr_start" class="form-control" value="{{ influx_yr_start|default(2020) }}" min="2010" max="2040" onchange="syncInfluxBuilder()">
+                                        <input type="number" id="influx_yr_start" name="influx_yr_start" class="form-control" value="{{ influx_yr_start|default(DEFAULT_START_YEAR) }}" min="2010" max="2040" onchange="syncInfluxBuilder()">
                                         <span class="year-separator">to</span>
-                                        <input type="number" id="influx_yr_end" name="influx_yr_end" class="form-control" value="{{ influx_yr_end|default(2024) }}" min="2010" max="2040" onchange="syncInfluxBuilder()">
+                                        <input type="number" id="influx_yr_end" name="influx_yr_end" class="form-control" value="{{ influx_yr_end|default(CURRENT_YEAR) }}" min="2010" max="2040" onchange="syncInfluxBuilder()">
                                     </div>
                                 </div>
                             </div>
@@ -545,28 +545,28 @@
                             <div class="example-box">
                                 <div class="example-box-title">Featured Multi-Year Presets</div>
                                 <div class="preset-tags">
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'bd', 2020, 2024)">
-                                        allbd20 ... allbd24
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'bd', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        allbd{{ DEFAULT_START_YEAR % 100 }} ... allbd{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">All Campaigns · Bangladesh</span>
                                     </button>
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'de', 2020, 2024)">
-                                        allde20 ... allde24
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'de', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        allde{{ DEFAULT_START_YEAR % 100 }} ... allde{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">All Campaigns · Germany</span>
                                     </button>
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wla', 'ng', 2020, 2024)">
-                                        wlang20 ... wlang24
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wla', 'ng', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        wlang{{ DEFAULT_START_YEAR % 100 }} ... wlang{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">Africa · Nigeria</span>
                                     </button>
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlm', 'de', 2020, 2024)">
-                                        wlmde20 ... wlmde24
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlm', 'de', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        wlmde{{ DEFAULT_START_YEAR % 100 }} ... wlmde{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">Monuments · Germany</span>
                                     </button>
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wle', 'in', 2020, 2024)">
-                                        wlein20 ... wlein24
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wle', 'in', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        wlein{{ DEFAULT_START_YEAR % 100 }} ... wlein{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">Earth · India</span>
                                     </button>
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlf', 'it', 2020, 2024)">
-                                        wlfit20 ... wlfit24
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlf', 'it', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        wlfit{{ DEFAULT_START_YEAR % 100 }} ... wlfit{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">Folklore · Italy</span>
                                     </button>
                                 </div>
@@ -591,7 +591,7 @@
                         </div>
                         <div style="background: var(--card-subtle); border: 1px solid var(--border-color); border-radius: 4px; padding: 14px 16px;">
                             <div style="font-weight: 600; color: var(--text-ink); font-size: 0.92rem; margin-bottom: 6px;">2 · Define Longitudinal Span</div>
-                            <p style="color: var(--text-muted); font-size: 0.84rem; margin: 0; line-height: 1.5;">Select at least two consecutive editions (e.g. 2020–2024). The query codes update automatically in chronological sequence.</p>
+                            <p style="color: var(--text-muted); font-size: 0.84rem; margin: 0; line-height: 1.5;">Select at least two consecutive editions (e.g. {{ DEFAULT_START_YEAR }}–{{ CURRENT_YEAR }}). The query codes update automatically in chronological sequence.</p>
                         </div>
                         <div style="background: var(--card-subtle); border: 1px solid var(--border-color); border-radius: 4px; padding: 14px 16px;">
                             <div style="font-weight: 600; color: var(--text-ink); font-size: 0.92rem; margin-bottom: 6px;">3 · Compute Influx Trends</div>
@@ -846,7 +846,7 @@
                     The Influx Analytics module assesses continuous community renewal and long-term mobilization:
                 </p>
                 <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
-                    <li><strong>Series Selection:</strong> Choose a campaign type (or All Campaigns), country, and consecutive year span (e.g. 2020–2024).</li>
+                    <li><strong>Series Selection:</strong> Choose a campaign type (or All Campaigns), country, and consecutive year span (e.g. {{ DEFAULT_START_YEAR }}–{{ CURRENT_YEAR }}).</li>
                     <li><strong>Newcomer Detection:</strong> Differentiates first-time participants (\(I_t\)) from returning veterans (\(R_t\)) across the series.</li>
                     <li><strong>Trend Visualizations:</strong> Reviews stacked volume bars, net expansion growth rates (\(\Delta \text{YoY}\)), and cumulative community pool milestones.</li>
                 </ol>
@@ -1008,11 +1008,18 @@
             const selectedVal = countrySelect ? countrySelect.value : '';
             const yrStartInput = document.getElementById('builder_yr_start');
             const yrEndInput = document.getElementById('builder_yr_end');
-            
-            if (!yrStartInput || !yrEndInput || !selectedVal) return;
+            const targetInput = document.getElementById('target_campaigns');
 
-            const yrStart = parseInt(yrStartInput.value, 10) || 2021;
-            const yrEnd = parseInt(yrEndInput.value, 10) || 2023;
+            if (!countrySelect || !targetInput) return;
+
+            const cVal = countrySelect.value;
+            if (!cVal) {
+                targetInput.value = '';
+                return;
+            }
+
+            const yrStart = parseInt(yrStartInput.value, 10) || ({{ CURRENT_YEAR }} - 2);
+            const yrEnd = parseInt(yrEndInput.value, 10) || {{ CURRENT_YEAR }};
 
             let targetCountries = [];
             if (selectedVal === 'ALL') {
@@ -1100,12 +1107,20 @@
 
         // Synchronize Health Builder controls to target_event input
         function syncHealthBuilderToCode() {
-            const checkedEvt = document.querySelector('input[name="health_event_type"]:checked');
-            const evt = checkedEvt ? checkedEvt.value : 'wlm';
+            const eventRadios = document.getElementsByName('health_event_type');
             const countrySelect = document.getElementById('health_country');
-            const cc = countrySelect ? countrySelect.value.toLowerCase() : '';
             const yearInput = document.getElementById('health_year');
-            const yr = yearInput ? parseInt(yearInput.value, 10) : 2024;
+            const targetInput = document.getElementById('target_event');
+            const baselineInput = document.getElementById('baseline_event');
+            const compModeRadios = document.getElementsByName('comp_mode');
+
+            if (!countrySelect || !targetInput) return;
+
+            let evt = 'wlm';
+            for (let r of eventRadios) { if (r.checked) { evt = r.value; break; } }
+            
+            const cc = countrySelect ? countrySelect.value.toLowerCase() : '';
+            const yr = yearInput ? parseInt(yearInput.value, 10) : {{ CURRENT_YEAR }};
 
             if (evt && cc && yr) {
                 const yy = String(yr % 100).padStart(2, '0');
@@ -1242,8 +1257,8 @@
             const yrEndInput = document.getElementById('influx_yr_end');
             
             if (!yrStartInput || !yrEndInput) return;
-            const y1 = parseInt(yrStartInput.value, 10) || 2020;
-            const y2 = parseInt(yrEndInput.value, 10) || 2024;
+            const y1 = parseInt(yrStartInput.value, 10) || {{ DEFAULT_START_YEAR }};
+            const y2 = parseInt(yrEndInput.value, 10) || {{ CURRENT_YEAR }};
             
             const codes = [];
             for (let y = y1; y <= y2; y++) {
