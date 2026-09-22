@@ -1,0 +1,22 @@
+{
+  "name": "campanalytics",
+  "title": "CampAnalytics — Event Evaluation",
+  "description": "High-performance analytics suite for Wikimedia Commons campaigns (Wiki Loves Monuments, Earth, Folklore, Africa, Bangla). Evaluates longitudinal participant retention, newcomer influx, and 5-dimension regional health benchmarking.",
+  "url": "https://campanalytics.toolforge.org/",
+  "repository": "https://github.com/siddiquetanvir/CampAnalytics",
+  "license": "GPL-2.0-or-later",
+  "author": "Tanvir Siddique",
+  "developer_docs_url": "https://github.com/siddiquetanvir/CampAnalytics#readme",
+  "user_docs_url": "https://campanalytics.toolforge.org/?mode=Methodology",
+  "keywords": [
+    "analytics",
+    "campaigns",
+    "commons",
+    "evaluation",
+    "statistics",
+    "retention",
+    "wikiloves",
+    "glam",
+    "toolforge"
+  ]
+}

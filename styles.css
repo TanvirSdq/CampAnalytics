@@ -24,6 +24,9 @@
 html, body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: var(--bg-canvas);
     color: var(--text-ink);
@@ -42,6 +45,7 @@ html, body {
     top: 0;
     z-index: 1000;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    width: 100%;
 }
 
 .navbar-container {
@@ -58,6 +62,13 @@ html, body {
     display: flex;
     align-items: center;
     gap: 28px;
+    height: 100%;
+}
+
+.navbar-nav {
+    display: flex;
+    align-items: center;
+    height: 100%;
 }
 
 .navbar-brand {
@@ -658,7 +669,7 @@ table.data-table tbody tr:hover {
    ========================================================================== */
 .methodology-cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
     gap: 20px;
     margin: 20px 0 32px 0;
 }
@@ -774,4 +785,135 @@ table.data-table tbody tr:hover {
 .toolforge-footer a:hover {
     color: var(--wiki-blue-hover);
     text-decoration: underline;
+}
+
+.form-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* ==========================================================================
+   Comprehensive Mobile & Tablet Responsiveness
+   ========================================================================== */
+@media (max-width: 860px) {
+    .navbar-container {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "brand right"
+            "nav   nav";
+        height: auto;
+        padding: 8px 14px 0;
+        row-gap: 4px;
+    }
+
+    .navbar-left {
+        display: contents;
+    }
+
+    .navbar-brand {
+        grid-area: brand;
+        align-self: center;
+        font-size: 1.15rem;
+    }
+
+    .navbar-right {
+        grid-area: right;
+        align-self: center;
+        gap: 8px;
+    }
+
+    .navbar-nav {
+        grid-area: nav;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 2px 0 0;
+    }
+
+    .navbar-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-tabs {
+        width: max-content;
+        height: 42px;
+        gap: 2px;
+    }
+
+    .nav-tab-link {
+        padding: 0 12px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .nav-util-text {
+        display: none;
+    }
+
+    .nav-util-link {
+        padding: 4px 6px;
+    }
+
+    .korikath-navbar-logo {
+        height: 26px;
+    }
+
+    .main-wrapper {
+        padding: 16px 12px 36px;
+    }
+
+    .page-title {
+        font-size: 1.35rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.88rem;
+        margin-bottom: 16px;
+    }
+
+    .methodology-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .glam-panel-body {
+        padding: 14px;
+    }
+
+    .glam-panel-header {
+        padding: 10px 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .form-row-2col {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .scorecard-header-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .scorecard-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .toolforge-footer {
+        padding: 20px 14px;
+        margin-top: 32px;
+    }
+
+    .toolforge-footer-links {
+        gap: 8px 12px;
+    }
 }
