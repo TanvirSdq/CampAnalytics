@@ -45,7 +45,7 @@
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                                         <label for="builder_country" class="form-label" style="margin-bottom: 0;">Target Country</label>
                                         <div style="display: flex; gap: 6px; align-items: center;">
-                                            <button type="button" class="btn btn-sm" onclick="selectAllCountries()" title="Select all available countries for global analysis" style="padding: 2px 8px; font-size: 0.78rem; background: #eef6ff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 3px; cursor: pointer; font-weight: 500;">
+                                            <button type="button" class="btn btn-sm" onclick="selectAllCountries(); replaceBuilderCodes();" title="Select all available countries and populate target codes" style="padding: 2px 8px; font-size: 0.78rem; background: #eef6ff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 3px; cursor: pointer; font-weight: 500;">
                                                 ✓ Select All (Global)
                                             </button>
                                             <button type="button" class="btn btn-sm" onclick="clearCountrySelection()" title="Clear country selection" style="padding: 2px 8px; font-size: 0.78rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer;">
@@ -79,13 +79,13 @@
                                 </div>
                                 
                             </div>
-                            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 12px;">
-                                    <button type="button" class="btn-primary" style="background-color:white;color: var(--wiki-blue);" onclick="replaceBuilderCodes()">
-                                        Replace
-                                    </button>
-                                    <button type="button" class="btn-primary" onclick="appendBuilderCodes()">
-                                        Append
-                                    </button>
+                            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px;">
+                                <button type="button" class="btn btn-outline-primary" onclick="replaceBuilderCodes()" title="Replace target campaign codes with builder selection">
+                                    🔄 Replace Codes
+                                </button>
+                                <button type="button" class="btn btn-primary" onclick="appendBuilderCodes()" title="Append builder selection to target campaign codes">
+                                    ➕ Append Codes
+                                </button>
                             </div>
 
                             <!-- Generated Target Campaign Codes -->
@@ -195,7 +195,7 @@
 
         {# Analytical Results Panel #}
         {% if tables or heatmaps or worldmap_html %}
-            <div class="display-panel">
+            <div class="display-panel" id="retention-results">
                 <div class="display-panel-header">
                     <span>Analysis Output: {{ view_mode }} Model</span>
                     <div style="display: flex; gap: 8px; align-items: center;">
@@ -252,7 +252,7 @@
                             <!-- Campaign Type Selector -->
                             <div class="form-group">
                                 <label class="form-label">Campaign Type</label>
-                                <div class="pills-container">
+                                <div class="pill-group" id="health-event-group">
                                     {% for event_key, event_val in EVENT_MAP.items() %}
                                         <input type="radio" name="health_event_type" value="{{ event_key }}" id="health-evt-{{ event_key }}" class="pill-checkbox" {% if event_key == 'wlm' %}checked{% endif %} onchange="syncHealthBuilderToCode()">
                                         <label for="health-evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
@@ -361,7 +361,7 @@
         {# Scorecard & Diagnostic Output #}
         {% if metrics %}
             <!-- Scorecard Summary Header Card -->
-            <div class="scorecard-header-card">
+            <div class="scorecard-header-card" id="health-results">
                 <div>
                     <div style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--nav-teal); margin-bottom: 4px;">Health Evaluation Scorecard</div>
                     <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-ink);">Campaign: {{ target_event|upper }}</div>
@@ -545,7 +545,7 @@
                             <!-- Synchronized Target Codes Input -->
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label for="influx_codes" class="form-label">Generated Campaign Sequence</label>
-                                <input type="text" id="influx_codes" name="influx_codes" class="form-control form-control-code" value="{{ influx_codes|default('wlmde20 wlmde21 wlmde22 wlmde23 wlmde24') }}" placeholder="e.g. wlmde20 wlmde21 wlmde22 wlmde23 wlmde24">
+                                <input type="text" id="influx_codes" name="influx_codes" class="form-control form-control-code" value="{{ influx_codes|default('wlmde20 wlmde21 wlmde22 wlmde23 wlmde24') }}" placeholder="e.g. wlmde20 wlmde21 wlmde22 wlmde23 wlmde24" oninput="parseCodeToInfluxBuilder()">
                                 <div class="form-hint" id="influx-scope-hint">Chronological campaign sequence to evaluate.</div>
                             </div>
 
@@ -619,7 +619,7 @@
 
         {% if influx_result and influx_result.records %}
             <!-- Structured Panel: Trend KPI Summary -->
-            <div class="display-panel">
+            <div class="display-panel" id="influx-results">
                 <div class="display-panel-header">
                     <span>Summary Indicators · Contributor Influx &amp; Expansion</span>
                     <div style="display: flex; gap: 8px; align-items: center;">
@@ -1072,29 +1072,79 @@
             return '';
         }
 
+        function flashTargetInput(success = true) {
+            const targetInput = document.getElementById('target_campaigns');
+            if (!targetInput) return;
+            targetInput.style.transition = 'box-shadow 0.2s ease, border-color 0.2s ease';
+            if (success) {
+                targetInput.style.borderColor = 'var(--wiki-blue)';
+                targetInput.style.boxShadow = '0 0 0 3px rgba(54, 89, 227, 0.25)';
+            } else {
+                targetInput.style.borderColor = '#d73a49';
+                targetInput.style.boxShadow = '0 0 0 3px rgba(215, 58, 73, 0.25)';
+            }
+            setTimeout(() => {
+                targetInput.style.borderColor = '';
+                targetInput.style.boxShadow = '';
+            }, 1100);
+        }
+
+        function flashBuilderError() {
+            const checkedEvents = document.querySelectorAll('input[name="builder_events"]:checked');
+            const countrySelect = document.getElementById('builder_country');
+            if (checkedEvents.length === 0) {
+                const group = document.getElementById('event-pill-group');
+                if (group) {
+                    group.style.outline = '2px solid #d73a49';
+                    group.style.borderRadius = '6px';
+                    group.style.padding = '4px';
+                    setTimeout(() => {
+                        group.style.outline = '';
+                        group.style.padding = '';
+                    }, 1400);
+                }
+            }
+            if (countrySelect && !countrySelect.value) {
+                countrySelect.style.borderColor = '#d73a49';
+                countrySelect.style.boxShadow = '0 0 0 3px rgba(215, 58, 73, 0.25)';
+                countrySelect.focus();
+                setTimeout(() => {
+                    countrySelect.style.borderColor = '';
+                    countrySelect.style.boxShadow = '';
+                }, 1400);
+            }
+            flashTargetInput(false);
+        }
+
         // Replace the target campaigns input with codes from builder
         function replaceBuilderCodes() {
             const codes = getCodesFromBuilder();
+            const targetInput = document.getElementById('target_campaigns');
             if (codes) {
-                const targetInput = document.getElementById('target_campaigns');
                 if (targetInput) {
                     targetInput.value = codes;
+                    flashTargetInput(true);
                 }
+            } else {
+                flashBuilderError();
             }
         }
 
         // Append codes from builder to the existing target campaigns input
         function appendBuilderCodes() {
             const codes = getCodesFromBuilder();
+            const targetInput = document.getElementById('target_campaigns');
             if (codes) {
-                const targetInput = document.getElementById('target_campaigns');
                 if (targetInput) {
                     if (targetInput.value.trim() === '') {
                         targetInput.value = codes;
                     } else {
                         targetInput.value = targetInput.value.trim() + ' ' + codes;
                     }
+                    flashTargetInput(true);
                 }
+            } else {
+                flashBuilderError();
             }
         }
 
@@ -1103,6 +1153,7 @@
             const targetInput = document.getElementById('target_campaigns');
             if (targetInput) {
                 targetInput.value = codes;
+                flashTargetInput(true);
             }
             const codesArr = codes.trim().split(/\s+/);
             if (codesArr.length > 0) {
@@ -1340,6 +1391,64 @@
             const yrEndInput = document.getElementById('influx_yr_end');
             if (yrEndInput) yrEndInput.value = y2;
             syncInfluxBuilder();
+
+            const codesInput = document.getElementById('influx_codes');
+            if (codesInput) {
+                codesInput.style.transition = 'box-shadow 0.2s ease, border-color 0.2s ease';
+                codesInput.style.borderColor = 'var(--wiki-blue)';
+                codesInput.style.boxShadow = '0 0 0 3px rgba(54, 89, 227, 0.25)';
+                setTimeout(() => {
+                    codesInput.style.borderColor = '';
+                    codesInput.style.boxShadow = '';
+                }, 1100);
+            }
+        }
+
+        // Parse typed or pasted codes into Influx Builder controls
+        function parseCodeToInfluxBuilder() {
+            const codesInput = document.getElementById('influx_codes');
+            if (!codesInput) return;
+            const val = codesInput.value.trim().toLowerCase();
+            if (!val) return;
+            const codes = val.split(/\s+/);
+            if (codes.length === 0) return;
+
+            const firstMatch = codes[0].match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$/);
+            if (firstMatch) {
+                const evt = firstMatch[1];
+                const cc = firstMatch[2];
+                
+                const evtRadio = document.getElementById('influx-evt-' + evt);
+                if (evtRadio) evtRadio.checked = true;
+
+                const countrySelect = document.getElementById('influx_country');
+                if (countrySelect && cc) countrySelect.value = cc;
+
+                let minY = null;
+                let maxY = null;
+                for (const c of codes) {
+                    const m = c.match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$/);
+                    if (m) {
+                        const y = 2000 + parseInt(m[3], 10);
+                        if (minY === null || y < minY) minY = y;
+                        if (maxY === null || y > maxY) maxY = y;
+                    }
+                }
+                const yrStartInput = document.getElementById('influx_yr_start');
+                const yrEndInput = document.getElementById('influx_yr_end');
+                if (minY !== null && yrStartInput) yrStartInput.value = minY;
+                if (maxY !== null && yrEndInput) yrEndInput.value = maxY;
+
+                const influxHint = document.getElementById('influx-scope-hint');
+                if (influxHint && cc) {
+                    const notice = getScopeNoticeJS(evt, cc);
+                    if (notice) {
+                        influxHint.innerHTML = '<span style="color: #d97706; font-weight: 500;">ℹ️ ' + notice + '</span>';
+                    } else {
+                        influxHint.innerText = 'Chronological campaign sequence to evaluate.';
+                    }
+                }
+            }
         }
 
         // Export Influx Data Table to CSV
@@ -1434,6 +1543,11 @@
         // Disables the submit button and updates text to prevent double-clicks
         // while the Wikimedia API query is in flight.
         function setLoadingState(btn, label) {
+            const form = btn.closest('form');
+            if (form && !form.checkValidity()) {
+                // Let native browser validation display if form is invalid
+                return;
+            }
             // Small delay lets the form submit before we update the DOM
             setTimeout(() => {
                 btn.disabled = true;
@@ -1442,5 +1556,48 @@
                 btn.style.cursor = 'not-allowed';
             }, 10);
         }
+
+        // Re-enable buttons if restored from browser back-forward cache
+        window.addEventListener('pageshow', () => {
+            document.querySelectorAll('button[type="submit"]').forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '';
+                btn.style.cursor = '';
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Automatically scroll to results on page reload if results exist across any view
+            const resultsEl = document.getElementById('influx-results') || 
+                              document.getElementById('health-results') || 
+                              document.getElementById('retention-results');
+            if (resultsEl) {
+                setTimeout(() => {
+                    resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 120);
+            }
+
+            // Cross-browser event delegation on pill groups to ensure selection updates in Safari/WebKit
+            ['event-pill-group', 'health-event-group', 'influx-event-group'].forEach(groupId => {
+                const groupEl = document.getElementById(groupId);
+                if (groupEl) {
+                    groupEl.addEventListener('click', (e) => {
+                        if (e.target.closest('.pill-label') || e.target.closest('.pill-checkbox')) {
+                            if (groupId === 'health-event-group') {
+                                setTimeout(syncHealthBuilderToCode, 30);
+                            } else if (groupId === 'influx-event-group') {
+                                setTimeout(syncInfluxBuilder, 30);
+                            }
+                        }
+                    });
+                }
+            });
+
+            // If influx_codes has an initial value, synchronize builder controls
+            const influxCodesInput = document.getElementById('influx_codes');
+            if (influxCodesInput && influxCodesInput.value) {
+                parseCodeToInfluxBuilder();
+            }
+        });
     </script>
 {% endblock %}

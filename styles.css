@@ -274,7 +274,11 @@ html, body {
 }
 
 .pill-checkbox {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
 }
 
 .pill-label {
@@ -301,6 +305,11 @@ html, body {
     background-color: var(--wiki-blue);
     border-color: var(--wiki-blue);
     color: #ffffff;
+}
+
+.pill-checkbox:focus-visible + .pill-label {
+    outline: 2px solid var(--wiki-blue);
+    outline-offset: 2px;
 }
 
 /* Form Inputs */
@@ -375,6 +384,14 @@ textarea.form-control {
     padding: 16px;
 }
 
+.pills-container,
+.pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
 .example-box-title {
     font-weight: 600;
     font-size: 0.88rem;
@@ -390,15 +407,18 @@ textarea.form-control {
 
 .preset-tag-btn {
     display: block;
+    width: 100%;
+    box-sizing: border-box;
     text-align: left;
     background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    padding: 7px 10px;
+    padding: 8px 11px;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 0.82rem;
     color: var(--wiki-blue);
     cursor: pointer;
+    word-break: break-word;
     transition: all 0.15s ease;
 }
 
@@ -406,6 +426,12 @@ textarea.form-control {
     background: #f0f4f8;
     border-color: var(--wiki-blue);
     color: var(--wiki-blue-hover);
+}
+
+.preset-tag-btn:active {
+    transform: scale(0.99);
+    background: #e1ecf8;
+    border-color: var(--wiki-blue-hover);
 }
 
 .preset-tag-label {
@@ -417,42 +443,76 @@ textarea.form-control {
 }
 
 /* Action Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    user-select: none;
+    font-family: inherit;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.btn:active {
+    transform: scale(0.99);
+}
+
+.btn-sm {
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    border-radius: 3px;
+}
+
 .btn-primary {
     background-color: var(--wiki-blue);
     color: #ffffff;
     border: 1px solid var(--wiki-blue);
-    border-radius: 4px;
-    padding: 9px 20px;
-    font-size: 0.92rem;
     font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-primary:hover {
     background-color: var(--wiki-blue-hover);
     border-color: var(--wiki-blue-hover);
+    color: #ffffff;
 }
 
 .btn-secondary {
     background-color: #ffffff;
     color: var(--text-ink);
     border: 1px solid var(--border-input);
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-size: 0.9rem;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
 }
 
 .btn-secondary:hover {
     background-color: var(--card-subtle);
     border-color: #a2a9b1;
+}
+
+.btn-outline-primary {
+    background-color: #ffffff;
+    color: var(--wiki-blue);
+    border: 1px solid var(--wiki-blue);
+    font-weight: 600;
+}
+
+.btn-outline-primary:hover {
+    background-color: #f0f7ff;
+    border-color: var(--wiki-blue-hover);
+    color: var(--wiki-blue-hover);
+}
+
+.btn-outline-primary:active {
+    background-color: #e1ecf8;
 }
 
 /* ==========================================================================
@@ -911,6 +971,12 @@ table.data-table tbody tr:hover {
     .scorecard-grid {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .preset-tags {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 8px;
     }
 
     .toolforge-footer {
