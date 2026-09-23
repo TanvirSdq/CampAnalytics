@@ -962,73 +962,128 @@
     {# 5. TOOL LIST LANDING PAGE (DEFAULT)                                    #}
     {# ====================================================================== #}
     {% else %}
-        <div style="margin-bottom: 24px;">
-            <h1 class="page-title" style="margin-bottom: 6px;">Campaign Analytics Suite</h1>
-            <p class="page-subtitle" style="margin-bottom: 0;">Cross-campaign participant retention, community health evaluation, and contributor influx analytics for Wikimedia campaigns.</p>
+        <div style="margin-bottom: 28px; padding-top: 6px;">
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: #eef6ff; color: var(--wiki-blue); font-size: 0.78rem; font-weight: 600; padding: 4px 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #d4e4fc;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                Wikimedia Campaign Analytics Suite
+            </div>
+            <h1 class="page-title" style="margin-bottom: 8px; font-size: 1.85rem; letter-spacing: -0.4px;">Campaign Analytics Suite</h1>
+            <p class="page-subtitle" style="margin-bottom: 0; font-size: 0.98rem; color: var(--text-muted); max-width: 760px; line-height: 1.6;">
+                Evaluate longitudinal participant retention, community health scorecards, and newcomer contributor influx across Wikimedia photography competitions.
+            </p>
         </div>
 
         <!-- Tool Cards Grid -->
         <div class="methodology-cards-grid">
-            <div class="tool-card">
+            <a href="/retention" class="tool-card">
                 <div>
-                    <span class="tool-card-badge">Tool 01</span>
+                    <div class="tool-card-icon-wrap">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9" cy="12" r="6"></circle>
+                            <circle cx="15" cy="12" r="6"></circle>
+                        </svg>
+                    </div>
+                    <span class="tool-card-badge">Tool 01 · Retention</span>
                     <h3 class="tool-card-title">Retention Analytics</h3>
-                    <p class="tool-card-desc">Evaluate longitudinal contributor movement and retention across multi-year editions. Analyze pairwise retention heatmaps, intersection matrices, and spatial choropleth maps across 50+ countries.</p>
-                    <ul style="margin: 0 0 20px 0; padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
-                        <li>Directional cohort intersect shares</li>
-                        <li>Consecutive edition heatmaps</li>
-                        <li>Global choropleth distribution map</li>
+                    <p class="tool-card-desc">Evaluate longitudinal contributor movement and retention across multi-year editions. Analyze pairwise heatmaps, intersection matrices, and spatial choropleth maps across 50+ countries.</p>
+                    <ul class="tool-card-features">
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Directional cohort intersect shares</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Consecutive edition heatmaps</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Global choropleth distribution map</span>
+                        </li>
                     </ul>
                 </div>
-                <a href="/retention" class="btn btn-primary" style="text-align: center; text-decoration: none; font-weight: 600; padding: 10px 16px; border-radius: 4px; display: block; margin-top: auto;">
-                    Launch Retention Analytics &rarr;
-                </a>
-            </div>
+                <div class="tool-card-btn">
+                    <span>Launch Retention Analytics</span>
+                    <span class="arrow-icon">&rarr;</span>
+                </div>
+            </a>
 
-            <div class="tool-card">
+            <a href="/health" class="tool-card">
                 <div>
-                    <span class="tool-card-badge">Tool 02</span>
+                    <div class="tool-card-icon-wrap" style="background-color: #fef6ee; color: #d97706;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                        </svg>
+                    </div>
+                    <span class="tool-card-badge" style="background-color: #fef3c7; color: #92400e;">Tool 02 · Health</span>
                     <h3 class="tool-card-title">Health Evaluation</h3>
                     <p class="tool-card-desc">Assess campaign vitality across five weighted structural indicators calibrated dynamically against regional peer performance benchmarks and upper-quartile envelopes.</p>
-                    <ul style="margin: 0 0 20px 0; padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
-                        <li>Weighted composite health score (0–100)</li>
-                        <li>Dynamic regional peer normalization</li>
-                        <li>Commons GlobalUsage &amp; quality footprint</li>
+                    <ul class="tool-card-features">
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Weighted composite health score (0–100)</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Dynamic regional peer normalization</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Commons GlobalUsage &amp; quality footprint</span>
+                        </li>
                     </ul>
                 </div>
-                <a href="/health" class="btn btn-primary" style="text-align: center; text-decoration: none; font-weight: 600; padding: 10px 16px; border-radius: 4px; display: block; margin-top: auto;">
-                    Launch Health Evaluation &rarr;
-                </a>
-            </div>
+                <div class="tool-card-btn">
+                    <span>Launch Health Evaluation</span>
+                    <span class="arrow-icon">&rarr;</span>
+                </div>
+            </a>
 
-            <div class="tool-card">
+            <a href="/influx" class="tool-card">
                 <div>
-                    <span class="tool-card-badge">Tool 03</span>
+                    <div class="tool-card-icon-wrap" style="background-color: #f0fdf4; color: #16a34a;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <span class="tool-card-badge" style="background-color: #dcfce7; color: #15803d;">Tool 03 · Influx</span>
                     <h3 class="tool-card-title">New User Influx</h3>
                     <p class="tool-card-desc">Track newcomer acquisition, returning veteran retention, and community expansion over multi-year series. Includes stacked cohort visualizations and CSV data export.</p>
-                    <ul style="margin: 0 0 20px 0; padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
-                        <li>First-time entrants vs. returning veterans</li>
-                        <li>Visual stacked bar dynamics &amp; cumulative pool</li>
-                        <li>YoY net growth &amp; newcomer share table</li>
+                    <ul class="tool-card-features">
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>First-time entrants vs. returning veterans</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Visual stacked bar dynamics &amp; cumulative pool</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>YoY net growth &amp; newcomer share table</span>
+                        </li>
                     </ul>
                 </div>
-                <a href="/influx" class="btn btn-primary" style="text-align: center; text-decoration: none; font-weight: 600; padding: 10px 16px; border-radius: 4px; display: block; margin-top: auto;">
-                    Launch New User Influx &rarr;
-                </a>
-            </div>
+                <div class="tool-card-btn">
+                    <span>Launch New User Influx</span>
+                    <span class="arrow-icon">&rarr;</span>
+                </div>
+            </a>
         </div>
 
         <!-- Documentation Card -->
         <div class="display-panel" style="margin-top: 10px;">
-            <div class="display-panel-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 18px 22px;">
+            <div class="display-panel-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 20px 24px;">
                 <div>
-                    <h4 style="margin: 0 0 4px 0; font-size: 0.98rem; color: var(--text-ink);">Need Technical Documentation or Formulations?</h4>
-                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
-                        Read mathematical definitions, weighting models, and data ingestion specifications in the methodology guide.
+                    <h4 style="margin: 0 0 4px 0; font-size: 0.98rem; color: var(--text-ink); font-weight: 600;">Need Technical Documentation or Mathematical Formulations?</h4>
+                    <p style="margin: 0; font-size: 0.86rem; color: var(--text-muted); line-height: 1.5;">
+                        Read formal definitions, weighting models, and data extraction specifications in the methodology guide.
                     </p>
                 </div>
-                <a href="/methodology" class="btn btn-sm" style="padding: 8px 16px; font-size: 0.84rem; background: #ffffff; color: var(--wiki-blue); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; font-weight: 600; white-space: nowrap;">
-                    View Methodology &amp; Usage Guide &rarr;
+                <a href="/methodology" class="btn btn-secondary" style="padding: 8px 18px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+                    View Methodology Guide &rarr;
                 </a>
             </div>
         </div>
