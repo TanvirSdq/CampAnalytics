@@ -195,27 +195,54 @@ def influx():
 
 @app.route('/retention', methods=['GET', 'POST'])
 def retention():
-    if request.method == 'POST':
-        target_campaigns = request.form.get('target_campaigns', '').strip()
-        view_mode = request.form.get('view_mode', 'Table')
-        metric_choice = request.form.get('metric_choice', 'Average')
-    else:
-        target_campaigns = request.args.get('target_campaigns', '').strip()
-        view_mode = request.args.get('view_mode', 'Table')
-        metric_choice = request.args.get('metric_choice', 'Average')
-        # If bare GET request with no parameters, show builder ready to use
-        if not target_campaigns and not request.args.get('target_campaigns'):
-            return render_template(
-                'index.html',
-                mode='Retention Analytics',
-                target_campaigns=EXAMPLE_CODES,
-                view_mode='Table',
-                metric_choice='Average',
-                error=None,
-                tables=[],
-                heatmaps=[],
-                worldmap_html=''
-            )
+    req_dict = request.form if request.method == 'POST' else request.args
+    target_campaigns = req_dict.get('target_campaigns', '').strip()
+    view_mode = req_dict.get('view_mode', 'Table')
+    metric_choice = req_dict.get('metric_choice', 'Average')
+    builder_country = req_dict.get('builder_country', '').strip()
+    builder_events = req_dict.getlist('builder_events')
+    builder_yr_start = req_dict.get('builder_yr_start', '').strip()
+    builder_yr_end = req_dict.get('builder_yr_end', '').strip()
+
+    # If target_campaigns was not supplied directly, but builder parameters were submitted:
+    if not target_campaigns and builder_country and builder_events:
+        try:
+            y1 = int(builder_yr_start)
+            y2 = int(builder_yr_end)
+        except (ValueError, TypeError):
+            y1 = datetime.date.today().year - 2
+            y2 = datetime.date.today().year
+
+        target_codes = []
+        if builder_country == 'ALL':
+            for e in builder_events:
+                for y in range(y1, y2 + 1):
+                    target_codes.append(f"{e}*{y % 100:02d}")
+        elif builder_country.startswith('REG:'):
+            ccs = builder_country[4:].split(',')
+            for e in builder_events:
+                for cc in ccs:
+                    for y in range(y1, y2 + 1):
+                        target_codes.append(f"{e}{cc.strip().lower()}{y % 100:02d}")
+        else:
+            for e in builder_events:
+                for y in range(y1, y2 + 1):
+                    target_codes.append(f"{e}{builder_country.lower()}{y % 100:02d}")
+        target_campaigns = ' '.join(target_codes)
+
+    # If bare GET request with no query parameters, show builder ready to use
+    if request.method == 'GET' and not request.args:
+        return render_template(
+            'index.html',
+            mode='Retention Analytics',
+            target_campaigns=EXAMPLE_CODES,
+            view_mode='Table',
+            metric_choice='Average',
+            error=None,
+            tables=[],
+            heatmaps=[],
+            worldmap_html=''
+        )
     
     if not target_campaigns:
         target_campaigns = EXAMPLE_CODES
@@ -290,33 +317,47 @@ def retention():
 
 @app.route('/health', methods=['GET', 'POST'])
 def health():
-    if request.method == 'POST':
-        target_event = request.form.get('target_event', '').strip()
-        comp_mode = request.form.get('comp_mode', 'Previous Year Baseline')
-        baseline_event_input = request.form.get('baseline_event', '').strip()
-        region = request.form.get('region', '').strip()
-    else:
-        target_event = request.args.get('target_event', '').strip()
-        comp_mode = request.args.get('comp_mode', 'Previous Year Baseline')
-        baseline_event_input = request.args.get('baseline_event', '').strip()
-        region = request.args.get('region', '').strip()
-        # If bare GET request with no parameters, show form ready to use
-        if not target_event and not request.args.get('target_event'):
-            current_year_short = str(datetime.date.today().year - 1)[-2:]
-            return render_template(
-                'index.html',
-                mode='Health Evaluation',
-                target_event=f'wlmbd{current_year_short}',
-                comp_mode='Previous Year Baseline',
-                baseline_event='',
-                region='South Asia',
-                error=None,
-                metrics=None,
-                insights=None,
-                target_users_count=0,
-                base_users_count=0,
-                intersect_users_count=0
-            )
+    req_dict = request.form if request.method == 'POST' else request.args
+    target_event = req_dict.get('target_event', '').strip()
+    comp_mode = req_dict.get('comp_mode', 'Previous Year Baseline')
+    baseline_event_input = req_dict.get('baseline_event', '').strip()
+    region = req_dict.get('region', '').strip()
+    health_evt = req_dict.get('health_event_type', '').strip().lower()
+    health_cc = req_dict.get('health_country', '').strip().lower()
+    health_yr = req_dict.get('health_year', '').strip()
+
+    # If bare GET request with no parameters, show form ready to use
+    if request.method == 'GET' and not request.args:
+        current_year_short = str(datetime.date.today().year - 1)[-2:]
+        return render_template(
+            'index.html',
+            mode='Health Evaluation',
+            target_event=f'wlmbd{current_year_short}',
+            comp_mode='Previous Year Baseline',
+            baseline_event='',
+            region='South Asia',
+            error=None,
+            metrics=None,
+            insights=None,
+            target_users_count=0,
+            base_users_count=0,
+            intersect_users_count=0
+        )
+
+    # If target_event is empty, but builder parameters were supplied:
+    if not target_event and health_cc and health_yr:
+        evt = health_evt or 'wlm'
+        try:
+            yy = int(health_yr) % 100
+            target_event = f"{evt}{health_cc}{yy:02d}"
+        except (ValueError, TypeError):
+            pass
+
+    # If health_event_type was explicitly specified, reconcile target_event prefix:
+    if 'health_event_type' in req_dict and target_event:
+        match_curr = CODE_RE.match(target_event.lower())
+        if match_curr and match_curr.group(1) != health_evt and health_evt:
+            target_event = f"{health_evt}{match_curr.group(2)}{match_curr.group(3)}"
 
     error = None
     metrics = None

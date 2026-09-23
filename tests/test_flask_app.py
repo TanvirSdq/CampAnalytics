@@ -202,6 +202,17 @@ class TestRetentionRoute(BaseTestCase):
             "Expected geographical scope notice for Wiki Loves Africa in Germany."
         )
 
+    def test_retention_builder_parameters_fallback(self):
+        """Verify submitting builder parameters without target_campaigns auto-assembles target codes."""
+        response = self.client.get(
+            '/retention?builder_country=de&builder_events=wlm&builder_events=wle&builder_yr_start=2021&builder_yr_end=2022'
+        )
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Retention Analytics', text)
+        self.assertIn('wlmde21', text)
+        self.assertIn('wlede22', text)
+
 
 class TestHealthRoute(BaseTestCase):
     """Tests for /health 5-dimension community health evaluation route."""
@@ -249,6 +260,26 @@ class TestHealthRoute(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         text = response.data.decode('utf-8')
         self.assertIn('Health Evaluation', text)
+
+    def test_health_builder_parameters_fallback(self):
+        """Verify submitting builder parameters without target_event auto-assembles target code."""
+        response = self.client.get(
+            '/health?health_event_type=all&health_country=de&health_year=2022'
+        )
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Health Evaluation', text)
+        self.assertIn('allde22', text)
+
+    def test_health_builder_mismatch_reconciliation(self):
+        """Verify selecting a new event type reconciles mismatched target_event prefix."""
+        response = self.client.get(
+            '/health?target_event=wlmde22&health_event_type=all'
+        )
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Health Evaluation', text)
+        self.assertIn('allde22', text)
 
     def test_health_mocked_scorecard_dimensions(self):
         """Verify all 5 health dimensions, star ratings, and overall score render with valid data."""

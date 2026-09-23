@@ -382,6 +382,15 @@ textarea.form-control {
     font-weight: 500;
 }
 
+.builder-btn-row {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
 /* Radio Group */
 .radio-options {
     display: flex;
@@ -1839,14 +1848,34 @@ table.data-table tfoot td:first-child {
     }
 
     .year-range-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .year-range-row input {
+        min-width: 0;
+        width: 100%;
+        text-align: center;
     }
 
     .year-separator {
         text-align: center;
-        margin: 2px 0;
+        margin: 0;
+    }
+
+    .builder-btn-row {
+        justify-content: stretch;
+        gap: 8px;
+    }
+
+    .builder-btn-row .btn {
+        flex: 1 1 calc(50% - 4px);
+        min-height: 44px;
+        justify-content: center;
+        padding: 8px 10px;
+        font-size: 0.82rem;
     }
 
     .btn-export-group {

@@ -20,7 +20,7 @@
         <h1 class="page-title">Retention Analytics</h1>
         <p class="page-subtitle">Longitudinal contributor retention and cohort overlap across Wiki Loves campaigns.</p>
 
-        <form action="/retention" method="GET" id="retention-form">
+        <form action="/retention" method="GET" id="retention-form" onsubmit="syncRetentionBeforeSubmit(event)">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -35,9 +35,11 @@
                             <div class="form-group">
                                 <label class="form-label">Event Matrix</label>
                                 <div class="pill-group" id="event-pill-group">
+                                    <input type="checkbox" name="builder_events" value="all" id="evt-all" class="pill-checkbox" onchange="onRetentionEventChange(this)" onclick="onRetentionEventChange(this)">
+                                    <label for="evt-all" class="pill-label" onclick="setTimeout(() => onRetentionEventChange(document.getElementById('evt-all')), 10)">All Campaigns</label>
                                     {% for event_key, event_val in EVENT_MAP.items() %}
-                                        <input type="checkbox" name="builder_events" value="{{ event_key }}" id="evt-{{ event_key }}" class="pill-checkbox">
-                                        <label for="evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
+                                        <input type="checkbox" name="builder_events" value="{{ event_key }}" id="evt-{{ event_key }}" class="pill-checkbox" onchange="onRetentionEventChange(this)" onclick="onRetentionEventChange(this)">
+                                        <label for="evt-{{ event_key }}" class="pill-label" onclick="setTimeout(() => onRetentionEventChange(document.getElementById('evt-{{ event_key }}')), 10)">{{ event_val }}</label>
                                     {% endfor %}
                                 </div>
                                 <div class="form-hint">Select one or more campaign types to compare.</div>
@@ -58,7 +60,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <select id="builder_country" name="builder_country" class="form-control">
+                                    <select id="builder_country" name="builder_country" class="form-control" onchange="syncRetentionBuilder()">
                                         <option value="">-- Select Country Matrix --</option>
                                         <option value="ALL" style="font-weight: 600; color: var(--wiki-blue);">All Countries (Global Analysis — 50+ Countries)</option>
                                         <optgroup label="Regional Clusters">
@@ -77,14 +79,14 @@
                                 <div class="form-group">
                                     <label class="form-label">Longitudinal Year Range</label>
                                     <div class="year-range-row">
-                                        <input type="number" id="builder_yr_start" name="builder_yr_start" value="{{ CURRENT_YEAR - 2 }}" min="2010" max="2040" class="form-control">
+                                        <input type="number" id="builder_yr_start" name="builder_yr_start" value="{{ CURRENT_YEAR - 2 }}" min="2010" max="2040" class="form-control" onchange="syncRetentionBuilder()" oninput="syncRetentionBuilder()">
                                         <span class="year-separator">to</span>
-                                        <input type="number" id="builder_yr_end" name="builder_yr_end" value="{{ CURRENT_YEAR }}" min="2010" max="2040" class="form-control">
+                                        <input type="number" id="builder_yr_end" name="builder_yr_end" value="{{ CURRENT_YEAR }}" min="2010" max="2040" class="form-control" onchange="syncRetentionBuilder()" oninput="syncRetentionBuilder()">
                                     </div>
                                 </div>
                                 
                             </div>
-                            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px;">
+                            <div class="builder-btn-row">
                                 <button type="button" class="btn btn-outline-primary" onclick="replaceBuilderCodes()" title="Replace target campaign codes with builder selection">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <polyline points="23 4 23 10 17 10"></polyline>
@@ -114,7 +116,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <textarea id="target_campaigns" name="target_campaigns" rows="3" placeholder="e.g. wlmde21 wlmde22 wlmde23" class="form-control form-control-code">{{ target_campaigns if target_campaigns else '' }}</textarea>
+                                <textarea id="target_campaigns" name="target_campaigns" rows="3" placeholder="e.g. wlmde21 wlmde22 wlmde23" class="form-control form-control-code" oninput="parseCodeToRetentionBuilder()">{{ target_campaigns if target_campaigns else '' }}</textarea>
                                 <div class="form-hint">Codes can be generated using the builder above, or edited manually.</div>
                             </div>
                         </div>
@@ -129,6 +131,14 @@
                                         All Countries (Global)
                                     </strong>
                                     <span class="preset-tag-label">50+ Countries WLM ('21–'23)</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('allde21 allde22')">
+                                    <strong>allde21 allde22</strong>
+                                    <span class="preset-tag-label">All Campaigns Germany ('21–'22)</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('allbd22 allbd23')">
+                                    <strong>allbd22 allbd23</strong>
+                                    <span class="preset-tag-label">All Campaigns Bangladesh ('22–'23)</span>
                                 </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('wlmde21 wlmde22')">
                                     <strong>wlmde21 wlmde22</strong>
@@ -335,7 +345,7 @@
             </a>
         </div>
 
-        <form action="/health" method="GET" id="health-form">
+        <form action="/health" method="GET" id="health-form" onsubmit="syncHealthBuilderToCode()">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -350,9 +360,11 @@
                             <div class="form-group">
                                 <label class="form-label">Campaign Type</label>
                                 <div class="pill-group" id="health-event-group">
+                                    <input type="radio" name="health_event_type" value="all" id="health-evt-all" class="pill-checkbox" {% if target_event and target_event.startswith('all') %}checked{% endif %} onchange="syncHealthBuilderToCode()" onclick="syncHealthBuilderToCode()">
+                                    <label for="health-evt-all" class="pill-label" onclick="setTimeout(syncHealthBuilderToCode, 10)">All Campaigns</label>
                                     {% for event_key, event_val in EVENT_MAP.items() %}
-                                        <input type="radio" name="health_event_type" value="{{ event_key }}" id="health-evt-{{ event_key }}" class="pill-checkbox" {% if event_key == 'wlm' %}checked{% endif %} onchange="syncHealthBuilderToCode()">
-                                        <label for="health-evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
+                                        <input type="radio" name="health_event_type" value="{{ event_key }}" id="health-evt-{{ event_key }}" class="pill-checkbox" {% if (target_event and target_event.startswith(event_key)) or (not target_event and event_key == 'wlm') %}checked{% endif %} onchange="syncHealthBuilderToCode()" onclick="syncHealthBuilderToCode()">
+                                        <label for="health-evt-{{ event_key }}" class="pill-label" onclick="setTimeout(syncHealthBuilderToCode, 10)">{{ event_val }}</label>
                                     {% endfor %}
                                 </div>
                                 <div class="form-hint">Select the Wikimedia campaign program to audit.</div>
@@ -365,14 +377,14 @@
                                     <select id="health_country" name="health_country" class="form-control" onchange="syncHealthBuilderToCode()">
                                         <option value="">-- Select Country --</option>
                                         {% for country_key in COUNTRY_OPTIONS %}
-                                            <option value="{{ country_key }}" {% if country_key == 'bd' %}selected{% endif %}>{{ COUNTRY_MAP[country_key].replace('_', ' ') }} ({{ country_key|upper }})</option>
+                                            <option value="{{ country_key }}" {% if (target_event and target_event[3:5] == country_key) or (not target_event and country_key == 'bd') %}selected{% endif %}>{{ COUNTRY_MAP[country_key].replace('_', ' ') }} ({{ country_key|upper }})</option>
                                         {% endfor %}
                                     </select>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="health_year" class="form-label">Campaign Year</label>
-                                    <input type="number" id="health_year" name="health_year" value="{{ CURRENT_YEAR }}" min="2010" max="2040" class="form-control" onchange="syncHealthBuilderToCode()">
+                                    <input type="number" id="health_year" name="health_year" value="{{ CURRENT_YEAR }}" min="2010" max="2040" class="form-control" onchange="syncHealthBuilderToCode()" oninput="syncHealthBuilderToCode()">
                                 </div>
                             </div>
 
@@ -383,7 +395,7 @@
                                     <span style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">(Auto-assembled from selection or editable)</span>
                                 </label>
                                 <input type="text" id="target_event" name="target_event" value="{{ target_event if target_event else 'wlmbd24' }}" placeholder="e.g., wlmbd24" class="form-control form-control-code" required oninput="parseCodeToHealthBuilder()">
-                                <div class="form-hint" id="health-scope-hint">Standard event code syntax: prefix (wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmbd24, wlede22, wlang23).</div>
+                                <div class="form-hint" id="health-scope-hint">Standard event code syntax: prefix (all / wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmbd24, allde24, wlang23).</div>
                             </div>
 
                             <div class="form-group">
@@ -425,6 +437,14 @@
                         <div class="example-box">
                             <div class="example-box-title">Preset Benchmarks</div>
                             <div class="preset-tags">
+                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('allde22', 'Northern & Western Europe', '')">
+                                    <strong>allde22</strong>
+                                    <span class="preset-tag-label">All Campaigns Germany</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('allbd{{ CURRENT_YEAR % 100 }}', 'South Asia', '')">
+                                    <strong>allbd{{ CURRENT_YEAR % 100 }}</strong>
+                                    <span class="preset-tag-label">All Campaigns Bangladesh</span>
+                                </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmbd{{ CURRENT_YEAR % 100 }}', 'South Asia', '')">
                                     <strong>wlmbd{{ CURRENT_YEAR % 100 }}</strong>
                                     <span class="preset-tag-label">Monuments Bangladesh (South Asia)</span>
@@ -1566,6 +1586,7 @@
                 const wlmCb = document.getElementById('evt-wlm');
                 if (wlmCb) wlmCb.checked = true;
             }
+            syncRetentionBuilder();
         }
 
         // Clear country selection
@@ -1713,46 +1734,105 @@
             }
         }
 
+        // Handle changes to retention event matrix checkboxes
+        function onRetentionEventChange(changedEl) {
+            if (!changedEl) return;
+            if (changedEl.id === 'evt-all' && changedEl.checked) {
+                // If "All Campaigns" is selected, deselect specific campaign checkboxes
+                document.querySelectorAll('input[name="builder_events"]').forEach(cb => {
+                    if (cb.id !== 'evt-all') cb.checked = false;
+                });
+            } else if (changedEl.checked && changedEl.id !== 'evt-all') {
+                // If a specific campaign is selected, deselect "All Campaigns"
+                const allCb = document.getElementById('evt-all');
+                if (allCb) allCb.checked = false;
+            }
+            syncRetentionBuilder();
+        }
+
+        // Synchronize Retention Builder controls to target_campaigns textarea
+        function syncRetentionBuilder() {
+            const checkedEvents = document.querySelectorAll('input[name="builder_events"]:checked');
+            const countrySelect = document.getElementById('builder_country');
+            if (checkedEvents.length === 0 && countrySelect && countrySelect.value) {
+                // Default to Monuments (wlm) if country chosen without campaign selection
+                const wlmCb = document.getElementById('evt-wlm');
+                if (wlmCb) wlmCb.checked = true;
+            }
+            const codes = getCodesFromBuilder();
+            const targetInput = document.getElementById('target_campaigns');
+            if (targetInput && codes) {
+                targetInput.value = codes;
+            }
+        }
+
+        // Parse typed or pasted codes into Retention Builder controls
+        function parseCodeToRetentionBuilder() {
+            const targetInput = document.getElementById('target_campaigns');
+            if (!targetInput) return;
+            const val = targetInput.value.trim().toLowerCase();
+            if (!val) return;
+            const codes = val.split(/\s+/);
+            if (codes.length === 0) return;
+
+            const eventsFound = new Set();
+            const countriesFound = new Set();
+            const yearsFound = [];
+
+            for (const code of codes) {
+                const m = code.match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{2}|\*)?(\d{2})$/);
+                if (m) {
+                    eventsFound.add(m[1]);
+                    if (m[2]) countriesFound.add(m[2]);
+                    yearsFound.push(parseInt(m[3], 10));
+                }
+            }
+
+            if (eventsFound.size > 0) {
+                document.querySelectorAll('input[name="builder_events"]').forEach(cb => {
+                    cb.checked = eventsFound.has(cb.value);
+                });
+            }
+
+            const countrySelect = document.getElementById('builder_country');
+            if (countrySelect && countriesFound.size > 0) {
+                if (countriesFound.has('*')) {
+                    countrySelect.value = 'ALL';
+                } else if (countriesFound.size === 1) {
+                    const cc = Array.from(countriesFound)[0];
+                    countrySelect.value = cc;
+                }
+            }
+
+            if (yearsFound.length > 0) {
+                const minY = Math.min(...yearsFound);
+                const maxY = Math.max(...yearsFound);
+                const yrStartInput = document.getElementById('builder_yr_start');
+                const yrEndInput = document.getElementById('builder_yr_end');
+                if (yrStartInput && minY <= maxY) yrStartInput.value = 2000 + minY;
+                if (yrEndInput && minY <= maxY) yrEndInput.value = 2000 + maxY;
+            }
+        }
+
+        // Ensure retention target_campaigns is populated before form submission
+        function syncRetentionBeforeSubmit(e) {
+            const targetInput = document.getElementById('target_campaigns');
+            if (targetInput && !targetInput.value.trim()) {
+                const codes = getCodesFromBuilder();
+                if (codes) {
+                    targetInput.value = codes;
+                }
+            }
+        }
+
         // Quick Preset Loader for Retention
-        function loadRetentionPreset(codes) {
+        function loadRetentionPreset(codes, flash = true) {
             const targetInput = document.getElementById('target_campaigns');
             if (targetInput) {
                 targetInput.value = codes;
-                flashTargetInput(true);
+                if (flash) flashTargetInput(true);
             }
-            const codesArr = codes.trim().split(/\s+/);
-            if (codesArr.length > 0) {
-                const match = codesArr[0].match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})/);
-                if (match) {
-                    const evt = match[1];
-                    const cc = match[2];
-                    const yr1 = parseInt(match[3], 10);
-                    
-                    document.querySelectorAll('input[name="builder_events"]').forEach(b => b.checked = false);
-                    const cb = document.getElementById('evt-' + evt);
-                    if (cb) cb.checked = true;
-
-                    const countrySelect = document.getElementById('builder_country');
-                    if (countrySelect && cc) {
-                        countrySelect.value = cc;
-                    }
-
-                    let minYr = yr1;
-                    let maxYr = yr1;
-                    for (const cd of codesArr) {
-                        const m = cd.match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})/);
-                        if (m) {
-                            const y = parseInt(m[3], 10);
-                            if (y < minYr) minYr = y;
-                            if (y > maxYr) maxYr = y;
-                        }
-                    }
-                    const yrStartInput = document.getElementById('builder_yr_start');
-                    const yrEndInput = document.getElementById('builder_yr_end');
-                    if (yrStartInput) yrStartInput.value = 2000 + minYr;
-                    if (yrEndInput) yrEndInput.value = 2000 + maxYr;
-                }
-            }
+            parseCodeToRetentionBuilder();
         }
 
         const REGION_MAPPING = {{ REGION_COUNTRY_MAPPING | tojson }};
@@ -1849,20 +1929,6 @@
                 }
             }
         }
-
-        // Initialize state on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const targetInput = document.getElementById('target_campaigns');
-            if (targetInput && targetInput.value) {
-                loadRetentionPreset(targetInput.value);
-            }
-            const healthTarget = document.getElementById('target_event');
-            if (healthTarget && healthTarget.value) {
-                parseCodeToHealthBuilder();
-            }
-            toggleCustomBaseline();
-            toggleMetricSelector();
-        });
 
         // Quick Preset Loader for Health Evaluation
         function loadHealthPreset(targetCode, regName, baselineCode) {
@@ -2549,17 +2615,32 @@
                                 setTimeout(syncHealthBuilderToCode, 30);
                             } else if (groupId === 'influx-event-group') {
                                 setTimeout(syncInfluxBuilder, 30);
+                            } else if (groupId === 'event-pill-group') {
+                                setTimeout(syncRetentionBuilder, 30);
                             }
                         }
                     });
                 }
             });
 
-            // If influx_codes has an initial value, synchronize builder controls
+            // Synchronize builder controls with initial input values
+            const retentionTarget = document.getElementById('target_campaigns');
+            if (retentionTarget && retentionTarget.value) {
+                parseCodeToRetentionBuilder();
+            }
+
+            const healthTarget = document.getElementById('target_event');
+            if (healthTarget && healthTarget.value) {
+                parseCodeToHealthBuilder();
+            }
+
             const influxCodesInput = document.getElementById('influx_codes');
             if (influxCodesInput && influxCodesInput.value) {
                 parseCodeToInfluxBuilder();
             }
+
+            toggleCustomBaseline();
+            toggleMetricSelector();
 
             // Auto-bind region select when typing target campaign code
             const targetEventInput = document.getElementById('target_event');
