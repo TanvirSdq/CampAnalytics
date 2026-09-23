@@ -824,7 +824,7 @@ table.data-table tbody tr:hover {
     text-align: center;
     font-size: 0.82rem;
     color: var(--text-muted);
-    margin-top: 48px;
+    margin-top: 32px;
 }
 
 .toolforge-footer-content {

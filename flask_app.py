@@ -63,7 +63,7 @@ def healthz():
 
 @app.route('/', methods=['GET'])
 def index():
-    mode = request.args.get('mode', 'Methodology')
+    mode = request.args.get('mode', 'Retention')
     if mode in ('Retention Analytics', 'Retention'):
         return retention()
     elif mode in ('Health Evaluation', 'Health'):
