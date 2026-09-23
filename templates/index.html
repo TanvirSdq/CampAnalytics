@@ -16,7 +16,7 @@
         <h1 class="page-title">Retention Analytics</h1>
         <p class="page-subtitle">Longitudinal contributor retention and cohort overlap across Wiki Loves campaigns.</p>
 
-        <form action="/retention" method="GET" id="retention-form" onsubmit="handleFormSubmit(this)">
+        <form action="/retention" method="GET" id="retention-form">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -238,7 +238,7 @@
         <h1 class="page-title">Health Evaluation</h1>
         <p class="page-subtitle">Multi-dimensional performance scorecard calibrated against regional geographic cohorts.</p>
 
-        <form action="/health" method="POST" id="health-form">
+        <form action="/health" method="GET" id="health-form">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -495,7 +495,7 @@
         <h1 class="page-title">Year-over-Year New User Influx</h1>
         <p class="page-subtitle">Track newcomer acquisition, returning veteran retention, and community expansion across consecutive campaign editions.</p>
 
-        <form action="/influx" method="POST" id="influx-form">
+        <form action="/influx" method="GET" id="influx-form">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -780,101 +780,39 @@
     {# ====================================================================== #}
     {% else %}
         <h1 class="page-title">Methodology &amp; Usage Guide</h1>
-        <p class="page-subtitle">Technical specifications, analytical formulations, and operational guidelines for the Campaign Analytics platform.</p>
+        <p class="page-subtitle">Technical specifications, analytical formulations, and usage guidelines for the Campaign Analytics platform.</p>
 
-        <!-- Home View Style Quick-Start Cards -->
-        <div class="methodology-cards-grid">
-            <a href="/retention" class="tool-card">
-                <div>
-                    <span class="tool-card-badge">Analytics Tool 01</span>
-                    <h3 class="tool-card-title">Retention Analytics</h3>
-                    <p class="tool-card-desc">Evaluates longitudinal contributor movement and cross-campaign retention across multi-year cohorts using interactive heatmaps, tabular data, and choropleth maps.</p>
-                </div>
-                <div class="tool-card-action">Launch Retention Builder →</div>
-            </a>
-
-            <a href="/health" class="tool-card">
-                <div>
-                    <span class="tool-card-badge">Analytics Tool 02</span>
-                    <h3 class="tool-card-title">Health Evaluation</h3>
-                    <p class="tool-card-desc">Assesses campaign vitality across five weighted structural indicators calibrated dynamically against regional peer performance benchmarks.</p>
-                </div>
-                <div class="tool-card-action">Launch Health Evaluator →</div>
-            </a>
-
-            <a href="/influx" class="tool-card">
-                <div>
-                    <span class="tool-card-badge">Analytics Tool 03</span>
-                    <h3 class="tool-card-title">New User Influx</h3>
-                    <p class="tool-card-desc">Tracks year-over-year contributor growth, newcomer influx proportions, and recurring veteran retention over consecutive multi-year campaign series.</p>
-                </div>
-                <div class="tool-card-action">Launch Influx Trends →</div>
-            </a>
-
-            <a href="#pipeline-specs" class="tool-card">
-                <div>
-                    <span class="tool-card-badge">Data Architecture</span>
-                    <h3 class="tool-card-title">Commons Data Pipeline</h3>
-                    <p class="tool-card-desc">High-speed dual-channel ingestion combining Toolforge replica database querying and Wikimedia Commons Action API with automatic failover and memory caching.</p>
-                </div>
-                <div class="tool-card-action">View Calculation Specs ↓</div>
-            </a>
-        </div>
-
-        <!-- Operational Guidelines Panel -->
-        <div class="display-panel">
+        <!-- ================================================================== -->
+        <!-- 1. RETENTION ANALYTICS SECTION                                     -->
+        <!-- ================================================================== -->
+        <div class="display-panel" id="retention-guide">
             <div class="display-panel-header">
-                <span>Operational Guidelines</span>
-                <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Usage Documentation</span>
+                <div>
+                    <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 01</span>
+                    <span style="font-weight: 700; font-size: 1.05rem;">Retention Analytics</span>
+                </div>
+                <a href="/retention" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; bbackground: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                    Go To Tool →
+                </a>
             </div>
             <div class="display-panel-body">
-                <h3 style="margin-top: 0; font-size: 1.05rem; color: var(--text-ink);">1 · Retention Analytics</h3>
+                <h3 style="margin-top: 0; font-size: 1.05rem; color: var(--text-ink);">Usage Guidelines &amp; Workflow</h3>
                 <p style="color: var(--text-muted); line-height: 1.6;">
                     The Retention Analytics interface evaluates participant continuity between successive campaign editions and cross-event contributor migration:
                 </p>
                 <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
-                    <li><strong>Campaign Selection:</strong> Select one or more configured Wiki Loves campaigns (such as Monuments, Earth, Folklore, Africa, or Bangla). Query codes follow the standard format <code>[event][country][year]</code> (e.g. <code>wlmbd24</code>, <code>wlede22</code>).</li>
-                    <li><strong>Geographic &amp; Temporal Parameters:</strong> Select a target country, regional cluster, or all available countries, and define the longitudinal year span. Target query codes are automatically synchronized.</li>
-                    <li><strong>Quick Presets:</strong> Pre-configured comparison vectors are available in the presets panel for common evaluation pairs.</li>
-                    <li><strong>Analytical Projection:</strong> Choose the desired output format:
+                    <li><strong>Campaign Selection:</strong> Select one or more configured Wiki Loves campaigns (such as Monuments <code>wlm</code>, Earth <code>wle</code>, Folklore <code>wlf</code>, Africa <code>wla</code>, or Bangla <code>wlb</code>). Query codes follow the standard format <code>[event][country][year]</code> (e.g. <code>wlmbd24</code>, <code>wlede22</code>).</li>
+                    <li><strong>Geographic &amp; Temporal Parameters:</strong> Select a target country, regional cluster, or all available countries (50+ global nations), and define the longitudinal year span. Use the <strong>Replace Codes</strong> or <strong>Append Codes</strong> buttons to populate the target codes input.</li>
+                    <li><strong>Quick Presets:</strong> Pre-configured comparison vectors are available in the presets panel for common evaluation pairs (e.g. Monuments Germany, Earth India, Folklore Bangladesh).</li>
+                    <li><strong>Analytical Projection Models:</strong> Choose the desired visualization output:
                         <ul style="margin-top: 4px; padding-left: 18px;">
-                            <li><strong>Data Table:</strong> Tabular breakdown of cohort population, intersecting participant count, and retention rate.</li>
+                            <li><strong>Data Table:</strong> Tabular breakdown of baseline cohort size, target cohort size, intersecting participant count, and directional retention rate.</li>
                             <li><strong>Heatmap Matrix:</strong> Color-coded matrix displaying pairwise retention shares across consecutive editions.</li>
-                            <li><strong>Choropleth World Map:</strong> Spatial distribution of country-level average or median retention metrics.</li>
+                            <li><strong>Choropleth World Map:</strong> Spatial distribution of country-level average or median retention metrics across international campaigns.</li>
                         </ul>
                     </li>
                 </ol>
 
-                <h3 style="margin-top: 24px; font-size: 1.05rem; color: var(--text-ink);">2 · Campaign Health Evaluation</h3>
-                <p style="color: var(--text-muted); line-height: 1.6;">
-                    The Health Evaluation module computes a multi-dimensional health index (0–100) relative to contemporary regional peer performance:
-                </p>
-                <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
-                    <li><strong>Target Campaign Code:</strong> Provide the standardized identifier for the evaluated edition (for example, <code>wlmbd24</code> or <code>wlede22</code>).</li>
-                    <li><strong>Baseline Reference:</strong> Designate either the automated previous-year edition or specify a custom comparison code. Both target and baseline cohorts must contain valid participant data.</li>
-                    <li><strong>Geographic Standardization Framework:</strong> Assign the appropriate regional cluster (e.g., South Asia, Northern &amp; Western Europe, ESEAP). Dynamic benchmark norms are calculated from the top regional performers in that cluster.</li>
-                    <li><strong>Evaluation Output:</strong> Review the weighted composite scorecard (0–100), categorical star ratings, quantitative cohort footprints, and automated diagnostic insights.</li>
-                </ol>
-
-                <h3 style="margin-top: 24px; font-size: 1.05rem; color: var(--text-ink);">3 · Year-over-Year New User Influx</h3>
-                <p style="color: var(--text-muted); line-height: 1.6;">
-                    The Influx Analytics module assesses continuous community renewal and long-term mobilization:
-                </p>
-                <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
-                    <li><strong>Series Selection:</strong> Choose a campaign type (or All Campaigns), country, and consecutive year span (e.g. {{ DEFAULT_START_YEAR }}–{{ CURRENT_YEAR }}).</li>
-                    <li><strong>Newcomer Detection:</strong> Differentiates first-time participants (\(I_t\)) from returning veterans (\(R_t\)) across the series.</li>
-                    <li><strong>Trend Visualizations:</strong> Reviews stacked volume bars, net expansion growth rates (\(\Delta \text{YoY}\)), and cumulative community pool milestones.</li>
-                </ol>
-            </div>
-        </div>
-
-        <!-- Analytical Formulations & Standards Panel -->
-        <div class="display-panel" id="pipeline-specs">
-            <div class="display-panel-header">
-                <span>Analytical Formulations &amp; Calibration Standards</span>
-                <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Methodological Rigor</span>
-            </div>
-            <div class="display-panel-body">
                 <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Directional Longitudinal Retention</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
@@ -888,6 +826,101 @@
                     </p>
                 </div>
 
+                <div class="math-panel" style="margin-bottom: 0;">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Data Extraction Pipeline &amp; Limitations</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 8px 0; line-height: 1.6;">
+                        Data is extracted in real time directly from Wikimedia Commons. The primary ingestion pathway queries Toolforge replica tools (<code>ptools.toolforge.org</code>) for low-latency category membership enumeration, with automatic failover to the official Wikimedia Commons Action API (<code>commons.wikimedia.org/w/api.php</code>) utilizing the <code>categorymembers</code> generator with automatic pagination and exponential backoff.
+                    </p>
+                    <ul style="color: var(--text-muted); font-size: 0.82rem; line-height: 1.6; margin: 0; padding-left: 20px;">
+                        <li>Evaluations reflect observable on-wiki upload records and do not account for offline organizing contributions.</li>
+                        <li>Incomplete or unheld campaign categories are identified as missing data and excluded from evaluation to prevent erroneous zero-scoring.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- 2. HEALTH EVALUATION SECTION                                       -->
+        <!-- ================================================================== -->
+        <div class="display-panel" id="health-guide">
+            <div class="display-panel-header">
+                <div>
+                    <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 02</span>
+                    <span style="font-weight: 700; font-size: 1.05rem;">Health Evaluation</span>
+                </div>
+                <a href="/health" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; bbackground: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                    Go To Tool →
+                </a>
+            </div>
+            <div class="display-panel-body">
+                <h3 style="margin-top: 0; font-size: 1.05rem; color: var(--text-ink);">Usage Guidelines &amp; Workflow</h3>
+                <p style="color: var(--text-muted); line-height: 1.6;">
+                    The Health Evaluation module computes a multi-dimensional health index (0–100) calibrated dynamically against contemporary regional peer performance:
+                </p>
+                <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
+                    <li><strong>Target Campaign Code:</strong> Provide the standardized identifier for the evaluated edition (for example, <code>wlmbd24</code> or <code>wlede22</code>).</li>
+                    <li><strong>Baseline Reference:</strong> Designate either the automated previous-year edition or specify a custom comparison code. Both target and baseline cohorts must contain valid participant data.</li>
+                    <li><strong>Geographic Standardization Framework:</strong> Assign the appropriate regional cluster (e.g., South Asia, Northern &amp; Western Europe, ESEAP). Dynamic benchmark norms are calculated from the top regional performers in that cluster.</li>
+                    <li><strong>Evaluation Output:</strong> Review the weighted composite scorecard (0–100), categorical star ratings, quantitative cohort footprints, and automated diagnostic insights.</li>
+                </ol>
+
+                <div class="math-panel">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Health Evaluation Weighting Model</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 10px 0;">
+                        The composite health score is computed on a 0–100 scale across five dimensions, each normalized against the upper-quartile performance of peer campaigns in the same geographic cluster. Weights reflect the relative predictive power of each dimension for long-term community sustainability:
+                    </p>
+                    <ul style="color: var(--text-ink); font-size: 0.88rem; line-height: 1.7; margin: 0; padding-left: 20px;">
+                        <li><strong>Retention Index (32%):</strong> Proportion of prior-edition contributors who return in the target edition. The strongest single predictor of whether a campaign community survives across years rather than requiring constant re-acquisition.</li>
+                        <li><strong>Content Utility (25%):</strong> Share of uploaded files actively deployed across Wikimedia projects (<code>prop=globalusage</code>). This is the Wikimedia-specific mission proxy — files that get used in articles deliver encyclopaedic value; files that don't are production without impact.</li>
+                        <li><strong>Growth Capacity (18%):</strong> Share of the target cohort comprising first-time participants:
+                            <div class="math-formula" style="margin: 6px 0;">Growth(A → B) = (|U_B \setminus U_A| / |U_B|) × 100%</div>
+                            Growth matters, but is weighted below retention and utility because a campaign that recruits heavily but retains nobody is structurally fragile.
+                        </li>
+                        <li><strong>Contributor Diversity (15%):</strong> Concentration of upload activity among the top 10% of uploaders (lower concentration = higher score). Raised to reflect its role as a leading fragility indicator — campaigns dominated by a handful of power users are vulnerable to collapse when those users disengage.</li>
+                        <li><strong>Quality Recognition (10%):</strong> Share of submissions formally recognized under Commons quality standards (<code>Category:Quality images</code>, <code>Category:Featured pictures</code>). Kept intentionally modest because QI/FP rates are noisy at small upload volumes and tend to favour niche campaigns over large-participation ones.</li>
+                    </ul>
+                </div>
+
+                <div class="math-panel" style="margin-bottom: 0;">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Regional Peer Normalization &amp; Calibration</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0; line-height: 1.6;">
+                        The system dynamically identifies active peer campaigns in the same geographic cluster, computes the upper quartile performance envelope, and normalizes target metrics against that cluster standard. This ensures equitable evaluation across mature and developing campaign ecosystems.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- 3. NEW USER INFLUX SECTION                                         -->
+        <!-- ================================================================== -->
+        <div class="display-panel" id="influx-guide">
+            <div class="display-panel-header">
+                <div>
+                    <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 03</span>
+                    <span style="font-weight: 700; font-size: 1.05rem;">New User Influx</span>
+                </div>
+                <a href="/influx" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; bbackground: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                    Go To Tool →
+                </a>
+            </div>
+            <div class="display-panel-body">
+                <h3 style="margin-top: 0; font-size: 1.05rem; color: var(--text-ink);">Usage Guidelines &amp; Workflow</h3>
+                <p style="color: var(--text-muted); line-height: 1.6;">
+                    The Influx Analytics module assesses continuous community renewal, newcomer acquisition, and long-term contributor mobilization:
+                </p>
+                <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
+                    <li><strong>Series Selection:</strong> Choose a campaign type (or All Campaigns), country, and consecutive year span (e.g. {{ DEFAULT_START_YEAR }}–{{ CURRENT_YEAR }}).</li>
+                    <li><strong>Generated Campaign Sequence:</strong> Chronological campaign sequence automatically assembled or customized to evaluate longitudinal trends.</li>
+                    <li><strong>Trend Visualizations &amp; Outputs:</strong>
+                        <ul style="margin-top: 4px; padding-left: 18px;">
+                            <li><strong>Summary KPI Cards:</strong> Cumulative Community Footprint, Peak Influx Year, Peak Overall Edition, and Contributor Longevity (recurring participants).</li>
+                            <li><strong>Visual Influx Dynamics:</strong> Dual-axis stacked bar chart showing first-time newcomers (\(I_t\)) stacked with returning veterans (\(R_t\)) alongside the cumulative pool trajectory.</li>
+                            <li><strong>Cohort Lifecycle Segmentation:</strong> Categorization into 1-Time Entrants (one-off contributors), Repeaters (2–3 editions), and Core Veterans (4+ editions).</li>
+                            <li><strong>Detailed Data Table:</strong> Comprehensive table with YoY Net Growth, Newcomer Share, Direct Retention, and CSV export capability.</li>
+                        </ul>
+                    </li>
+                </ol>
+
                 <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Year-over-Year Newcomer Influx &amp; Retention</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
@@ -896,6 +929,9 @@
                     <div class="math-formula">
                         Influx(C_t) = |U_t \setminus U_{&lt;t}|, \quad \text{Newcomer Share} = \left(\frac{Influx(C_t)}{|U_t|}\right) \times 100\%
                     </div>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
+                        Returning veterans are defined as \(R_t = |U_t \cap U_{&lt;t}|\), and direct retention from the immediate prior edition is given by \(Retention(C_{t-1} \to C_t) = (|U_t \cap U_{t-1}| / |U_{t-1}|) \times 100\%\).
+                    </p>
                 </div>
 
                 <div class="math-panel">
@@ -911,52 +947,14 @@
                     </p>
                 </div>
 
-                <div class="math-panel">
-                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Growth Capacity (New Contributor Acquisition)</h4>
+                <div class="math-panel" style="margin-bottom: 0;">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Cumulative Movement Footprint</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
-                        Growth capacity measures the proportion of target cohort \(B\) participants who are newly acquired contributors with no recorded uploads in baseline cohort \(A\):
+                        The cumulative community pool milestone measures the total distinct individuals who have engaged across the evaluated series up to edition year \(t\):
                     </p>
                     <div class="math-formula">
-                        Growth(A → B) = (|U_B \setminus U_A| / |U_B|) × 100%
+                        \text{Cumulative Pool}_t = \left|\bigcup_{j \le t} U_j\right|
                     </div>
-                </div>
-
-                <div class="math-panel">
-                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Health Evaluation Weighting Model</h4>
-                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 10px 0;">
-                        The composite health score is computed on a 0–100 scale across five dimensions, each normalized against the upper-quartile performance of peer campaigns in the same geographic cluster. Weights reflect the relative predictive power of each dimension for long-term community sustainability:
-                    </p>
-                    <ul style="color: var(--text-ink); font-size: 0.88rem; line-height: 1.7; margin: 0; padding-left: 20px;">
-                        <li><strong>Retention Index (32%):</strong> Proportion of prior-edition contributors who return in the target edition. The strongest single predictor of whether a campaign community survives across years rather than requiring constant re-acquisition.</li>
-                        <li><strong>Content Utility (25%):</strong> Share of uploaded files actively deployed across Wikimedia projects (<code>prop=globalusage</code>). This is the Wikimedia-specific mission proxy — files that get used in articles deliver encyclopaedic value; files that don't are production without impact.</li>
-                        <li><strong>Growth Capacity (18%):</strong> Share of the target cohort comprising first-time participants. Growth matters, but is weighted below retention and utility because a campaign that recruits heavily but retains nobody is structurally fragile.</li>
-                        <li><strong>Contributor Diversity (15%):</strong> Concentration of upload activity among the top 10% of uploaders (lower concentration = higher score). Raised to reflect its role as a leading fragility indicator — campaigns dominated by a handful of power users are vulnerable to collapse when those users disengage.</li>
-                        <li><strong>Quality Recognition (10%):</strong> Share of submissions formally recognized under Commons quality standards (<code>Category:Quality images</code>, <code>Category:Featured pictures</code>). Kept intentionally modest because QI/FP rates are noisy at small upload volumes and tend to favour niche campaigns over large-participation ones.</li>
-                    </ul>
-                </div>
-
-                <div class="math-panel">
-                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Regional Peer Normalization</h4>
-                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0; line-height: 1.6;">
-                        Rather than applying static global thresholds, the system dynamically identifies active peer campaigns in the same geographic cluster, computes the upper quartile performance envelope, and normalizes target metrics against that cluster standard. This ensures equitable evaluation across mature and developing campaign ecosystems.
-                    </p>
-                </div>
-
-                <div class="math-panel">
-                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Data Pipeline &amp; Infrastructure</h4>
-                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0; line-height: 1.6;">
-                        Data is extracted in real time directly from Wikimedia Commons. The primary ingestion pathway queries Toolforge replica tools (<code>ptools.toolforge.org</code>) for low-latency category membership enumeration. In case of network interruption or rate limits, requests automatically failover to the official Wikimedia Commons Action API (<code>commons.wikimedia.org/w/api.php</code>) utilizing the <code>categorymembers</code> generator with automatic pagination and exponential backoff.
-                    </p>
-                </div>
-
-                <div class="math-panel" style="margin-bottom: 0;">
-                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Analytical Scope &amp; Limitations</h4>
-                    <ul style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; margin: 0; padding-left: 20px;">
-                        <li>Evaluations are based on observable on-wiki upload records and do not account for offline activities, workshops, or uncredited organizing contributions.</li>
-                        <li>Comparative health scores are inherently relative to the designated regional peer cluster and baseline edition.</li>
-                        <li>Incomplete or unheld campaign categories are identified as missing data and excluded from evaluation to prevent erroneous zero-scoring.</li>
-                        <li>Content utility and quality rates are calculated from verified category membership and Commons image metadata.</li>
-                    </ul>
                 </div>
             </div>
         </div>
@@ -1527,16 +1525,6 @@
                 btn.innerHTML = orig;
                 btn.classList.remove('share-btn--copied');
             }, 2500);
-        }
-
-        // Automatically submit via POST only if manually entered codes exceed GET URL safe limits
-        function handleFormSubmit(form) {
-            const targetInput = form.querySelector('[name="target_campaigns"]');
-            if (targetInput && targetInput.value.length > 3000) {
-                form.method = 'POST';
-            } else {
-                form.method = 'GET';
-            }
         }
 
         // ── LOADING STATE ──────────────────────────────────────────────────────
