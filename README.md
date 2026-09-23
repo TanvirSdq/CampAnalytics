@@ -10,6 +10,14 @@
 
 ---
 
+<div align="center">
+
+### [📖 Overview](README.md) &nbsp;&nbsp;|&nbsp;&nbsp; [📐 Scientific Methodology](METHODOLOGY.md) &nbsp;&nbsp;|&nbsp;&nbsp; [⚖️ License](LICENSE) &nbsp;&nbsp;|&nbsp;&nbsp; [🌐 Live Toolforge Deployment](https://campanalytics.toolforge.org/)
+
+</div>
+
+---
+
 ## Live Deployments
 
 CampAnalytics is accessible online through two official live web deployments:
@@ -53,17 +61,17 @@ CampAnalytics answers three core programmatic questions:
 
 ### 2. Health Evaluation (5-Dimension Scorecard)
 
-Scores a campaign edition on a 0–100 scale across five dimensions, each benchmarked against the upper-quartile of peer campaigns in the same geographic cluster:
+Scores a campaign edition on a 0–100 scale across five defensible dimensions structured into paired analytical pillars summing to 100%, each benchmarked against empirical regional reference thresholds:
 
-| Dimension | Weight | What it measures |
-|:---|:---:|:---|
-| Retention Index | **32%** | Returning contributors from the prior edition — the primary sustainability signal |
-| Content Utility | **25%** | Files actively used across Wikimedia projects (`prop=globalusage`) — the mission-alignment proxy |
-| Growth Capacity | **18%** | First-time participant share — important, but weighted below retention to avoid rewarding high-churn campaigns |
-| Contributor Diversity | **15%** | Upload concentration (top-10% uploader share) — raised to reflect its value as a fragility early-warning indicator |
-| Quality Recognition | **10%** | Commons QI/FP recognition rate — kept modest as QI rates are noisy at small upload volumes |
+| Dimension | Weight | Pillar | What it Measures |
+|:---|:---:|:---|:---|
+| Retention Index | **25%** | Community Vitality (50%) | Returning contributors from the prior edition — primary sustainability signal |
+| Growth Capacity | **25%** | Community Vitality (50%) | First-time newcomer acquisition share across campaign lifecycle |
+| Content Utility | **20%** | Content Impact (35%) | Files actively used across Wikimedia wikis (`prop=globalusage`) |
+| Quality Recognition | **15%** | Content Impact (35%) | Commons QI/FP recognition rate of uploaded media |
+| Contributor Diversity | **15%** | Participation Equity (15%) | Upload distribution equity (top-10% uploader concentration) |
 
-Weights are ordered by their relative predictive power for long-term community sustainability. Regional benchmarks are computed dynamically — not against arbitrary global thresholds.
+Regional benchmarks are regularized using Empirical Bayesian shrinkage ($B_{\text{effective}} = \frac{N}{N + 3} B_{\text{regional}} + \frac{3}{N + 3} B_{\text{global}}$), preventing small-sample distortion in sparse regions.
 
 ### 3. New User Influx & Growth
 
@@ -74,9 +82,33 @@ Weights are ordered by their relative predictive power for long-term community s
 - **Longevity segmentation**: 1-Time Entrants · Repeaters (2–3 editions) · Core Veterans (4+ editions)
 - **Campaign breakdown**: Per-year breakdown of which campaigns contributed to the composite cohort
 
-### 4. Methodology & Usage Guide
+### 4. Scientific Methodology & Formal Specifications
 
-Transparent mathematical formulations, regional normalization criteria, Commons API / Toolforge failover specifications, and usage guidelines for programmatic organizers — built into the app as a dedicated tab.
+CampAnalytics is backed by a formal mathematical methodology with zero-floor utility scoring, concave progress curves, and academic citations.
+
+👉 **[Read the Full Methodology Paper (METHODOLOGY.md)](METHODOLOGY.md)**
+
+<details>
+<summary><b>📐 Click to Expand Methodology Overview & Mathematical Formulas</b></summary>
+
+#### A. Longitudinal Account Retention Matrix
+$$\text{Retention}(A \to B) = \left( \frac{|U_A \cap U_B|}{|U_A|} \right) \times 100\%$$
+
+#### B. Empirical Bayesian Benchmark Regularization
+$$B_{\text{effective}} = \frac{N}{N + M} \cdot \bar{B}_{\text{regional}} + \frac{M}{N + M} \cdot B_{\text{global}}$$
+Where $M = 3.0$ prevents denominator collapse in regions with few peer editions.
+
+#### C. Continuous Relative Utility Scoring Function
+$$S(x, B) = \begin{cases} 0.0 & \text{if } x \le 0 \\ 70.0 \times \left(\frac{x}{B}\right)^{0.75} & \text{if } 0 < x < B \\ 70.0 + 30.0 \times \left(1 - \exp\left(-1.2 \times \frac{x - B}{B}\right)\right) & \text{if } x \ge B \end{cases}$$
+
+Key mathematical properties:
+- **Strict zero-floor integrity**: $S(0) = 0.0$ (no passing score for zero output).
+- **Exact benchmark alignment**: $S(B) = 70.0$ ("Meets Benchmark").
+- **Concave progress**: Encourages initial gains below benchmark.
+- **Diminishing returns**: Bounded at 100.0 without runaway scores.
+
+For full mathematical proofs, refer to [`METHODOLOGY.md`](METHODOLOGY.md).
+</details>
 
 ---
 
@@ -209,17 +241,20 @@ CampAnalytics/
 ├── streamlit_app.py         # Streamlit interactive dashboard
 ├── analytics.py             # Core engine: caching, Commons API, math, charts
 ├── app_config.py            # Global palette and settings
+├── campaign_cache.py        # Persistent SQLite participant cache
 ├── config.json              # 5 campaigns · 51 countries · 9 regional clusters
-│                            #   EVENT_MAP · EVENT_DISPLAY_MAP
-│                            #   EVENT_COUNTRY_SCOPE · COUNTRY_MAP
-│                            #   REGION_COUNTRY_MAPPING
-├── styles.css               # Flask stylesheet
+├── METHODOLOGY.md           # Scientific methodology paper & mathematical specifications
+├── styles.css               # Flask stylesheet & mobile ergonomics
 ├── streamlit_styles.css     # Streamlit theme and sidebar stylesheet
+├── toolhub.yaml             # Wikimedia Toolhub 2.0.0 manifest
+├── toolinfo.json            # Wikimedia Toolinfo registry metadata
 ├── Procfile                 # Web process definition
 ├── requirements.txt         # Python dependencies
-└── templates/
-    ├── base.html            # Layout shell, top navbar, Project Korikath brand
-    └── index.html           # 4-mode suite: Retention · Health · Influx · Methodology
+├── templates/
+│   ├── base.html            # Layout shell, top navbar, Project Korikath brand
+│   └── index.html           # 4-mode suite: Evaluation · Retention · Influx · Methodology
+└── tests/
+    └── test_flask_app.py    # Automated test suite (43 unit tests)
 ```
 
 ---
