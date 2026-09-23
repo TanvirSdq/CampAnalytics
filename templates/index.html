@@ -923,13 +923,13 @@
                 <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Year-over-Year Newcomer Influx &amp; Retention</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
-                        For edition \(C_t\) in a chronological series, newcomer influx isolates contributors not seen in any prior recorded edition \(U_{<t}\):
+                        For edition \(C_t\) in a chronological series, newcomer influx isolates contributors not seen in any prior recorded edition \(U_{&lt; t}\):
                     </p>
                     <div class="math-formula">
-                        \[ \text{Influx}(C_t) = |U_t \setminus U_{<t}|, \quad \text{Newcomer Share} = \left(\frac{\text{Influx}(C_t)}{|U_t|}\right) \times 100\% \]
+                        \[ \text{Influx}(C_t) = |U_t \setminus U_{&lt; t}|, \quad \text{Newcomer Share} = \left(\frac{\text{Influx}(C_t)}{|U_t|}\right) \times 100\% \]
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
-                        Returning veterans are defined as \(R_t = |U_t \cap U_{<t}|\), and direct retention from the immediate prior edition is given by \(\text{Retention}(C_{t-1} \to C_t) = \frac{|U_t \cap U_{t-1}|}{|U_{t-1}|} \times 100\%\).
+                        Returning veterans are defined as \(R_t = |U_t \cap U_{&lt; t}|\), and direct retention from the immediate prior edition is given by \(\text{Retention}(C_{t-1} \to C_t) = \frac{|U_t \cap U_{t-1}|}{|U_{t-1}|} \times 100\%\).
                     </p>
                 </div>
 
