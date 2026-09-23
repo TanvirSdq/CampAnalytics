@@ -29,6 +29,11 @@ from analytics import (
     compute_yoy_influx, create_influx_barchart
 )
 
+COUNTRY_TO_REGION = {}
+for reg_name, ccs in REGION_COUNTRY_MAPPING.items():
+    for cc in ccs:
+        COUNTRY_TO_REGION[cc] = reg_name
+
 app = Flask(__name__)
 
 # Make config variables available to all templates
@@ -43,6 +48,7 @@ def inject_config():
         'COUNTRY_OPTIONS': COUNTRY_OPTIONS,
         'COUNTRY_MAP': COUNTRY_MAP,
         'REGION_COUNTRY_MAPPING': REGION_COUNTRY_MAPPING,
+        'COUNTRY_TO_REGION': COUNTRY_TO_REGION,
         'EXAMPLE_CODES': EXAMPLE_CODES,
         'CUSTOM_CSS': app_config.get_custom_css(),
         'TEXT_MUTED': TEXT_MUTED,
@@ -56,6 +62,21 @@ def fig_to_base64(fig):
     img.seek(0)
     plt.close(fig)
     return base64.b64encode(img.getvalue()).decode()
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
+
+@app.errorhandler(404)
+def handle_404(e):
+    return render_template('index.html', mode='Tools', error="The requested page or endpoint could not be found (HTTP 404). Please select a tool from the suite below."), 404
+
+@app.errorhandler(500)
+def handle_500(e):
+    return render_template('index.html', mode='Tools', error="An internal server error occurred (HTTP 500). Please verify your campaign parameters or retry."), 500
 
 @app.route('/healthz', methods=['GET'])
 def healthz():
@@ -252,12 +273,12 @@ def health():
         target_event = request.form.get('target_event', '').strip()
         comp_mode = request.form.get('comp_mode', 'Previous Year Baseline')
         baseline_event_input = request.form.get('baseline_event', '').strip()
-        region = request.form.get('region', 'South Asia')
+        region = request.form.get('region', '').strip()
     else:
         target_event = request.args.get('target_event', '').strip()
         comp_mode = request.args.get('comp_mode', 'Previous Year Baseline')
         baseline_event_input = request.args.get('baseline_event', '').strip()
-        region = request.args.get('region', 'South Asia')
+        region = request.args.get('region', '').strip()
         # If bare GET request with no parameters, show form ready to use
         if not target_event and not request.args.get('target_event'):
             current_year_short = str(datetime.date.today().year - 1)[-2:]
@@ -293,6 +314,10 @@ def health():
             event_type, target_cc, year_str = match.groups()
             year_int = int(year_str)
             prev_year_str = f"{year_int - 1:02d}"
+
+            # Auto-bind region to target country's native region if not provided or unknown
+            if not region or region not in REGION_COUNTRY_MAPPING:
+                region = COUNTRY_TO_REGION.get(target_cc, 'South Asia')
 
             baseline_event = baseline_event_input
             if comp_mode == "Previous Year Baseline":
@@ -346,21 +371,46 @@ def health():
                         b_u = all_fetched_data.get(b_code, set())
                         structural = structural_metrics.get(t_code, {})
                         
-                        if t_u or b_u:
-                            ret_val = (len(t_u & b_u) / len(b_u) * 100) if b_u else 15.0
-                            gro_val = (len(t_u - b_u) / len(t_u) * 100) if t_u else 40.0
+                        if b_u and len(b_u) > 0:
+                            ret_val = (len(t_u & b_u) / len(b_u) * 100.0)
                             rep_retentions.append(ret_val)
+                        elif t_u and len(t_u) > 0:
+                            rep_retentions.append(15.0)
+
+                        if t_u and len(t_u) > 0:
+                            gro_val = (len(t_u - b_u) / len(t_u) * 100.0)
                             rep_growths.append(gro_val)
-                        rep_quality_rates.append(float(structural.get("quality_image_share", 0.0)))
-                        rep_diversities.append(float(structural.get("top10_uploader_share", 100.0)))
-                        rep_usages.append(float(structural.get("usage_share", 0.0)))
+                            total_up = structural.get("total_uploads", 0)
+                            if total_up > 0:
+                                if "quality_image_share" in structural:
+                                    rep_quality_rates.append(float(structural.get("quality_image_share", 0.0)))
+                                if "top10_uploader_share" in structural:
+                                    rep_diversities.append(float(structural.get("top10_uploader_share", 70.0)))
+                                if "usage_share" in structural:
+                                    rep_usages.append(float(structural.get("usage_share", 0.0)))
                     
+                    def compute_bayesian_benchmark(arr, baseline_global, prior_weight=3.0):
+                        """
+                        Applies Empirical Bayesian Shrinkage to regional benchmarks:
+                        B_effective = (N / (N + M)) * B_regional + (M / (N + M)) * B_global
+                        
+                        Prevents empty peer pools or small samples (N <= 3) from causing
+                        denominator collapse or extreme distortion while respecting regional empirical signals.
+                        """
+                        if not arr:
+                            return float(baseline_global)
+                        n = len(arr)
+                        b_regional = float(np.percentile(arr, 75)) if n >= 3 else float(np.mean(arr))
+                        lambda_weight = n / (n + prior_weight)
+                        b_effective = (lambda_weight * b_regional) + ((1.0 - lambda_weight) * baseline_global)
+                        return float(round(b_effective, 2))
+
                     benchmarks = {
-                        'retention': float(np.mean(rep_retentions)) if rep_retentions else 15.0,
-                        'growth': float(np.mean(rep_growths)) if rep_growths else 40.0,
-                        'quality': float(np.mean(rep_quality_rates)) if rep_quality_rates else 0.0,
-                        'diversity': float(np.mean(rep_diversities)) if rep_diversities else 100.0,
-                        'usage': float(np.mean(rep_usages)) if rep_usages else 0.0
+                        'retention': compute_bayesian_benchmark(rep_retentions, analytics.GLOBAL_MOVEMENT_BASELINES['retention']),
+                        'growth': compute_bayesian_benchmark(rep_growths, analytics.GLOBAL_MOVEMENT_BASELINES['growth']),
+                        'quality': compute_bayesian_benchmark(rep_quality_rates, analytics.GLOBAL_MOVEMENT_BASELINES['quality']),
+                        'diversity': compute_bayesian_benchmark(rep_diversities, analytics.GLOBAL_MOVEMENT_BASELINES['diversity']),
+                        'usage': compute_bayesian_benchmark(rep_usages, analytics.GLOBAL_MOVEMENT_BASELINES['usage'])
                     }
                     
                     target_structural_metrics = structural_metrics.get(
@@ -376,7 +426,12 @@ def health():
                         if m != 'Overall':
                             metrics[m]['stars'] = analytics.calculate_stars(metrics[m]['score'])[0]
 
-                    insights = analytics.generate_insights(metrics, region.split(" (")[0], benchmarks)
+                    counts = {
+                        'target': target_users_count,
+                        'base': base_users_count,
+                        'overlap': intersect_users_count
+                    }
+                    insights = analytics.generate_insights(metrics, region.split(" (")[0], benchmarks, counts=counts)
 
     return render_template('index.html', mode='Health Evaluation', 
                            target_event=target_event, comp_mode=comp_mode, 

@@ -4,7 +4,11 @@
     {# Friendly Notice Banners #}
     {% if error %}
         <div class="notice-banner notice-error" role="alert">
-            <span style="font-size: 1.2rem;">⚠️</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; color: #b45309;">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
             <div><strong>Notice:</strong> {{ error }}</div>
         </div>
     {% endif %}
@@ -45,8 +49,9 @@
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                                         <label for="builder_country" class="form-label" style="margin-bottom: 0;">Target Country</label>
                                         <div style="display: flex; gap: 6px; align-items: center;">
-                                            <button type="button" class="btn btn-sm" onclick="selectAllCountries(); replaceBuilderCodes();" title="Select all available countries and populate target codes" style="padding: 2px 8px; font-size: 0.78rem; background: #eef6ff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 3px; cursor: pointer; font-weight: 500;">
-                                                ✓ Select All (Global)
+                                            <button type="button" class="btn btn-sm" onclick="selectAllCountries(); replaceBuilderCodes();" title="Select all available countries and populate target codes" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.78rem; background: #eef6ff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 3px; cursor: pointer; font-weight: 500;">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                <span>Select All (Global)</span>
                                             </button>
                                             <button type="button" class="btn btn-sm" onclick="clearCountrySelection()" title="Clear country selection" style="padding: 2px 8px; font-size: 0.78rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer;">
                                                 Clear
@@ -55,10 +60,10 @@
                                     </div>
                                     <select id="builder_country" name="builder_country" class="form-control">
                                         <option value="">-- Select Country Matrix --</option>
-                                        <option value="ALL" style="font-weight: 600; color: var(--wiki-blue);">🌐 All Countries (Global Analysis — 50+ Countries)</option>
+                                        <option value="ALL" style="font-weight: 600; color: var(--wiki-blue);">All Countries (Global Analysis — 50+ Countries)</option>
                                         <optgroup label="Regional Clusters">
                                             {% for reg_name, reg_ccs in REGION_COUNTRY_MAPPING.items() %}
-                                                <option value="REG:{{ reg_ccs|join(',') }}">📍 {{ reg_name }} ({{ reg_ccs|join(', ')|upper }})</option>
+                                                <option value="REG:{{ reg_ccs|join(',') }}">{{ reg_name }} ({{ reg_ccs|join(', ')|upper }})</option>
                                             {% endfor %}
                                         </optgroup>
                                         <optgroup label="Individual Countries">
@@ -210,7 +215,11 @@
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Longitudinal Contributor Overlap</span>
                         <button type="button" class="share-btn" onclick="copyCurrentURL(this)" title="Copy shareable link to these results">
-                            🔗 Share Results
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                            <span>Share Results</span>
                         </button>
                     </div>
                 </div>
@@ -230,9 +239,76 @@
                     {% endif %}
 
                     {% if tables %}
+                        <div class="math-panel" style="margin-top: 14px; margin-bottom: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-ink);">Longitudinal Cohort Retention Formulation</div>
+                                <a href="/methodology#retention-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">Methodology Documentation →</a>
+                            </div>
+                            <div class="math-formula" style="margin: 4px 0; font-size: 0.92rem;">
+                                \[ \text{Retention}(C_A \to C_B) = \frac{|U_A \cap U_B|}{|U_A|} \times 100\% \]
+                            </div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">
+                                Measures discrete account survival: percentage of participants from prior cohort \(U_A\) who returned to submit at least one photograph in subsequent cohort \(U_B\).
+                            </div>
+                        </div>
+
                         {% for table_html in tables %}
-                            <div class="table-responsive" style="margin-top: 14px;">
-                                {{ table_html | safe }}
+                            <div class="table-interactive-wrapper" id="retention-table-wrap-{{ loop.index }}">
+                                <div class="table-toolbar">
+                                    <div class="table-toolbar-left">
+                                        <div class="table-search-wrapper">
+                                            <span class="table-search-icon">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <circle cx="11" cy="11" r="8"></circle>
+                                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                                </svg>
+                                            </span>
+                                            <input type="text" class="table-search-input" placeholder="Search rows..." data-target="retention-data-table-{{ loop.index }}">
+                                        </div>
+                                        <div class="table-page-size-wrap">
+                                            <span>Show:</span>
+                                            <select class="table-page-size" data-target="retention-data-table-{{ loop.index }}">
+                                                <option value="10">10</option>
+                                                <option value="25" selected>25</option>
+                                                <option value="50">50</option>
+                                                <option value="all">All</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="table-toolbar-right">
+                                        <div class="btn-export-group">
+                                            <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('retention-data-table-{{ loop.index }}', 'csv', 'campanalytics_retention')">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                </svg>
+                                                <span>CSV</span>
+                                            </button>
+                                            <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('retention-data-table-{{ loop.index }}', 'wikitext', 'campanalytics_retention')">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                                                </svg>
+                                                <span>Wikitext</span>
+                                            </button>
+                                            <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('retention-data-table-{{ loop.index }}', 'json', 'campanalytics_retention')">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                    <polyline points="16 18 22 12 16 6"></polyline>
+                                                    <polyline points="8 6 2 12 8 18"></polyline>
+                                                </svg>
+                                                <span>JSON</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-scroll-container">
+                                    {{ table_html | replace('<table ', '<table id="retention-data-table-' ~ loop.index ~ '" data-sortable="true" ') | safe }}
+                                </div>
+                                <div class="table-pagination-bar" data-target="retention-data-table-{{ loop.index }}">
+                                    <div class="table-pagination-info">Showing rows...</div>
+                                    <div class="table-pagination-nav"></div>
+                                </div>
                             </div>
                         {% endfor %}
                     {% endif %}
@@ -244,8 +320,20 @@
     {# 2. HEALTH EVALUATION VIEW                                              #}
     {# ====================================================================== #}
     {% elif mode == 'Health Evaluation' %}
-        <h1 class="page-title">Health Evaluation</h1>
-        <p class="page-subtitle">Multi-dimensional performance scorecard calibrated against regional geographic cohorts.</p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 6px;">
+            <div>
+                <h1 class="page-title" style="margin-bottom: 4px;">Evaluation</h1>
+                <p class="page-subtitle" style="margin-bottom: 0;">Multi-dimensional campaign health evaluation calibrated against regional peer performance benchmarks.</p>
+            </div>
+            <a href="/methodology#health-guide" class="btn btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.82rem; font-weight: 600; background: #ffffff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 4px; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.04); margin-top: 4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                </svg>
+                <span>Tool Usage &amp; Process Guide</span>
+                <span aria-hidden="true">&rarr;</span>
+            </a>
+        </div>
 
         <form action="/health" method="GET" id="health-form">
             <!-- Structured Panel: What to look up -->
@@ -372,7 +460,11 @@
             <!-- Scorecard Summary Header Card -->
             <div class="scorecard-header-card" id="health-results">
                 <div>
-                    <div style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--nav-teal); margin-bottom: 4px;">Health Evaluation Scorecard</div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--nav-teal);">Evaluation Scorecard</span>
+                        <span style="color: #cbd5e1;">·</span>
+                        <a href="/methodology#health-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">Methodology &amp; Usage Guide →</a>
+                    </div>
                     <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-ink);">Campaign: {{ target_event|upper }}</div>
                     <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 2px;">Regional Calibration Framework: {{ region }}</div>
                 </div>
@@ -381,9 +473,24 @@
                         <span class="overall-score-number">{{ metrics['Overall'] }}</span>
                         <span class="overall-score-max">/ 100</span>
                     </div>
-                    <button type="button" class="share-btn" onclick="copyCurrentURL(this)" title="Copy shareable link to this scorecard">
-                        🔗 Share Scorecard
-                    </button>
+                    <div class="scorecard-header-actions">
+                        <button type="button" class="export-report-btn" onclick="CampTableSuite.openExportReportModal()" title="Export evaluation report in Wikitext or Markdown">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            <span>Export Report</span>
+                        </button>
+                        <button type="button" class="share-btn" onclick="copyCurrentURL(this)" title="Copy shareable link to this scorecard">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                            <span>Share Scorecard</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -394,7 +501,7 @@
                     <div>
                         <div class="scorecard-card-title">
                             <span>Retention Index</span>
-                            <span class="scorecard-card-weight">Weight 32%</span>
+                            <span class="scorecard-card-weight">Weight 25%</span>
                         </div>
                         <div class="scorecard-card-value">{{ metrics['Retention']['raw'] }}</div>
                         <div class="scorecard-card-stars">{{ metrics['Retention']['stars'] }}</div>
@@ -402,25 +509,12 @@
                     <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Retention']['score']) }} / 100</div>
                 </div>
 
-                <!-- Dimension 2: Content Utility -->
-                <div class="scorecard-card">
-                    <div>
-                        <div class="scorecard-card-title">
-                            <span>Content Utility</span>
-                            <span class="scorecard-card-weight">Weight 25%</span>
-                        </div>
-                        <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Usage']['raw']) }}%</div>
-                        <div class="scorecard-card-stars">{{ metrics['Usage']['stars'] }}</div>
-                    </div>
-                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Usage']['score']) }} / 100</div>
-                </div>
-
-                <!-- Dimension 3: Growth Capacity -->
+                <!-- Dimension 2: Growth Capacity -->
                 <div class="scorecard-card">
                     <div>
                         <div class="scorecard-card-title">
                             <span>Growth Capacity</span>
-                            <span class="scorecard-card-weight">Weight 18%</span>
+                            <span class="scorecard-card-weight">Weight 25%</span>
                         </div>
                         <div class="scorecard-card-value">{{ metrics['Growth']['raw'] }}</div>
                         <div class="scorecard-card-stars">{{ metrics['Growth']['stars'] }}</div>
@@ -428,7 +522,33 @@
                     <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Growth']['score']) }} / 100</div>
                 </div>
 
-                <!-- Dimension 4: Contributor Diversity -->
+                <!-- Dimension 3: Content Utility -->
+                <div class="scorecard-card">
+                    <div>
+                        <div class="scorecard-card-title">
+                            <span>Content Utility</span>
+                            <span class="scorecard-card-weight">Weight 20%</span>
+                        </div>
+                        <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Usage']['raw']) }}%</div>
+                        <div class="scorecard-card-stars">{{ metrics['Usage']['stars'] }}</div>
+                    </div>
+                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Usage']['score']) }} / 100</div>
+                </div>
+
+                <!-- Dimension 4: Quality Recognition -->
+                <div class="scorecard-card">
+                    <div>
+                        <div class="scorecard-card-title">
+                            <span>Quality Recognition</span>
+                            <span class="scorecard-card-weight">Weight 15%</span>
+                        </div>
+                        <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Quality']['raw']) }}%</div>
+                        <div class="scorecard-card-stars">{{ metrics['Quality']['stars'] }}</div>
+                    </div>
+                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Quality']['score']) }} / 100</div>
+                </div>
+
+                <!-- Dimension 5: Contributor Diversity -->
                 <div class="scorecard-card">
                     <div>
                         <div class="scorecard-card-title">
@@ -440,18 +560,123 @@
                     </div>
                     <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Diversity']['score']) }} / 100</div>
                 </div>
+            </div>
 
-                <!-- Dimension 5: Quality Recognition -->
-                <div class="scorecard-card">
-                    <div>
-                        <div class="scorecard-card-title">
-                            <span>Quality Recognition</span>
-                            <span class="scorecard-card-weight">Weight 10%</span>
-                        </div>
-                        <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Quality']['raw']) }}%</div>
-                        <div class="scorecard-card-stars">{{ metrics['Quality']['stars'] }}</div>
+            <!-- Health Formula Card & Methodology Anchor Link -->
+            <div class="math-panel" style="margin-top: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-ink);">Composite Community Health Weighting Formula</div>
+                    <a href="/methodology#health-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">
+                        Methodology Documentation →
+                    </a>
+                </div>
+                <div class="math-formula" style="margin: 4px 0; font-size: 0.92rem;">
+                    \[ \text{Evaluation Index} = 0.25 S_{\text{ret}} + 0.25 S_{\text{grow}} + 0.20 S_{\text{util}} + 0.15 S_{\text{qual}} + 0.15 S_{\text{div}} \]
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+                    Evaluated via continuous concave utility scaling with zero-floor preservation. Regional benchmarks are stabilized using Empirical Bayesian shrinkage against global movement baselines.
+                </div>
+            </div>
+
+            <!-- Health Scorecard Data Table & Universal Exports -->
+            <div class="table-interactive-wrapper" style="margin-top: 14px;">
+                <div class="table-toolbar">
+                    <div class="table-toolbar-left">
+                        <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-ink);">Scorecard Dimension Breakdown</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">(Target vs Regional 75th-Percentile Benchmark)</span>
                     </div>
-                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Quality']['score']) }} / 100</div>
+                    <div class="table-toolbar-right">
+                        <div class="btn-export-group">
+                            <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('health-data-table', 'csv', 'campanalytics_health_scorecard')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>CSV</span>
+                            </button>
+                            <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('health-data-table', 'wikitext', 'campanalytics_health_scorecard')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                                </svg>
+                                <span>Wikitext</span>
+                            </button>
+                            <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('health-data-table', 'json', 'campanalytics_health_scorecard')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="16 18 22 12 16 6"></polyline>
+                                    <polyline points="8 6 2 12 8 18"></polyline>
+                                </svg>
+                                <span>JSON</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-scroll-container">
+                    <table class="data-table" id="health-data-table">
+                        <thead>
+                            <tr>
+                                <th>Dimension</th>
+                                <th>Weight</th>
+                                <th>Observed Value</th>
+                                <th>Regional Benchmark (75th)</th>
+                                <th>Normalized Score</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 600;">Retention Index</td>
+                                <td>25%</td>
+                                <td>{{ metrics['Retention']['raw'] }}</td>
+                                <td>{{ "%.1f"|format(metrics['Retention']['benchmark']) }}%</td>
+                                <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Retention']['score']) }} / 100</td>
+                                <td>{{ metrics['Retention']['stars'] }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Growth Capacity</td>
+                                <td>25%</td>
+                                <td>{{ metrics['Growth']['raw'] }}</td>
+                                <td>{{ "%.1f"|format(metrics['Growth']['benchmark']) }}%</td>
+                                <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Growth']['score']) }} / 100</td>
+                                <td>{{ metrics['Growth']['stars'] }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Content Utility</td>
+                                <td>20%</td>
+                                <td>{{ "%.1f"|format(metrics['Usage']['raw']) }}%</td>
+                                <td>{{ "%.1f"|format(metrics['Usage']['benchmark']) }}%</td>
+                                <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Usage']['score']) }} / 100</td>
+                                <td>{{ metrics['Usage']['stars'] }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Quality Recognition</td>
+                                <td>15%</td>
+                                <td>{{ "%.1f"|format(metrics['Quality']['raw']) }}%</td>
+                                <td>{{ "%.1f"|format(metrics['Quality']['benchmark']) }}%</td>
+                                <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Quality']['score']) }} / 100</td>
+                                <td>{{ metrics['Quality']['stars'] }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Contributor Diversity</td>
+                                <td>15%</td>
+                                <td>{{ "%.1f"|format(metrics['Diversity']['raw']) }}%</td>
+                                <td>{{ "%.1f"|format(metrics['Diversity']['benchmark']) }}%</td>
+                                <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Diversity']['score']) }} / 100</td>
+                                <td>{{ metrics['Diversity']['stars'] }}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td style="font-weight: 700;">Composite Overall</td>
+                                <td style="font-weight: 700;">100%</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td style="font-weight: 700; color: var(--nav-teal); font-size: 0.98rem;">{{ metrics['Overall'] }} / 100</td>
+                                <td>—</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
 
@@ -459,8 +684,10 @@
             {% if insights %}
                 <div class="display-panel">
                     <div class="display-panel-header">
-                        <span>Peer-Relative Diagnostic Insights</span>
-                        <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Automated Evaluation</span>
+                        <span>Campaign Organizer Diagnostic Insights</span>
+                        <a href="/methodology#health-guide" style="font-weight: 500; font-size: 0.8rem; color: var(--wiki-blue); text-decoration: none;">
+                            How are benchmarks &amp; insights computed? →
+                        </a>
                     </div>
                     <div class="display-panel-body">
                         {% for insight in insights %}
@@ -634,7 +861,11 @@
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ influx_result.records|length }} Consecutive Editions Analyzed</span>
                         <button type="button" class="share-btn" onclick="copyCurrentURL(this)" title="Copy shareable link to these results">
-                            🔗 Share Results
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                            <span>Share Results</span>
                         </button>
                     </div>
                 </div>
@@ -715,75 +946,131 @@
                 </div>
             {% endif %}
 
-            <!-- Structured Panel: Detailed Data Table -->
+            <!-- Structured Panel: Detailed Data Table with Universal Exporters -->
             <div class="display-panel">
                 <div class="display-panel-header">
                     <span>Year-over-Year Influx Breakdown Data Table</span>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <button type="button" class="btn btn-sm" onclick="exportInfluxTableToCSV()" style="padding: 4px 12px; font-size: 0.8rem; background: #ffffff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 4px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 5px;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            <span>Export Data (CSV)</span>
-                        </button>
-                    </div>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Annual Recruitment &amp; Cumulative Pool Trajectory</span>
                 </div>
                 <div class="display-panel-body" style="padding: 0;">
-                    <div class="table-responsive">
-                        <table class="data-table" id="influx-data-table">
-                            <thead>
-                                <tr>
-                                    <th>Year</th>
-                                    <th>Campaign Code</th>
-                                    <th>Total Active</th>
-                                    <th>First-Time Influx</th>
-                                    <th>Returning Veterans</th>
-                                    <th>Newcomer Share</th>
-                                    <th>Direct Retention</th>
-                                    <th>YoY Net Growth</th>
-                                    <th>New-to-Veteran Ratio</th>
-                                    <th>Cumulative Pool</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for r in influx_result.records %}
+                    <div class="table-interactive-wrapper" id="influx-table-wrap" style="margin-top: 0; border: none; border-radius: 0;">
+                        <div class="table-toolbar">
+                            <div class="table-toolbar-left">
+                                <div class="table-search-wrapper">
+                                    <span class="table-search-icon">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    </span>
+                                    <input type="text" class="table-search-input" placeholder="Search years/codes..." data-target="influx-data-table">
+                                </div>
+                                <div class="table-page-size-wrap">
+                                    <span>Show:</span>
+                                    <select class="table-page-size" data-target="influx-data-table">
+                                        <option value="10">10</option>
+                                        <option value="25" selected>25</option>
+                                        <option value="50">50</option>
+                                        <option value="all">All</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="table-toolbar-right">
+                                <div class="btn-export-group">
+                                    <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('influx-data-table', 'csv', 'campanalytics_influx_trends')">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="7 10 12 15 17 10"></polyline>
+                                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                                        </svg>
+                                        <span>CSV</span>
+                                    </button>
+                                    <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('influx-data-table', 'wikitext', 'campanalytics_influx_trends')">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                                        </svg>
+                                        <span>Wikitext</span>
+                                    </button>
+                                    <button type="button" class="btn-export" onclick="CampTableSuite.exportTable('influx-data-table', 'json', 'campanalytics_influx_trends')">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="16 18 22 12 16 6"></polyline>
+                                            <polyline points="8 6 2 12 8 18"></polyline>
+                                        </svg>
+                                        <span>JSON</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-scroll-container">
+                            <table class="data-table" id="influx-data-table" data-sortable="true">
+                                <thead>
                                     <tr>
-                                        <td style="font-weight: 600;">{{ r.year }}</td>
-                                        <td>
-                                            <code>{{ r.code }}</code>
-                                            {% if r.breakdown_str and r.breakdown_str != 'Single stream' %}
-                                                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 3px; line-height: 1.3;">{{ r.breakdown_str }}</div>
-                                            {% endif %}
-                                        </td>
-                                        <td style="font-weight: 600;">{{ "{:,}".format(r.total_active) }}</td>
-                                        <td style="color: #0d9488; font-weight: 600;">+{{ "{:,}".format(r.new_contributors) }}</td>
-                                        <td style="color: var(--nav-teal); font-weight: 600;">{{ "{:,}".format(r.returning_contributors) }}</td>
-                                        <td>
-                                            <span style="display: inline-block; width: 48px;">{{ r.newcomer_share_pct }}%</span>
-                                            <span style="display: inline-block; width: 60px; height: 6px; background-color: #e2e8f0; border-radius: 3px; overflow: hidden; vertical-align: middle;">
-                                                <span style="display: block; width: {{ r.newcomer_share_pct }}%; height: 100%; background-color: var(--nav-accent);"></span>
-                                            </span>
-                                        </td>
-                                        <td>{% if loop.first %}—{% else %}{{ r.retention_from_prev_pct }}%{% endif %}</td>
-                                        <td>
-                                            {% if loop.first %}
-                                                —
-                                            {% elif r.yoy_growth_pct > 0 %}
-                                                <span style="color: #16a34a; font-weight: 600;">+{{ r.yoy_growth_pct }}%</span>
-                                            {% elif r.yoy_growth_pct < 0 %}
-                                                <span style="color: #dc2626; font-weight: 600;">{{ r.yoy_growth_pct }}%</span>
-                                            {% else %}
-                                                0.0%
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ r.new_to_veteran_ratio }}x</td>
-                                        <td style="font-weight: 600; color: var(--nav-teal);">{{ "{:,}".format(r.cumulative_pool) }}</td>
+                                        <th>Year</th>
+                                        <th>Campaign Code</th>
+                                        <th>Total Active</th>
+                                        <th>First-Time Influx</th>
+                                        <th>Returning Veterans</th>
+                                        <th>Newcomer Share</th>
+                                        <th>Direct Retention</th>
+                                        <th>YoY Net Growth</th>
+                                        <th>New-to-Veteran Ratio</th>
+                                        <th>Cumulative Pool</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% for r in influx_result.records %}
+                                        <tr>
+                                            <td style="font-weight: 600;">{{ r.year }}</td>
+                                            <td>
+                                                <code>{{ r.code }}</code>
+                                                {% if r.breakdown_str and r.breakdown_str != 'Single stream' %}
+                                                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 3px; line-height: 1.3;">{{ r.breakdown_str }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td style="font-weight: 600;">{{ "{:,}".format(r.total_active) }}</td>
+                                            <td style="color: #0d9488; font-weight: 600;">+{{ "{:,}".format(r.new_contributors) }}</td>
+                                            <td style="color: var(--nav-teal); font-weight: 600;">{{ "{:,}".format(r.returning_contributors) }}</td>
+                                            <td>
+                                                {% if r.is_baseline %}
+                                                    <span style="display: inline-block; width: 44px;">{{ r.newcomer_share_pct }}%</span>
+                                                    <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.68rem; padding: 2px 6px; border-radius: 3px; font-weight: 600;" title="Year 1 of series serves as the relative baseline. All active uploaders are indexed as initial entrants.">Baseline (100%)</span>
+                                                {% else %}
+                                                    <span style="display: inline-block; width: 44px;">{{ r.newcomer_share_pct }}%</span>
+                                                    <span style="display: inline-block; width: 55px; height: 6px; background-color: #e2e8f0; border-radius: 3px; overflow: hidden; vertical-align: middle;">
+                                                        <span style="display: block; width: {{ r.newcomer_share_pct }}%; height: 100%; background-color: var(--nav-accent);"></span>
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{% if loop.first or r.is_baseline %}—{% else %}{{ r.retention_from_prev_pct }}%{% endif %}</td>
+                                            <td>
+                                                {% if loop.first or r.is_baseline %}
+                                                    —
+                                                {% elif r.yoy_growth_pct > 0 %}
+                                                    <span style="color: #16a34a; font-weight: 600;">+{{ r.yoy_growth_pct }}%</span>
+                                                {% elif r.yoy_growth_pct < 0 %}
+                                                    <span style="color: #dc2626; font-weight: 600;">{{ r.yoy_growth_pct }}%</span>
+                                                {% else %}
+                                                    0.0%
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if r.new_to_veteran_ratio is not none %}
+                                                    {{ r.new_to_veteran_ratio }}x
+                                                {% else %}
+                                                    <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="font-weight: 600; color: var(--nav-teal);">{{ "{:,}".format(r.cumulative_pool) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination-bar" data-target="influx-data-table">
+                            <div class="table-pagination-info">Showing rows...</div>
+                            <div class="table-pagination-nav"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -797,12 +1084,67 @@
         <p class="page-subtitle">Technical specifications, analytical formulations, and usage guidelines for the Campaign Analytics platform.</p>
 
         <!-- ================================================================== -->
-        <!-- 1. RETENTION ANALYTICS SECTION                                     -->
+        <!-- 1. EVALUATION (HEALTH EVALUATION) SECTION                          -->
+        <!-- ================================================================== -->
+        <div class="display-panel" id="health-guide">
+            <div class="display-panel-header">
+                <div>
+                    <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 01</span>
+                    <span style="font-weight: 700; font-size: 1.05rem;">Evaluation (Health Evaluation)</span>
+                </div>
+                <a href="/health" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                    Go To Tool →
+                </a>
+            </div>
+            <div class="display-panel-body">
+                <p style="color: var(--text-muted); line-height: 1.6;">
+                    The Evaluation module computes a multi-dimensional campaign vitality score (0–100) calibrated dynamically against contemporary regional peer performance:
+                </p>
+
+                <h4 style="margin: 14px 0 8px 0; color: var(--text-ink); font-size: 0.95rem;">Step-by-Step Tool Usage &amp; Evaluation Process</h4>
+                <ol style="color: var(--text-ink); line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Target Campaign Code:</strong> Enter the official identifier for the campaign edition you want to evaluate (e.g. <code>wlmbd24</code> for Wiki Loves Monuments 2024 Bangladesh, or <code>wlede23</code> for Wiki Loves Earth Germany).</li>
+                    <li><strong>Baseline Reference Edition:</strong> Select <em>Previous Year Baseline</em> to measure progression against the immediately preceding year (e.g. 2023 vs 2024), or specify a custom baseline edition for multi-year comparisons. Both cohorts must have active upload records.</li>
+                    <li><strong>Regional Peer Calibration:</strong> The tool automatically identifies your country's regional cluster (e.g. South Asia, Northern &amp; Western Europe, ESEAP). Regional benchmarks are computed from active peer campaigns in this group to ensure fair comparison between emerging and veteran communities.</li>
+                    <li><strong>Evaluation Scorecard &amp; Report:</strong> Review the 5 dimension scores, qualitative star ratings, quantitative participant counts, and diagnostic insights. Use the <strong>Export Report</strong> button to generate ready-to-copy summaries for Wikimedia grant reporting, talk pages, or organizing retrospectives.</li>
+                </ol>
+
+                <div class="math-panel">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Evaluation Weighting Model</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 10px 0;">
+                        The composite evaluation score is calculated on a 0–100 scale across five core dimensions organized into complementary structural pairs:
+                    </p>
+                    <div class="math-formula" style="margin: 10px 0 14px 0;">
+                        \[ \text{Evaluation Index} = 0.25 S_{\text{ret}} + 0.25 S_{\text{grow}} + 0.20 S_{\text{util}} + 0.15 S_{\text{qual}} + 0.15 S_{\text{div}} \]
+                    </div>
+                    <ul style="color: var(--text-ink); font-size: 0.88rem; line-height: 1.7; margin: 0; padding-left: 20px;">
+                        <li><strong>Retention Index (25%):</strong> Percentage of baseline cohort participants who contributed to the target edition. Reflects multi-year community volunteer continuity.</li>
+                        <li><strong>Growth Capacity (25%):</strong> Percentage of target edition uploaders who are first-time entrants. Measures new contributor recruitment velocity.</li>
+                        <li><strong>Content Utility (20%):</strong> Share of uploaded images actively integrated into Wikimedia project articles (<code>prop=globalusage</code>). Measures direct encyclopedic deployment.</li>
+                        <li><strong>Quality Recognition (15%):</strong> Share of submissions awarded formal community quality designations (Quality Images or Featured Pictures).</li>
+                        <li><strong>Contributor Diversity (15%):</strong> Distribution equity of contributions, measured inversely against the top 10% uploader concentration to evaluate participation breadth.</li>
+                    </ul>
+                </div>
+
+                <div class="math-panel" style="margin-bottom: 0;">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Empirical Bayesian Shrinkage &amp; Benchmarks</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0; line-height: 1.6;">
+                        Regional reference thresholds are computed from active peer campaigns within each geographic cluster. To prevent distortion in regions with small sample sizes (\(N \le 3\)), Empirical Bayesian shrinkage blends regional peer metrics with global movement baselines:
+                    </p>
+                    <div class="math-formula" style="margin: 8px 0;">
+                        \[ B_{\text{effective}} = \frac{N}{N + 3} B_{\text{regional}} + \frac{3}{N + 3} B_{\text{global}} \]
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- 2. RETENTION ANALYTICS SECTION                                     -->
         <!-- ================================================================== -->
         <div class="display-panel" id="retention-guide">
             <div class="display-panel-header">
                 <div>
-                    <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 01</span>
+                    <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 02</span>
                     <span style="font-weight: 700; font-size: 1.05rem;">Retention Analytics</span>
                 </div>
                 <a href="/retention" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
@@ -848,58 +1190,6 @@
                         <li>Evaluations reflect observable on-wiki upload records and do not account for offline organizing contributions.</li>
                         <li>Incomplete or unheld campaign categories are identified as missing data and excluded from evaluation to prevent erroneous zero-scoring.</li>
                     </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================================================================== -->
-        <!-- 2. HEALTH EVALUATION SECTION                                       -->
-        <!-- ================================================================== -->
-        <div class="display-panel" id="health-guide">
-            <div class="display-panel-header">
-                <div>
-                    <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 02</span>
-                    <span style="font-weight: 700; font-size: 1.05rem;">Health Evaluation</span>
-                </div>
-                <a href="/health" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
-                    Go To Tool →
-                </a>
-            </div>
-            <div class="display-panel-body">
-                <p style="color: var(--text-muted); line-height: 1.6;">
-                    The Health Evaluation module computes a multi-dimensional health index (0–100) calibrated dynamically against contemporary regional peer performance:
-                </p>
-                <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
-                    <li><strong>Target Campaign Code:</strong> Provide the standardized identifier for the evaluated edition (for example, <code>wlmbd24</code> or <code>wlede22</code>).</li>
-                    <li><strong>Baseline Reference:</strong> Designate either the automated previous-year edition or specify a custom comparison code. Both target and baseline cohorts must contain valid participant data.</li>
-                    <li><strong>Geographic Standardization Framework:</strong> Assign the appropriate regional cluster (e.g., South Asia, Northern &amp; Western Europe, ESEAP). Dynamic benchmark norms are calculated from the top regional performers in that cluster.</li>
-                    <li><strong>Evaluation Output:</strong> Review the weighted composite scorecard (0–100), categorical star ratings, quantitative cohort footprints, and automated diagnostic insights.</li>
-                </ol>
-
-                <div class="math-panel">
-                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Health Evaluation Weighting Model</h4>
-                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 10px 0;">
-                        The composite health score is computed on a 0–100 scale across five dimensions, each normalized against the upper-quartile performance of peer campaigns in the same geographic cluster. Weights reflect the relative predictive power of each dimension for long-term community sustainability:
-                    </p>
-                    <ul style="color: var(--text-ink); font-size: 0.88rem; line-height: 1.7; margin: 0; padding-left: 20px;">
-                        <li><strong>Retention Index (32%):</strong> Proportion of prior-edition contributors who return in the target edition. The strongest single predictor of whether a campaign community survives across years rather than requiring constant re-acquisition.</li>
-                        <li><strong>Content Utility (25%):</strong> Share of uploaded files actively deployed across Wikimedia projects (<code>prop=globalusage</code>). This is the Wikimedia-specific mission proxy — files that get used in articles deliver encyclopaedic value; files that don't are production without impact.</li>
-                        <li><strong>Growth Capacity (18%):</strong> Share of the target cohort comprising first-time participants:
-                            <div class="math-formula" style="margin: 6px 0;">
-                                \[ \text{Growth}(A \to B) = \frac{|U_B \setminus U_A|}{|U_B|} \times 100\% \]
-                            </div>
-                            Growth matters, but is weighted below retention and utility because a campaign that recruits heavily but retains nobody is structurally fragile.
-                        </li>
-                        <li><strong>Contributor Diversity (15%):</strong> Concentration of upload activity among the top 10% of uploaders (lower concentration = higher score). Raised to reflect its role as a leading fragility indicator — campaigns dominated by a handful of power users are vulnerable to collapse when those users disengage.</li>
-                        <li><strong>Quality Recognition (10%):</strong> Share of submissions formally recognized under Commons quality standards (<code>Category:Quality images</code>, <code>Category:Featured pictures</code>). Kept intentionally modest because QI/FP rates are noisy at small upload volumes and tend to favour niche campaigns over large-participation ones.</li>
-                    </ul>
-                </div>
-
-                <div class="math-panel" style="margin-bottom: 0;">
-                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Regional Peer Normalization &amp; Calibration</h4>
-                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0; line-height: 1.6;">
-                        The system dynamically identifies active peer campaigns in the same geographic cluster, computes the upper quartile performance envelope, and normalizes target metrics against that cluster standard. This ensures equitable evaluation across mature and developing campaign ecosystems.
-                    </p>
                 </div>
             </div>
         </div>
@@ -953,14 +1243,14 @@
                         When analyzing all campaigns together (<code>all[country][year]</code>), participant sets across all active Wiki Loves photography contests in edition year \(t\) are aggregated into a unified ecosystem cohort \(U_t\):
                     </p>
                     <div class="math-formula">
-                        \[ U_t = \bigcup_{e \in E} U_{e, t}, \quad I_t = U_t \setminus \bigcup_{j < t} U_j, \quad R_t = U_t \cap \bigcup_{j < t} U_j \]
+                        \[ U_t = \bigcup_{e \in E} U_{e, t}, \quad I_t = U_t \setminus \bigcup_{j &lt; t} U_j, \quad R_t = U_t \cap \bigcup_{j &lt; t} U_j \]
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
                         Where \(E = \{\text{WLM}, \text{WLE}, \text{WLF}, \text{WLA}, \text{WLB}\}\). Contributor cross-participation across contests is de-duplicated, measuring the total net new individuals brought into the Wikimedia movement annually.
                     </p>
                 </div>
 
-                <div class="math-panel" style="margin-bottom: 0;">
+                <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Cumulative Movement Footprint</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
                         The cumulative community pool milestone measures the total distinct individuals who have engaged across the evaluated series up to edition year \(t\):
@@ -968,6 +1258,60 @@
                     <div class="math-formula">
                         \[ \text{Cumulative Pool}_t = \left|\bigcup_{j \le t} U_j\right| \]
                     </div>
+                </div>
+
+                <div class="math-panel">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Academic Literature &amp; Foundational Research</h4>
+                    <ul style="color: var(--text-ink); font-size: 0.85rem; line-height: 1.6; margin: 0; padding-left: 20px;">
+                        <li><strong>Halfaker, A., Geiger, R. S., Morgan, J. T., &amp; Riedl, J. (2013).</strong> <em>The Rise and Decline of an Open Collaboration System: How Wikipedia's reaction to popularity is causing its decline.</em> American Behavioral Scientist, 57(5), 664–688. <a href="https://doi.org/10.1177/0002764212469365" target="_blank" style="color: var(--wiki-blue);">doi:10.1177/0002764212469365</a> (Informs retention weighting and newcomer survivorship models).</li>
+                        <li><strong>Morgan, J. T., &amp; Halfaker, A. (2018).</strong> <em>Evaluating the Impact of Wikimedia Grants and Contributor Retention.</em> Wikimedia Research Report, Wikimedia Foundation. (Framework for longitudinal cohort survival analysis).</li>
+                        <li><strong>Kittur, A., Chi, E., Pendleton, B. A., Suh, B., &amp; Mytkowicz, T. (2007).</strong> <em>He says, she says: conflict and coordination in Wikipedia.</em> Proceedings of the SIGCHI Conference on Human Factors in Computing Systems, 453–462. (Concentration metrics and power-law distribution in peer production).</li>
+                    </ul>
+                </div>
+
+                <div class="math-panel" style="margin-bottom: 0;">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Metric Glossary &amp; Data Dictionary</h4>
+                    <table class="data-table" style="font-size: 0.82rem; margin-top: 8px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 24%;">Metric / Symbol</th>
+                                <th style="width: 28%;">Formal Definition</th>
+                                <th>Operational Description &amp; Scope</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Directional Retention (\(R_{A \to B}\))</strong></td>
+                                <td>\(\frac{|U_A \cap U_B|}{|U_A|} \times 100\%\)</td>
+                                <td>Percentage of distinct uploaders from cohort \(A\) who returned to submit at least one file in subsequent edition \(B\).</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Content Utility (\(S_{\text{util}}\))</strong></td>
+                                <td>\(\frac{|F_{\text{in-use}}|}{|F_{\text{total}}|} \times 100\%\)</td>
+                                <td>Proportion of campaign uploads embedded across Wikipedia articles, Wikidata, Wikivoyage, or other Wikimedia projects via <code>prop=globalusage</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Newcomer Influx (\(I_t\))</strong></td>
+                                <td>\(U_t \setminus \bigcup_{j &lt; t} U_j\)</td>
+                                <td>First-time participants in edition \(t\) with no prior upload history in any previous edition of the evaluated contest series.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cumulative Pool</strong></td>
+                                <td>\(\left|\bigcup_{j \le t} U_j\right|\)</td>
+                                <td>Total unique contributors ever mobilized by the campaign series through edition year \(t\).</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Top-10% Concentration</strong></td>
+                                <td>\(\frac{\sum_{i=1}^{\lfloor 0.1 N \rfloor} u_i}{\sum_{i=1}^N u_i} \times 100\%\)</td>
+                                <td>Share of total submissions uploaded by the most active 10% of participants; measures structural reliance on power users.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Regional 75th Percentile</strong></td>
+                                <td>\(P_{75}(X_{\text{region}})\)</td>
+                                <td>Upper-quartile performance threshold computed across peer campaigns in the same geographic sub-region (e.g. South Asia, Western Europe).</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -985,6 +1329,39 @@
 
         <!-- Tool Cards Grid -->
         <div class="methodology-cards-grid">
+            <a href="/health" class="tool-card">
+                <div>
+                    <div class="tool-card-top-row">
+                        <div class="tool-card-icon-wrap" style="background-color: #fef6ee; color: #d97706;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg>
+                        </div>
+                        <span class="tool-card-badge" style="background-color: #fef3c7; color: #92400e;">Tool 01 · Evaluation</span>
+                    </div>
+                    <h3 class="tool-card-title">Evaluation</h3>
+                    <p class="tool-card-desc">Evaluate campaign vitality across five weighted structural indicators calibrated against regional peer performance benchmarks and movement baselines.</p>
+                    <ul class="tool-card-features">
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Standardized composite score (0–100)</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Bayesian-regularized regional benchmarks</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>GlobalUsage &amp; Quality Image tracking</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tool-card-btn">
+                    <span>Launch Evaluation</span>
+                    <span class="arrow-icon">&rarr;</span>
+                </div>
+            </a>
+
             <a href="/retention" class="tool-card">
                 <div>
                     <div class="tool-card-top-row">
@@ -994,10 +1371,10 @@
                                 <circle cx="15" cy="12" r="6"></circle>
                             </svg>
                         </div>
-                        <span class="tool-card-badge">Tool 01 · Retention</span>
+                        <span class="tool-card-badge">Tool 02 · Retention</span>
                     </div>
-                    <h3 class="tool-card-title">Retention Analytics</h3>
-                    <p class="tool-card-desc">Evaluate longitudinal contributor movement and retention across multi-year editions. Analyze pairwise heatmaps, intersection matrices, and spatial choropleth maps across 50+ countries.</p>
+                    <h3 class="tool-card-title">Retention</h3>
+                    <p class="tool-card-desc">Track longitudinal contributor movement and retention across multi-year editions. Analyze pairwise heatmaps, intersection matrices, and spatial choropleth maps across 50+ countries.</p>
                     <ul class="tool-card-features">
                         <li class="tool-card-feature-item">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -1014,40 +1391,7 @@
                     </ul>
                 </div>
                 <div class="tool-card-btn">
-                    <span>Launch Retention Analytics</span>
-                    <span class="arrow-icon">&rarr;</span>
-                </div>
-            </a>
-
-            <a href="/health" class="tool-card">
-                <div>
-                    <div class="tool-card-top-row">
-                        <div class="tool-card-icon-wrap" style="background-color: #fef6ee; color: #d97706;">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                            </svg>
-                        </div>
-                        <span class="tool-card-badge" style="background-color: #fef3c7; color: #92400e;">Tool 02 · Health</span>
-                    </div>
-                    <h3 class="tool-card-title">Health Evaluation</h3>
-                    <p class="tool-card-desc">Assess campaign vitality across five weighted structural indicators calibrated dynamically against regional peer performance benchmarks and upper-quartile envelopes.</p>
-                    <ul class="tool-card-features">
-                        <li class="tool-card-feature-item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span>Weighted composite health score (0–100)</span>
-                        </li>
-                        <li class="tool-card-feature-item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span>Dynamic regional peer normalization</span>
-                        </li>
-                        <li class="tool-card-feature-item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span>Commons GlobalUsage &amp; quality footprint</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="tool-card-btn">
-                    <span>Launch Health Evaluation</span>
+                    <span>Launch Retention</span>
                     <span class="arrow-icon">&rarr;</span>
                 </div>
             </a>
@@ -1065,8 +1409,8 @@
                         </div>
                         <span class="tool-card-badge" style="background-color: #dcfce7; color: #15803d;">Tool 03 · Influx</span>
                     </div>
-                    <h3 class="tool-card-title">New User Influx</h3>
-                    <p class="tool-card-desc">Track newcomer acquisition, returning veteran retention, and community expansion over multi-year series. Includes stacked cohort visualizations and CSV data export.</p>
+                    <h3 class="tool-card-title">Influx</h3>
+                    <p class="tool-card-desc">Analyze newcomer acquisition, returning veteran retention, and community expansion over multi-year series. Includes stacked cohort visualizations and CSV data export.</p>
                     <ul class="tool-card-features">
                         <li class="tool-card-feature-item">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -1074,16 +1418,16 @@
                         </li>
                         <li class="tool-card-feature-item">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span>Visual stacked bar dynamics &amp; cumulative pool</span>
+                            <span>Stacked cohort dynamics &amp; cumulative pool</span>
                         </li>
                         <li class="tool-card-feature-item">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span>YoY net growth &amp; newcomer share table</span>
+                            <span>Year-over-Year newcomer proportion tracking</span>
                         </li>
                     </ul>
                 </div>
                 <div class="tool-card-btn">
-                    <span>Launch New User Influx</span>
+                    <span>Launch Influx</span>
                     <span class="arrow-icon">&rarr;</span>
                 </div>
             </a>
@@ -1387,7 +1731,7 @@
                 if (healthHint) {
                     const notice = getScopeNoticeJS(evt, cc);
                     if (notice) {
-                        healthHint.innerHTML = '<span style="color: #d97706; font-weight: 500;">ℹ️ ' + notice + '</span>';
+                        healthHint.innerHTML = '<span style="color: #d97706; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> ' + notice + '</span>';
                     } else {
                         healthHint.innerText = 'Standard event code syntax: prefix (wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmbd24, wlede22, wlang23).';
                     }
@@ -1516,7 +1860,7 @@
             if (influxHint) {
                 const notice = getScopeNoticeJS(evt, cc);
                 if (notice) {
-                    influxHint.innerHTML = '<span style="color: #d97706; font-weight: 500;">ℹ️ ' + notice + '</span>';
+                    influxHint.innerHTML = '<span style="color: #d97706; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> ' + notice + '</span>';
                 } else {
                     influxHint.innerText = 'Chronological campaign sequence to evaluate.';
                 }
@@ -1586,7 +1930,7 @@
                 if (influxHint && cc) {
                     const notice = getScopeNoticeJS(evt, cc);
                     if (notice) {
-                        influxHint.innerHTML = '<span style="color: #d97706; font-weight: 500;">ℹ️ ' + notice + '</span>';
+                        influxHint.innerHTML = '<span style="color: #d97706; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> ' + notice + '</span>';
                     } else {
                         influxHint.innerText = 'Chronological campaign sequence to evaluate.';
                     }
@@ -1594,32 +1938,517 @@
             }
         }
 
-        // Export Influx Data Table to CSV
-        function exportInfluxTableToCSV() {
-            const table = document.getElementById('influx-data-table');
-            if (!table) return;
-            let csv = [];
-            const rows = table.querySelectorAll('tr');
-            for (let i = 0; i < rows.length; i++) {
-                const row = [], cols = rows[i].querySelectorAll('td, th');
-                for (let j = 0; j < cols.length; j++) {
-                    let text = cols[j].innerText.replace(/"/g, '""').trim();
-                    row.push('"' + text + '"');
+    <!-- Wikitext Export Preview Modal -->
+    <div id="wikitext-modal-overlay" class="wikitext-modal-overlay" style="display: none;" onclick="if(event.target === this) CampTableSuite.closeWikitextModal()">
+        <div class="wikitext-modal" role="dialog" aria-modal="true" aria-labelledby="wikitext-modal-title">
+            <div class="wikitext-modal-header">
+                <div class="wikitext-modal-title" id="wikitext-modal-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                    <span>MediaWiki Wikitext Table Export</span>
+                </div>
+                <button type="button" class="wikitext-modal-close" onclick="CampTableSuite.closeWikitextModal()" aria-label="Close dialog">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="wikitext-modal-body">
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 10px 0;">
+                    Formatted MediaWiki sortable table markup. Copy and paste directly into Wikimedia grant reports, talk pages, or project dashboards:
+                </p>
+                <textarea id="wikitext-modal-textarea" class="wikitext-textarea" readonly spellcheck="false"></textarea>
+            </div>
+            <div class="wikitext-modal-footer">
+                <button type="button" class="btn btn-sm" onclick="CampTableSuite.closeWikitextModal()" style="background: #ffffff; border: 1px solid var(--border-color); color: var(--text-ink); cursor: pointer;">
+                    Close
+                </button>
+                <button type="button" id="wikitext-copy-btn" class="btn btn-sm btn-primary" onclick="CampTableSuite.copyModalWikitext(this)">
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evaluation Export Report Modal -->
+    <div id="export-report-modal-overlay" class="wikitext-modal-overlay" style="display: none;" onclick="if(event.target === this) CampTableSuite.closeExportReportModal()">
+        <div class="wikitext-modal" role="dialog" aria-modal="true" aria-labelledby="export-report-modal-title" style="max-width: 760px;">
+            <div class="wikitext-modal-header">
+                <div class="wikitext-modal-title" id="export-report-modal-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <span>Export Evaluation Report</span>
+                </div>
+                <button type="button" class="wikitext-modal-close" onclick="CampTableSuite.closeExportReportModal()" aria-label="Close dialog">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="wikitext-modal-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">
+                        Structured campaign evaluation report ready for Wikimedia project talk pages, community dashboards, or documentation.
+                    </p>
+                    <div class="export-format-toggle">
+                        <button type="button" id="format-btn-wikitext" class="export-format-btn active" onclick="CampTableSuite.setReportFormat('wikitext')">Wikitext</button>
+                        <button type="button" id="format-btn-markdown" class="export-format-btn" onclick="CampTableSuite.setReportFormat('markdown')">Markdown</button>
+                    </div>
+                </div>
+                <textarea id="export-report-textarea" class="wikitext-textarea" readonly spellcheck="false" style="min-height: 340px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.82rem;"></textarea>
+            </div>
+            <div class="wikitext-modal-footer">
+                <button type="button" class="btn btn-sm" onclick="CampTableSuite.closeExportReportModal()" style="background: #ffffff; border: 1px solid var(--border-color); color: var(--text-ink); cursor: pointer;">
+                    Close
+                </button>
+                <button type="button" id="export-report-copy-btn" class="btn btn-sm btn-primary" onclick="CampTableSuite.copyReportText(this)">
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── CAMP ANALYTICS INTERACTIVE TABLE & EXPORT SUITE ───────────────────
+        const CampTableSuite = {
+            state: {},
+
+            init() {
+                document.querySelectorAll('.table-interactive-wrapper').forEach((wrap, wrapIdx) => {
+                    const table = wrap.querySelector('table.data-table');
+                    if (!table) return;
+                    if (!table.id) table.id = 'camp-table-' + wrapIdx;
+                    const tid = table.id;
+
+                    this.state[tid] = {
+                        table: table,
+                        wrapper: wrap,
+                        pageSize: 25,
+                        currentPage: 1,
+                        searchQuery: '',
+                        sortCol: null,
+                        sortDir: 'asc',
+                        allRows: Array.from(table.querySelectorAll('tbody tr')),
+                        filteredRows: []
+                    };
+                    this.state[tid].filteredRows = [...this.state[tid].allRows];
+
+                    // Make headers sortable
+                    const headers = table.querySelectorAll('thead th');
+                    headers.forEach((th, colIdx) => {
+                        th.setAttribute('data-sortable-col', 'true');
+                        if (!th.querySelector('.sort-indicator')) {
+                            const ind = document.createElement('span');
+                            ind.className = 'sort-indicator';
+                            ind.textContent = ' ⇅';
+                            th.appendChild(ind);
+                        }
+                        th.addEventListener('click', () => this.handleSort(tid, colIdx, th));
+                    });
+
+                    // Search input
+                    const searchInput = wrap.querySelector('.table-search-input');
+                    if (searchInput) {
+                        searchInput.addEventListener('input', (e) => {
+                            this.handleSearch(tid, e.target.value);
+                        });
+                    }
+
+                    // Page size selector
+                    const sizeSelect = wrap.querySelector('.table-page-size');
+                    if (sizeSelect) {
+                        sizeSelect.addEventListener('change', (e) => {
+                            const val = e.target.value;
+                            this.state[tid].pageSize = (val === 'all') ? 999999 : parseInt(val, 10);
+                            this.state[tid].currentPage = 1;
+                            this.render(tid);
+                        });
+                    }
+
+                    this.render(tid);
+                });
+            },
+
+            handleSort(tid, colIdx, th) {
+                const s = this.state[tid];
+                if (!s) return;
+                if (s.sortCol === colIdx) {
+                    s.sortDir = (s.sortDir === 'asc') ? 'desc' : 'asc';
+                } else {
+                    s.sortCol = colIdx;
+                    s.sortDir = 'asc';
                 }
-                csv.push(row.join(','));
+
+                s.table.querySelectorAll('thead th').forEach(h => {
+                    h.classList.remove('sort-asc', 'sort-desc');
+                    const ind = h.querySelector('.sort-indicator');
+                    if (ind) ind.textContent = ' ⇅';
+                });
+                th.classList.add(s.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+                const activeInd = th.querySelector('.sort-indicator');
+                if (activeInd) activeInd.textContent = (s.sortDir === 'asc') ? ' ▲' : ' ▼';
+
+                const dir = s.sortDir === 'asc' ? 1 : -1;
+                s.filteredRows.sort((a, b) => {
+                    const cA = a.children[colIdx] ? a.children[colIdx].innerText.trim() : '';
+                    const cB = b.children[colIdx] ? b.children[colIdx].innerText.trim() : '';
+                    const numA = parseFloat(cA.replace(/[+%,]/g, ''));
+                    const numB = parseFloat(cB.replace(/[+%,]/g, ''));
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return (numA - numB) * dir;
+                    }
+                    return cA.localeCompare(cB) * dir;
+                });
+
+                s.currentPage = 1;
+                this.render(tid);
+            },
+
+            handleSearch(tid, query) {
+                const s = this.state[tid];
+                if (!s) return;
+                s.searchQuery = (query || '').toLowerCase().trim();
+                if (!s.searchQuery) {
+                    s.filteredRows = [...s.allRows];
+                } else {
+                    s.filteredRows = s.allRows.filter(row => {
+                        return row.innerText.toLowerCase().includes(s.searchQuery);
+                    });
+                }
+                s.currentPage = 1;
+                this.render(tid);
+            },
+
+            render(tid) {
+                const s = this.state[tid];
+                if (!s) return;
+                const total = s.filteredRows.length;
+                const startIdx = (s.currentPage - 1) * s.pageSize;
+                const endIdx = startIdx + s.pageSize;
+
+                s.allRows.forEach(r => r.style.display = 'none');
+                s.filteredRows.slice(startIdx, endIdx).forEach(r => r.style.display = '');
+
+                const tbody = s.table.querySelector('tbody');
+                if (tbody) {
+                    s.filteredRows.forEach(r => tbody.appendChild(r));
+                }
+
+                // Update pagination bar
+                const bar = s.wrapper.querySelector('.table-pagination-bar');
+                if (bar) {
+                    const infoEl = bar.querySelector('.table-pagination-info');
+                    const nav = bar.querySelector('.table-pagination-nav');
+                    if (total === 0) {
+                        if (infoEl) infoEl.textContent = 'No matching entries';
+                        if (nav) nav.innerHTML = '';
+                        return;
+                    }
+                    const dispStart = startIdx + 1;
+                    const dispEnd = Math.min(endIdx, total);
+                    if (infoEl) infoEl.textContent = `Showing ${dispStart}–${dispEnd} of ${total} entries`;
+
+                    if (nav) {
+                        const totalPages = Math.ceil(total / s.pageSize);
+                        if (totalPages <= 1) {
+                            nav.innerHTML = '';
+                        } else {
+                            let navHtml = `<button type="button" class="btn btn-sm" style="padding: 2px 8px; margin-right: 4px;" ${s.currentPage === 1 ? 'disabled' : ''} onclick="CampTableSuite.setPage('${tid}', ${s.currentPage - 1})">‹ Prev</button>`;
+                            navHtml += `<span style="font-size: 0.8rem; margin: 0 6px;">Page ${s.currentPage} of ${totalPages}</span>`;
+                            navHtml += `<button type="button" class="btn btn-sm" style="padding: 2px 8px; margin-left: 4px;" ${s.currentPage >= totalPages ? 'disabled' : ''} onclick="CampTableSuite.setPage('${tid}', ${s.currentPage + 1})">Next ›</button>`;
+                            nav.innerHTML = navHtml;
+                        }
+                    }
+                }
+            },
+
+            setPage(tid, page) {
+                const s = this.state[tid];
+                if (!s) return;
+                const totalPages = Math.ceil(s.filteredRows.length / s.pageSize);
+                s.currentPage = Math.max(1, Math.min(page, totalPages));
+                this.render(tid);
+            },
+
+            exportTable(tableId, format, baseFilename) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+                const timestamp = new Date().toISOString();
+                const headers = Array.from(table.querySelectorAll('thead th')).map(th => {
+                    const clone = th.cloneNode(true);
+                    const ind = clone.querySelector('.sort-indicator');
+                    if (ind) ind.remove();
+                    return clone.innerText.trim();
+                });
+
+                const rows = [];
+                table.querySelectorAll('tbody tr').forEach(tr => {
+                    const row = Array.from(tr.querySelectorAll('td')).map(td => {
+                        return td.innerText.replace(/\s+/g, ' ').trim();
+                    });
+                    if (row.length > 0) rows.push(row);
+                });
+
+                if (format === 'csv') {
+                    let csv = [
+                        '# Tool: CampAnalytics (https://campanalytics.toolforge.org/)',
+                        `# Export Date: ${timestamp}`,
+                        '# License: GPL-2.0-or-later',
+                        '# Data Source: Wikimedia Commons Action API / Toolforge Replica',
+                        headers.map(h => `"${h.replace(/"/g, '""')}"`).join(',')
+                    ];
+                    rows.forEach(r => {
+                        csv.push(r.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','));
+                    });
+                    this.downloadBlob(csv.join('\n'), 'text/csv;charset=utf-8;', `${baseFilename}_${Date.now()}.csv`);
+                } else if (format === 'json') {
+                    const jsonData = rows.map(r => {
+                        const obj = {};
+                        headers.forEach((h, i) => {
+                            obj[h] = r[i] || '';
+                        });
+                        return obj;
+                    });
+                    const output = {
+                        meta: {
+                            tool: 'CampAnalytics',
+                            url: 'https://campanalytics.toolforge.org/',
+                            timestamp: timestamp,
+                            license: 'GPL-2.0-or-later'
+                        },
+                        data: jsonData
+                    };
+                    this.downloadBlob(JSON.stringify(output, null, 2), 'application/json;charset=utf-8;', `${baseFilename}_${Date.now()}.json`);
+                } else if (format === 'wikitext') {
+                    let wt = `{| class="wikitable sortable"\n|+ CampAnalytics Export — ${timestamp.substring(0, 10)}\n! ` + headers.join(' !! ') + '\n';
+                    rows.forEach(r => {
+                        wt += '|-\n| ' + r.join(' || ') + '\n';
+                    });
+                    wt += '|}';
+                    this.showWikitextModal(wt);
+                }
+            },
+
+            downloadBlob(content, type, filename) {
+                const blob = new Blob([content], { type: type });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            },
+
+            showWikitextModal(wikitext) {
+                const overlay = document.getElementById('wikitext-modal-overlay');
+                const ta = document.getElementById('wikitext-modal-textarea');
+                if (overlay && ta) {
+                    ta.value = wikitext;
+                    overlay.style.display = 'flex';
+                    ta.select();
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(wikitext);
+                }
+            },
+
+            closeWikitextModal() {
+                const overlay = document.getElementById('wikitext-modal-overlay');
+                if (overlay) overlay.style.display = 'none';
+            },
+
+            copyModalWikitext(btn) {
+                const ta = document.getElementById('wikitext-modal-textarea');
+                if (ta) {
+                    ta.select();
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(ta.value).then(() => {
+                            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -1px; margin-right: 4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>Copied!';
+                            btn.classList.add('btn-export--copied');
+                            setTimeout(() => {
+                                btn.textContent = 'Copy to Clipboard';
+                                btn.classList.remove('btn-export--copied');
+                            }, 2000);
+                        });
+                    }
+                }
+            },
+
+            // ── EVALUATION REPORT EXPORT MODAL HANDLERS ───────────────────────
+            currentReportFormat: 'wikitext',
+
+            openExportReportModal() {
+                const overlay = document.getElementById('export-report-modal-overlay');
+                if (overlay) {
+                    this.renderExportReport();
+                    overlay.style.display = 'flex';
+                    const ta = document.getElementById('export-report-textarea');
+                    if (ta) ta.select();
+                }
+            },
+
+            closeExportReportModal() {
+                const overlay = document.getElementById('export-report-modal-overlay');
+                if (overlay) overlay.style.display = 'none';
+            },
+
+            setReportFormat(fmt) {
+                this.currentReportFormat = fmt;
+                const btnWiki = document.getElementById('format-btn-wikitext');
+                const btnMd = document.getElementById('format-btn-markdown');
+                if (btnWiki && btnMd) {
+                    if (fmt === 'wikitext') {
+                        btnWiki.classList.add('active');
+                        btnMd.classList.remove('active');
+                    } else {
+                        btnMd.classList.add('active');
+                        btnWiki.classList.remove('active');
+                    }
+                }
+                this.renderExportReport();
+            },
+
+            renderExportReport() {
+                const ta = document.getElementById('export-report-textarea');
+                if (!ta || !window.EVALUATION_REPORT_DATA) return;
+                const d = window.EVALUATION_REPORT_DATA;
+                const today = new Date().toISOString().split('T')[0];
+
+                const score = d.overallScore;
+                let ratingLabel = 'Moderate';
+                if (score >= 85) ratingLabel = 'Outstanding';
+                else if (score >= 70) ratingLabel = 'Strong';
+                else if (score >= 50) ratingLabel = 'Moderate';
+                else if (score >= 30) ratingLabel = 'Emerging';
+                else ratingLabel = 'Critical / Low';
+
+                const targetUpper = d.targetEvent.toUpperCase();
+                const baseStr = d.baselineEvent ? d.baselineEvent.toUpperCase() : 'Prior Year Baseline';
+
+                if (this.currentReportFormat === 'wikitext') {
+                    let w = `== CampAnalytics Campaign Evaluation Report: ${targetUpper} ==\n\n`;
+                    w += `'''Executive Summary:'''\n`;
+                    w += `* '''Target Campaign:''' ${targetUpper}\n`;
+                    w += `* '''Baseline Reference:''' ${baseStr}\n`;
+                    w += `* '''Regional Calibration Framework:''' ${d.region}\n`;
+                    w += `* '''Overall Evaluation Score:''' '''${score} / 100''' (${ratingLabel})\n`;
+                    w += `* '''Generated On:''' ${today}\n\n`;
+
+                    w += `=== Performance Dimensions ===\n`;
+                    w += `{| class="wikitable sortable"\n`;
+                    w += `! Dimension !! Focus Area !! Weight !! Observed !! Regional Norm !! Score !! Rating\n`;
+                    w += `|-\n| Retention Index || Volunteer Continuity || ${d.metrics.retention.weight} || ${d.metrics.retention.raw} || ${d.metrics.retention.benchmark}% || ${d.metrics.retention.score} / 100 || ${d.metrics.retention.stars}\n`;
+                    w += `|-\n| Growth Capacity || Newcomer Recruitment || ${d.metrics.growth.weight} || ${d.metrics.growth.raw} || ${d.metrics.growth.benchmark}% || ${d.metrics.growth.score} / 100 || ${d.metrics.growth.stars}\n`;
+                    w += `|-\n| Content Utility || Article Image Use || ${d.metrics.usage.weight} || ${d.metrics.usage.raw} || ${d.metrics.usage.benchmark} || ${d.metrics.usage.score} / 100 || ${d.metrics.usage.stars}\n`;
+                    w += `|-\n| Quality Recognition || Featured / QI Recognition || ${d.metrics.quality.weight} || ${d.metrics.quality.raw} || ${d.metrics.quality.benchmark} || ${d.metrics.quality.score} / 100 || ${d.metrics.quality.stars}\n`;
+                    w += `|-\n| Contributor Diversity || Participation Equity || ${d.metrics.diversity.weight} || ${d.metrics.diversity.raw} || ${d.metrics.diversity.benchmark} || ${d.metrics.diversity.score} / 100 || ${d.metrics.diversity.stars}\n`;
+                    w += `|-\n! Composite Overall !! Full Evaluation !! 100% !! — !! — !! ${score} / 100 !! ${ratingLabel}\n`;
+                    w += `|}\n\n`;
+
+                    w += `=== Contributor Participation Footprint ===\n`;
+                    w += `* '''Total Evaluated Uploaders:''' ${d.counts.target.toLocaleString()}\n`;
+                    w += `* '''Baseline Reference Uploaders:''' ${d.counts.base.toLocaleString()}\n`;
+                    w += `* '''Retained Prior Contributors:''' ${d.counts.overlap.toLocaleString()}\n`;
+                    w += `* '''First-Time Newcomer Uploaders:''' ${Math.max(0, d.counts.target - d.counts.overlap).toLocaleString()}\n\n`;
+
+                    if (d.insights && d.insights.length > 0) {
+                        w += `=== Organizer Diagnostic Insights ===\n`;
+                        d.insights.forEach(ins => {
+                            w += `* ${ins}\n`;
+                        });
+                        w += `\n`;
+                    }
+
+                    w += `----\n`;
+                    w += `''Compiled with [https://meta.wikimedia.org/wiki/Project_Korikath CampAnalytics] · Tool Usage & Process Guide available on Wikimedia Toolforge.''`;
+                    ta.value = w;
+                } else {
+                    let m = `# CampAnalytics Campaign Evaluation Report: ${targetUpper}\n\n`;
+                    m += `### Executive Summary\n\n`;
+                    m += `- **Target Campaign:** ${targetUpper}\n`;
+                    m += `- **Baseline Reference:** ${baseStr}\n`;
+                    m += `- **Regional Framework:** ${d.region}\n`;
+                    m += `- **Overall Evaluation Score:** **${score} / 100** (${ratingLabel})\n`;
+                    m += `- **Generated On:** ${today}\n\n`;
+
+                    m += `### Performance Dimensions\n\n`;
+                    m += `| Dimension | Focus Area | Weight | Observed | Regional Norm | Score | Rating |\n`;
+                    m += `| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n`;
+                    m += `| Retention Index | Volunteer Continuity | ${d.metrics.retention.weight} | ${d.metrics.retention.raw} | ${d.metrics.retention.benchmark}% | ${d.metrics.retention.score} / 100 | ${d.metrics.retention.stars} |\n`;
+                    m += `| Growth Capacity | Newcomer Recruitment | ${d.metrics.growth.weight} | ${d.metrics.growth.raw} | ${d.metrics.growth.benchmark}% | ${d.metrics.growth.score} / 100 | ${d.metrics.growth.stars} |\n`;
+                    m += `| Content Utility | Article Image Use | ${d.metrics.usage.weight} | ${d.metrics.usage.raw} | ${d.metrics.usage.benchmark} | ${d.metrics.usage.score} / 100 | ${d.metrics.usage.stars} |\n`;
+                    m += `| Quality Recognition | Featured / QI Recognition | ${d.metrics.quality.weight} | ${d.metrics.quality.raw} | ${d.metrics.quality.benchmark} | ${d.metrics.quality.score} / 100 | ${d.metrics.quality.stars} |\n`;
+                    m += `| Contributor Diversity | Participation Equity | ${d.metrics.diversity.weight} | ${d.metrics.diversity.raw} | ${d.metrics.diversity.benchmark} | ${d.metrics.diversity.score} / 100 | ${d.metrics.diversity.stars} |\n`;
+                    m += `| **Composite Overall** | **Full Evaluation** | **100%** | — | — | **${score} / 100** | **${ratingLabel}** |\n\n`;
+
+                    m += `### Contributor Participation Footprint\n\n`;
+                    m += `- **Total Evaluated Uploaders:** ${d.counts.target.toLocaleString()}\n`;
+                    m += `- **Baseline Reference Uploaders:** ${d.counts.base.toLocaleString()}\n`;
+                    m += `- **Retained Prior Contributors:** ${d.counts.overlap.toLocaleString()}\n`;
+                    m += `- **First-Time Newcomer Uploaders:** ${Math.max(0, d.counts.target - d.counts.overlap).toLocaleString()}\n\n`;
+
+                    if (d.insights && d.insights.length > 0) {
+                        m += `### Organizer Diagnostic Insights\n\n`;
+                        d.insights.forEach(ins => {
+                            m += `- ${ins}\n`;
+                        });
+                        m += `\n`;
+                    }
+
+                    m += `---\n`;
+                    m += `*Compiled with [CampAnalytics](https://meta.wikimedia.org/wiki/Project_Korikath) · Tool Usage & Process Guide available on Wikimedia Toolforge.*`;
+                    ta.value = m;
+                }
+            },
+
+            copyReportText(btn) {
+                const ta = document.getElementById('export-report-textarea');
+                if (ta) {
+                    ta.select();
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(ta.value).then(() => {
+                            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -1px; margin-right: 4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>Copied!';
+                            btn.classList.add('btn-export--copied');
+                            setTimeout(() => {
+                                btn.textContent = 'Copy to Clipboard';
+                                btn.classList.remove('btn-export--copied');
+                            }, 2000);
+                        });
+                    }
+                }
             }
-            const csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
-            const downloadLink = document.createElement('a');
-            downloadLink.download = 'campanalytics_influx_trends.csv';
-            downloadLink.href = window.URL.createObjectURL(csvFile);
-            downloadLink.style.display = 'none';
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
+        };
+
+        // ── SHARE DEEP-LINK & DYNAMIC URL STATE SYNC ──────────────────────────
+        function syncFormStateToURL() {
+            const activeForm = document.getElementById('retention-form') || 
+                               document.getElementById('health-form') || 
+                               document.getElementById('influx-form');
+            if (activeForm && window.history && window.history.replaceState) {
+                const formData = new FormData(activeForm);
+                const params = new URLSearchParams();
+                for (const [key, val] of formData.entries()) {
+                    if (val && typeof val === 'string' && val.trim()) {
+                        params.append(key, val.trim());
+                    }
+                }
+                const qs = params.toString();
+                if (qs && qs.length < 3500) {
+                    const newUrl = window.location.pathname + '?' + qs;
+                    window.history.replaceState(null, '', newUrl);
+                }
+            }
         }
-        // ── SHARE DEEP-LINK ────────────────────────────────────────────────────
-        // Copies the current page URL or reconstructs shareable GET query params from form
-        // and briefly shows feedback on the button.
+
         function copyCurrentURL(btn) {
             let url = window.location.href;
             if (!window.location.search || window.location.search === '') {
@@ -1641,15 +2470,17 @@
                 }
             }
 
+            const svgCheck = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -1px; margin-right: 4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            const svgWarn = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -1px; margin-right: 4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+
             if (url.length > 4000) {
-                flashShareBtn(btn, '⚠️ Query too large to share via URL');
+                flashShareBtn(btn, svgWarn + 'Query too large to share via URL');
                 return;
             }
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(() => flashShareBtn(btn, '✓ Link copied!'));
+                navigator.clipboard.writeText(url).then(() => flashShareBtn(btn, svgCheck + 'Link copied!'));
             } else {
-                // Fallback for older browsers
                 const ta = document.createElement('textarea');
                 ta.value = url;
                 ta.style.position = 'fixed';
@@ -1658,11 +2489,11 @@
                 ta.select();
                 try { document.execCommand('copy'); } catch (e) {}
                 document.body.removeChild(ta);
-                flashShareBtn(btn, '✓ Link copied!');
+                flashShareBtn(btn, svgCheck + 'Link copied!');
             }
         }
 
-        function flashShareBtn(btn, msg = '✓ Link copied!') {
+        function flashShareBtn(btn, msg) {
             const orig = btn.innerHTML;
             btn.innerHTML = msg;
             btn.classList.add('share-btn--copied');
@@ -1673,15 +2504,11 @@
         }
 
         // ── LOADING STATE ──────────────────────────────────────────────────────
-        // Disables the submit button and updates text to prevent double-clicks
-        // while the Wikimedia API query is in flight.
         function setLoadingState(btn, label) {
             const form = btn.closest('form');
             if (form && !form.checkValidity()) {
-                // Let native browser validation display if form is invalid
                 return;
             }
-            // Small delay lets the form submit before we update the DOM
             setTimeout(() => {
                 btn.disabled = true;
                 btn.innerHTML = '<span class="loading-spinner"></span>' + label;
@@ -1700,6 +2527,9 @@
         });
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Interactive Table Suite across all rendered tables
+            CampTableSuite.init();
+
             // Automatically scroll to results on page reload if results exist across any view
             const resultsEl = document.getElementById('influx-results') || 
                               document.getElementById('health-results') || 
@@ -1731,6 +2561,77 @@
             if (influxCodesInput && influxCodesInput.value) {
                 parseCodeToInfluxBuilder();
             }
+
+            // Auto-bind region select when typing target campaign code
+            const targetEventInput = document.getElementById('target_event');
+            const regionSelect = document.getElementById('region');
+            const countryToRegionMap = {{ COUNTRY_TO_REGION | tojson }};
+            if (targetEventInput && regionSelect) {
+                targetEventInput.addEventListener('input', function() {
+                    const val = this.value.trim().toLowerCase();
+                    const match = val.match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$/);
+                    if (match && match[2] && countryToRegionMap[match[2]]) {
+                        regionSelect.value = countryToRegionMap[match[2]];
+                    }
+                });
+            }
+
+            {% if metrics %}
+            window.EVALUATION_REPORT_DATA = {
+                targetEvent: {{ target_event|tojson }},
+                compMode: {{ comp_mode|tojson }},
+                region: {{ region|tojson }},
+                overallScore: {{ metrics['Overall']|tojson }},
+                metrics: {
+                    retention: {
+                        raw: {{ metrics['Retention']['raw']|tojson }},
+                        benchmark: {{ ("%.1f"|format(metrics['Retention']['benchmark']))|tojson }},
+                        score: {{ ("%.1f"|format(metrics['Retention']['score']))|tojson }},
+                        stars: {{ metrics['Retention']['stars']|tojson }},
+                        weight: '25%'
+                    },
+                    growth: {
+                        raw: {{ metrics['Growth']['raw']|tojson }},
+                        benchmark: {{ ("%.1f"|format(metrics['Growth']['benchmark']))|tojson }},
+                        score: {{ ("%.1f"|format(metrics['Growth']['score']))|tojson }},
+                        stars: {{ metrics['Growth']['stars']|tojson }},
+                        weight: '25%'
+                    },
+                    usage: {
+                        raw: {{ ("%.1f"|format(metrics['Usage']['raw']))|tojson }} + '%',
+                        benchmark: {{ ("%.1f"|format(metrics['Usage']['benchmark']))|tojson }} + '%',
+                        score: {{ ("%.1f"|format(metrics['Usage']['score']))|tojson }},
+                        stars: {{ metrics['Usage']['stars']|tojson }},
+                        weight: '20%'
+                    },
+                    quality: {
+                        raw: {{ ("%.1f"|format(metrics['Quality']['raw']))|tojson }} + '%',
+                        benchmark: {{ ("%.1f"|format(metrics['Quality']['benchmark']))|tojson }} + '%',
+                        score: {{ ("%.1f"|format(metrics['Quality']['score']))|tojson }},
+                        stars: {{ metrics['Quality']['stars']|tojson }},
+                        weight: '15%'
+                    },
+                    diversity: {
+                        raw: {{ ("%.1f"|format(metrics['Diversity']['raw']))|tojson }} + '%',
+                        benchmark: {{ ("%.1f"|format(metrics['Diversity']['benchmark']))|tojson }} + '%',
+                        score: {{ ("%.1f"|format(metrics['Diversity']['score']))|tojson }},
+                        stars: {{ metrics['Diversity']['stars']|tojson }},
+                        weight: '15%'
+                    }
+                },
+                counts: {
+                    target: {{ target_users_count|tojson }},
+                    base: {{ base_users_count|tojson }},
+                    overlap: {{ intersect_users_count|tojson }}
+                },
+                insights: {{ insights|tojson if insights else []|tojson }}
+            };
+            {% endif %}
+
+            // Attach dynamic URL sync to form input changes
+            document.querySelectorAll('form input, form select').forEach(input => {
+                input.addEventListener('change', syncFormStateToURL);
+            });
         });
     </script>
 {% endblock %}

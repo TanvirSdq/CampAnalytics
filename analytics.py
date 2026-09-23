@@ -11,8 +11,9 @@ import io
 import json
 import logging
 import re
+import threading
 import time
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from itertools import permutations
 from math import ceil
@@ -52,31 +53,101 @@ CODE_RE = re.compile(r'^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$')
 EXAMPLE_CODES = "wlmde21 wlmde22 wlmbd22 wlmbd23"
 COUNTRY_OPTIONS = sorted(COUNTRY_MAP.keys(), key=lambda k: COUNTRY_MAP[k])
 
-# --- IN-MEMORY CACHING ---
-_DATA_CACHE = {}
-_COMPOSITE_BREAKDOWNS = {}
+# --- IN-MEMORY CACHING (BOUNDED LRU) ---
+class BoundedLRUCache:
+    """Thread-safe bounded LRU cache with maximum size capacity."""
+    def __init__(self, maxsize=1000):
+        self.maxsize = maxsize
+        self._cache = OrderedDict()
+        self._lock = threading.Lock()
+
+    def get(self, key, default=None):
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+                return self._cache[key]
+            return default
+
+    def set(self, key, value):
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+            self._cache[key] = value
+            if len(self._cache) > self.maxsize:
+                self._cache.popitem(last=False)
+
+    def delete(self, key):
+        with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+
+    def clear(self):
+        with self._lock:
+            self._cache.clear()
+
+    def __contains__(self, key):
+        with self._lock:
+            return key in self._cache
+
+    def __getitem__(self, key):
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+                return self._cache[key]
+            raise KeyError(key)
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
+    def __delitem__(self, key):
+        self.delete(key)
+
+    def __len__(self):
+        with self._lock:
+            return len(self._cache)
+
+    def items(self):
+        with self._lock:
+            return list(self._cache.items())
+
+    def values(self):
+        with self._lock:
+            return list(self._cache.values())
+
+    def keys(self):
+        with self._lock:
+            return list(self._cache.keys())
+
+_DATA_CACHE = BoundedLRUCache(maxsize=1000)
+_COMPOSITE_BREAKDOWNS = BoundedLRUCache(maxsize=500)
 
 def timed_cache(ttl=3600):
-    """In-memory thread-safe cache decorator with TTL (seconds)."""
+    """In-memory thread-safe cache decorator with TTL (seconds) and bounded LRU capacity."""
     def decorator(func):
         def wrapper(*args, **kwargs):
             key = (func.__name__, args, tuple(sorted(kwargs.items())))
             now = time.time()
-            if key in _DATA_CACHE:
-                val, ts = _DATA_CACHE[key]
+            cached = _DATA_CACHE.get(key)
+            if cached is not None:
+                val, ts = cached
                 if now - ts < ttl:
                     return val
+                else:
+                    _DATA_CACHE.delete(key)
             result = func(*args, **kwargs)
-            _DATA_CACHE[key] = (result, now)
+            _DATA_CACHE.set(key, (result, now))
             return result
         return wrapper
     return decorator
 
-# --- RELIABLE HTTP SESSION ---
+# --- RELIABLE HTTP SESSION WITH CONNECTION POOL SIZING ---
 def get_session():
     session = requests.Session()
     retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504, 429])
-    session.mount('https://', HTTPAdapter(max_retries=retries))
+    # pool_connections=20, pool_maxsize=20 safely accommodates ThreadPoolExecutor(max_workers=16)
+    adapter = HTTPAdapter(max_retries=retries, pool_connections=20, pool_maxsize=20)
+    session.mount('https://', adapter)
+    session.mount('http://', adapter)
     return session
 
 http_session = get_session()
@@ -414,18 +485,72 @@ def fetch_all_concurrently(codes, threads=16):
     return results
 
 # --- RETENTION SUITE UTILITIES ---
-def compute_retention_percentages(events):
-    percentages = []
+def _extract_year(code):
+    """Extract 4-digit calendar year from campaign code (e.g., 'wlmde22' -> 2022)."""
+    match = CODE_RE.match(code)
+    if match:
+        try:
+            return 2000 + int(match.group(3))
+        except (ValueError, IndexError):
+            pass
+    return 0
+
+def compute_retention_percentages(events, forward_only=False, return_dict=False):
+    """
+    Compute directional retention percentages between campaign editions.
+    Separates forward cohort retention (t_source < t_target) from backward overlap
+    and the overall pairwise matrix.
+
+    Args:
+        events: dict mapping event code to set of usernames
+        forward_only: if True, returns only forward retention percentages
+        return_dict: if True, returns dict with 'forward', 'backward', and 'all' lists
+
+    Returns:
+        list of retention percentages (or dict if return_dict=True)
+    """
+    sorted_codes = sorted(events.keys(), key=lambda c: (_extract_year(c), c))
+    code_index = {code: i for i, code in enumerate(sorted_codes)}
+
+    forward_percentages = []
+    backward_percentages = []
+    all_percentages = []
+
     for source, target in permutations(events.keys(), 2):
         source_users = events[source]
         if not source_users:
             continue
         overlap = len(source_users & events[target])
-        percentages.append((overlap / len(source_users)) * 100)
-    return percentages
+        pct = (overlap / len(source_users)) * 100.0
+        all_percentages.append(pct)
+
+        src_yr = _extract_year(source)
+        tgt_yr = _extract_year(target)
+        src_idx = code_index[source]
+        tgt_idx = code_index[target]
+
+        if (src_yr < tgt_yr) or (src_yr == tgt_yr and src_idx < tgt_idx):
+            forward_percentages.append(pct)
+        else:
+            backward_percentages.append(pct)
+
+    if return_dict:
+        return {
+            'forward': forward_percentages,
+            'backward': backward_percentages,
+            'all': all_percentages
+        }
+    if forward_only:
+        return forward_percentages
+    return all_percentages
+
+def compute_forward_retention(events):
+    """Convenience helper returning forward cohort retention percentages."""
+    return compute_retention_percentages(events, forward_only=True)
 
 def create_heatmap(events, country_name):
-    """Generate high-contrast Seaborn retention heatmap on bright clean canvas."""
+    """Generate high-contrast Seaborn retention heatmap on bright clean canvas.
+    Diagonal elements are set to 100.0% representing self-retention."""
     sns.set_theme(style="white")
     event_codes = list(events.keys())
     size = len(event_codes)
@@ -445,13 +570,15 @@ def create_heatmap(events, country_name):
             source_users = events[source]
             if not source_users:
                 matrix[i, j] = 0.0
+            elif i == j:
+                matrix[i, j] = 100.0
             else:
                 overlap = len(source_users & events[target])
-                matrix[i, j] = (overlap / len(source_users)) * 100
+                matrix[i, j] = (overlap / len(source_users)) * 100.0
 
-    max_retention = np.nanmax(matrix) if np.size(matrix) else 0.0
-    rounded_max = max(10, int(np.ceil(max_retention / 10.0) * 10))
-    np.fill_diagonal(matrix, rounded_max)
+    # Ensure diagonal accurately reflects 100.0% self-retention for non-empty cohorts
+    for i, code in enumerate(event_codes):
+        matrix[i, i] = 100.0 if events[code] else 0.0
 
     fig, ax = plt.subplots(figsize=(max(5, size * 1.2), max(4, size)))
     fig.patch.set_facecolor("#ffffff")
@@ -462,7 +589,7 @@ def create_heatmap(events, country_name):
         xticklabels=readable_labels, yticklabels=readable_labels,
         cmap=WIKI_CMAP, linewidths=1.5, linecolor="#ffffff",
         cbar_kws={'label': 'Retention (%)'},
-        vmin=0, vmax=rounded_max, ax=ax,
+        vmin=0, vmax=100.0, ax=ax,
         annot_kws={"fontweight": "bold", "fontsize": 10, "color": TEXT_INK}
     )
 
@@ -475,19 +602,24 @@ def create_heatmap(events, country_name):
     plt.tight_layout()
     return fig
 
-def build_global_table(valid_countries):
+def build_global_table(valid_countries, forward_only=False):
     rows = []
     for country_code, events in valid_countries.items():
-        percentages = compute_retention_percentages(events)
-        if not percentages:
+        ret_dict = compute_retention_percentages(events, return_dict=True)
+        all_percentages = ret_dict['all']
+        forward_percentages = ret_dict['forward']
+        if not all_percentages:
             continue
+        primary_percentages = forward_percentages if (forward_only and forward_percentages) else all_percentages
+        fwd_val = round(float(np.mean(forward_percentages)), 1) if forward_percentages else round(float(np.mean(all_percentages)), 1)
         rows.append({
             "Country": country_display_name(country_code),
             "Occurrences": len(events),
-            "Avg Retention (%)": round(float(np.mean(percentages)), 1),
-            "Median Retention (%)": round(float(np.median(percentages)), 1),
-            "Max Retention (%)": round(float(np.max(percentages)), 1),
-            "Std Dev (%)": round(float(np.std(percentages, ddof=1)), 1) if len(percentages) > 1 else 0.0,
+            "Forward Retention (%)": fwd_val,
+            "Avg Retention (%)": round(float(np.mean(all_percentages)), 1),
+            "Median Retention (%)": round(float(np.median(primary_percentages)), 1),
+            "Max Retention (%)": round(float(np.max(primary_percentages)), 1),
+            "Std Dev (%)": round(float(np.std(primary_percentages, ddof=1)), 1) if len(primary_percentages) > 1 else 0.0,
         })
     if not rows:
         return pd.DataFrame()
@@ -571,124 +703,217 @@ def calculate_stars(score, max_score=100):
     stars = min(5, max(1, stars))
     return "★" * stars + "☆" * (5 - stars), stars
 
+GLOBAL_MOVEMENT_BASELINES = {
+    'retention': 20.0,    # 20.0% global contest median retention
+    'usage': 2.5,         # 2.5% global median encyclopedic reuse
+    'growth': 65.0,       # 65.0% global median newcomer share
+    'diversity': 70.0,    # 70.0% global median top-10% uploader share
+    'quality': 1.5        # 1.5% global median QI/FP recognition rate
+}
+
+def calculate_relative_score(metric_value, benchmark_value, positive_is_higher=True):
+    """
+    Computes a standardized relative score (0 to 100) comparing an observed metric
+    against a reference benchmark value using continuous non-linear scaling.
+
+    Parameters:
+        metric_value (float): The observed value for the campaign dimension.
+        benchmark_value (float): The regional peer benchmark threshold.
+        positive_is_higher (bool): True if higher values represent stronger performance,
+                                   False if lower concentration indicates healthier equity.
+
+    Returns:
+        float: Standardized score in the range [0.0, 100.0].
+    """
+    if positive_is_higher:
+        # Strict zero-floor: zero activity maps to zero points
+        if metric_value <= 0:
+            return 0.0
+
+        # Guard against zero or near-zero benchmark divisors
+        benchmark_value = max(float(benchmark_value), 0.5)
+
+        if metric_value <= benchmark_value:
+            # Sub-linear concave scaling for values below benchmark (reaches 70.0 at benchmark)
+            return float(round(70.0 * ((metric_value / benchmark_value) ** 0.75), 1))
+        else:
+            # Diminishing returns scaling above benchmark asymptotically approaching 100.0
+            excess_ratio = (metric_value - benchmark_value) / benchmark_value
+            score = 70.0 + 30.0 * (1.0 - np.exp(-1.2 * excess_ratio))
+            return float(round(min(100.0, score), 1))
+    else:
+        # Inverse dimension: Contributor concentration (top 10% upload share)
+        # Lower concentration indicates broader, healthier community distribution.
+        if metric_value >= 100.0:
+            return 15.0
+        if metric_value <= 10.0:
+            return 100.0
+
+        benchmark_value = min(max(float(benchmark_value), 20.0), 90.0)
+
+        if metric_value > benchmark_value:
+            # Higher concentration than benchmark: progressive penalty down to 15.0
+            ratio = (metric_value - benchmark_value) / (100.0 - benchmark_value)
+            return float(round(max(15.0, 70.0 - 55.0 * (ratio ** 0.85)), 1))
+        else:
+            # Lower concentration than benchmark: bonus up to 100.0
+            ratio = (benchmark_value - metric_value) / (benchmark_value - 10.0)
+            return float(round(min(100.0, 70.0 + 30.0 * (ratio ** 0.85)), 1))
+
+# Retain backward-compatible alias
+defensible_relative_score = calculate_relative_score
+
 def generate_health_metrics(
     target_users,
     baseline_users,
     target_structural_metrics,
     benchmarks
 ):
+    """
+    Generates composite health scorecard metrics across five dimensions.
+
+    Parameters:
+        target_users (set): Usernames active in the evaluated target campaign.
+        baseline_users (set): Usernames active in the baseline comparison campaign.
+        target_structural_metrics (dict): Global usage, quality, and uploader shares.
+        benchmarks (dict): Calibrated reference thresholds for each dimension.
+
+    Returns:
+        dict: Dimension dictionaries with raw values, normalized scores, benchmarks, and weights.
+    """
     metrics = {}
 
-    def relative_score(metric_value, benchmark_value, positive_is_higher=True):
-        if benchmark_value <= 0:
-            return 60.0 if metric_value >= 0 else 0.0
-        if not positive_is_higher:
-            metric_value = max(metric_value, 0.0)
-            benchmark_value = max(benchmark_value, 0.0)
-            if metric_value <= 0:
-                return 0.0
-            return min(100.0, max(0.0, (benchmark_value / metric_value) * 60))
-        if metric_value <= 0:
-            return 0.0
-        return min(100.0, max(0.0, (metric_value / benchmark_value) * 60))
-
+    # 1. Retention Index: volunteer continuity from baseline cohort
     if baseline_users:
         overlap = len(target_users & baseline_users)
-        retention_rate = (overlap / len(baseline_users)) * 100
+        retention_rate = (overlap / len(baseline_users)) * 100.0
     else:
         retention_rate = 0.0
+    ret_bm = float(benchmarks.get('retention', GLOBAL_MOVEMENT_BASELINES['retention']))
     metrics['Retention'] = {
         'raw': f"{retention_rate:.1f}%",
-        'score': relative_score(retention_rate, benchmarks['retention'], positive_is_higher=True)
+        'score': calculate_relative_score(retention_rate, ret_bm, positive_is_higher=True),
+        'benchmark': ret_bm,
+        'weight': 25
     }
 
+    # 2. Growth Capacity: newcomer participant influx share
     if target_users:
         new_users = len(target_users - baseline_users)
-        growth_rate = (new_users / len(target_users)) * 100
+        growth_rate = (new_users / len(target_users)) * 100.0
     else:
         growth_rate = 0.0
+    gro_bm = float(benchmarks.get('growth', GLOBAL_MOVEMENT_BASELINES['growth']))
     metrics['Growth'] = {
         'raw': f"{growth_rate:.1f}%",
-        'score': relative_score(growth_rate, benchmarks['growth'], positive_is_higher=True)
+        'score': calculate_relative_score(growth_rate, gro_bm, positive_is_higher=True),
+        'benchmark': gro_bm,
+        'weight': 25
     }
     
+    # 3. Content Utility: cross-wiki project reuse share
     raw_usage = float(target_structural_metrics.get("usage_share", 0.0))
-    usage_baseline = float(benchmarks.get('usage', 0.0))
+    usage_baseline = float(benchmarks.get('usage', GLOBAL_MOVEMENT_BASELINES['usage']))
     metrics['Usage'] = {
         'raw': raw_usage,
-        'score': relative_score(raw_usage, usage_baseline, positive_is_higher=True)
+        'score': calculate_relative_score(raw_usage, usage_baseline, positive_is_higher=True),
+        'benchmark': usage_baseline,
+        'weight': 20
     }
 
-    raw_quality = float(target_structural_metrics.get("quality_image_share", 0.0))
-    quality_baseline = float(benchmarks.get('quality', 0.0))
-    metrics['Quality'] = {
-        'raw': raw_quality,
-        'score': relative_score(raw_quality, quality_baseline, positive_is_higher=True)
-    }
-
-    raw_diversity = float(target_structural_metrics.get("top10_uploader_share", 100.0))
-    diversity_baseline = float(benchmarks.get('diversity', 0.0))
+    # 4. Contributor Diversity: distribution balance among uploaders (inverse concentration)
+    raw_diversity = float(target_structural_metrics.get("top10_uploader_share", 70.0))
+    diversity_baseline = float(benchmarks.get('diversity', GLOBAL_MOVEMENT_BASELINES['diversity']))
     metrics['Diversity'] = {
         'raw': raw_diversity,
-        'score': relative_score(raw_diversity, diversity_baseline, positive_is_higher=False)
+        'score': calculate_relative_score(raw_diversity, diversity_baseline, positive_is_higher=False),
+        'benchmark': diversity_baseline,
+        'weight': 15
     }
 
-    # Weights grounded in open-source community health literature:
-    # Retention (32%) — dominant predictor of sustainability (Halfaker et al. 2013)
-    # Content Utility (25%) — mission-alignment proxy unique to Wikimedia (reuse = encyclopaedic value)
-    # Growth (18%) — necessary but subordinate; growth without retention is a leaky bucket
-    # Contributor Diversity (15%) — raised: HHI concentration is a leading fragility indicator
-    # Quality Recognition (10%) — demoted: QI/FP rates are noisy at small upload N
+    # 5. Quality Recognition: featured and quality image recognition share
+    raw_quality = float(target_structural_metrics.get("quality_image_share", 0.0))
+    quality_baseline = float(benchmarks.get('quality', GLOBAL_MOVEMENT_BASELINES['quality']))
+    metrics['Quality'] = {
+        'raw': raw_quality,
+        'score': calculate_relative_score(raw_quality, quality_baseline, positive_is_higher=True),
+        'benchmark': quality_baseline,
+        'weight': 15
+    }
+
+    # Paired composite aggregation:
+    # - Community Vitality (50%): Retention (25%) + Newcomer Growth (25%)
+    # - Content Impact (35%): Usage Share (20%) + Quality Share (15%)
+    # - Participation Equity (15%): Contributor Concentration (15%)
     overall = (
-        (metrics['Retention']['score'] * 0.32) +
-        (metrics['Growth']['score'] * 0.18) +
-        (metrics['Usage']['score'] * 0.25) +
-        (metrics['Quality']['score'] * 0.10) +
+        (metrics['Retention']['score'] * 0.25) +
+        (metrics['Growth']['score'] * 0.25) +
+        (metrics['Usage']['score'] * 0.20) +
+        (metrics['Quality']['score'] * 0.15) +
         (metrics['Diversity']['score'] * 0.15)
     )
     metrics['Overall'] = round(overall)
 
     return metrics
 
-def generate_insights(metrics, region_name, benchmarks):
+def generate_insights(metrics, region_name, benchmarks, counts=None):
     insights = []
+    region_label = f"{region_name} regional norm" if region_name else "regional benchmark"
+    target_count = counts.get('target', 0) if counts else 0
+    base_count = counts.get('base', 0) if counts else 0
+    overlap_count = counts.get('overlap', 0) if counts else 0
+    newcomer_count = max(0, target_count - overlap_count)
 
+    # 1. Retention Insight
     raw_ret = float(metrics['Retention']['raw'].replace('%', '')) if isinstance(metrics['Retention']['raw'], str) else float(metrics['Retention']['raw'])
-    ret_diff = raw_ret - benchmarks['retention']
-    region_label = f"{region_name} regional" if region_name else "regional"
-    if ret_diff > 5:
-        insights.append(f"Retention is healthy: {raw_ret:.1f}% is {ret_diff:.1f} percentage points above the {region_label} baseline, indicating strong continuity of contributors from prior campaigns.")
-    elif ret_diff < -5:
-        insights.append(f"Retention is under pressure: the campaign is losing more returning contributors than the {region_label} standard, suggesting a likely engagement or follow-up gap.")
+    ret_bm = benchmarks.get('retention', GLOBAL_MOVEMENT_BASELINES['retention'])
+    if raw_ret >= ret_bm:
+        diff_str = f"+{raw_ret - ret_bm:.1f}% above"
+        insights.append(f"Retention is strong ({raw_ret:.1f}%): retained {overlap_count:,} out of {base_count:,} prior-edition contributors ({diff_str} {region_label} of {ret_bm:.1f}%). Demonstrates high volunteer continuity.")
+    elif raw_ret >= (ret_bm * 0.6):
+        insights.append(f"Retention is moderate ({raw_ret:.1f}%): {overlap_count:,} returning uploaders retained from {base_count:,} baseline. Tracking within typical range for annual photo contests (benchmark: {ret_bm:.1f}%).")
     else:
-        insights.append(f"Retention is stable: the campaign is tracking near the {region_label} benchmark, with no major churn signal evident.")
+        insights.append(f"Retention indicates high turnover ({raw_ret:.1f}%): retained {overlap_count:,} of {base_count:,} baseline contributors (below {region_label} of {ret_bm:.1f}%). Characteristic of outreach drives where post-contest re-engagement is limited.")
 
+    # 2. Growth / Influx Insight
     raw_growth = float(metrics['Growth']['raw'].replace('%', '')) if isinstance(metrics['Growth']['raw'], str) else float(metrics['Growth']['raw'])
-    if raw_growth > 75 and raw_ret < 10:
-        insights.append(f"Growth is strong but fragile: {raw_growth:.1f}% new contributors joined, yet retention remains low, which can create churn without sustained re-engagement work.")
-    elif raw_growth > 50:
-        insights.append("Growth pipeline is healthy: the campaign is attracting a substantial influx of new contributors and is expanding the contributor base beyond the historical core.")
-    elif raw_growth < 20:
-        insights.append("Growth momentum is limited: the campaign is not expanding the contributor base enough to offset retention losses.")
-
-    if metrics['Quality']['score'] >= 70:
-        insights.append("Quality image signal is outperforming the regional norm: a larger share of uploaded files meets Commons quality standards.")
-    elif metrics['Quality']['score'] < 40:
-        insights.append("Quality image signal is below benchmark: the campaign is producing fewer files that meet the regional quality threshold.")
+    gro_bm = benchmarks.get('growth', GLOBAL_MOVEMENT_BASELINES['growth'])
+    if raw_growth >= 80.0:
+        insights.append(f"Newcomer mobilization is exceptional ({raw_growth:.1f}%): brought {newcomer_count:,} brand-new participants into the movement out of {target_count:,} active uploaders (regional benchmark: {gro_bm:.1f}%).")
+    elif raw_growth >= gro_bm:
+        insights.append(f"Newcomer pipeline is healthy ({raw_growth:.1f}%): {newcomer_count:,} first-time contributors engaged, maintaining active expansion of the local participant base.")
     else:
-        insights.append("Quality image signal is near benchmark: the campaign is broadly aligned with the regional quality profile.")
+        insights.append(f"Participant cohort is primarily established ({raw_growth:.1f}% new): {newcomer_count:,} first-time contributors joined, indicating stable stewardship with room to expand newcomer outreach.")
 
-    if metrics['Usage']['score'] >= 70:
-        insights.append("Content Utility is excellent: a high proportion of uploaded files are actively being used across Wikimedia projects.")
-    elif metrics['Usage']['score'] < 40:
-        insights.append("Content Utility is low: very few uploaded files are currently in use, suggesting an opportunity to focus on encyclopedic integration.")
+    # 3. Content Utility Insight
+    raw_usage = float(metrics['Usage']['raw'])
+    use_bm = benchmarks.get('usage', GLOBAL_MOVEMENT_BASELINES['usage'])
+    if raw_usage >= use_bm:
+        insights.append(f"Content Utility is robust ({raw_usage:.1f}%): file reuse across Wikipedia articles matches or exceeds the {region_label} ({use_bm:.1f}%), delivering direct encyclopedic value.")
+    elif raw_usage > 0.0:
+        insights.append(f"Content Utility is emerging ({raw_usage:.1f}%): files have begun being deployed in Wikipedia articles (benchmark: {use_bm:.1f}%). Encyclopedic adoption typically expands over 6–12 months via edit-a-thons.")
     else:
-        insights.append("Content Utility is average: file usage across wikis is aligned with regional norms.")
+        insights.append(f"Content Utility is unindexed (0.0%): no uploaded files are currently recorded in active Wikipedia article use. Suggests an organizing opportunity for post-contest illustration drives.")
 
-    if metrics['Diversity']['score'] < 40:
-        insights.append("Diversity remains concentrated: a small set of contributors accounts for a large share of uploads, which reduces resilience and breadth.")
+    # 4. Diversity / Participation Breadth Insight
+    raw_div = float(metrics['Diversity']['raw'])
+    div_bm = benchmarks.get('diversity', GLOBAL_MOVEMENT_BASELINES['diversity'])
+    if raw_div <= 65.0:
+        insights.append(f"Participation breadth is exceptionally distributed: top 10% uploaders contributed {raw_div:.1f}% of files, demonstrating broad grassroots participation beyond the power-user core.")
+    elif raw_div <= 85.0:
+        insights.append(f"Participation distribution ({raw_div:.1f}% by top 10% uploaders) aligns with standard Wikimedia peer-production power laws (regional norm: {div_bm:.1f}%).")
     else:
-        insights.append("Diversity is healthy: upload activity is comparatively spread across a wider contributor base, which supports campaign resilience and participation equity.")
+        insights.append(f"Upload concentration is high: top 10% uploaders contributed {raw_div:.1f}% of all submissions, indicating heavy reliance on a small cluster of power uploaders.")
+
+    # 5. Quality Recognition Insight
+    raw_qual = float(metrics['Quality']['raw'])
+    qual_bm = benchmarks.get('quality', GLOBAL_MOVEMENT_BASELINES['quality'])
+    if raw_qual >= qual_bm:
+        insights.append(f"Quality Recognition is high ({raw_qual:.1f}%): formal Commons Quality Image / Featured Picture nominations outperform the {region_label} ({qual_bm:.1f}%).")
+    elif raw_qual > 0.0:
+        insights.append(f"Quality Recognition is present ({raw_qual:.1f}%): recognized Commons quality files have been logged (benchmark: {qual_bm:.1f}%).")
+    else:
+        insights.append("Quality Recognition is unindexed (0.0%): no files have formal Commons Quality Image designations. (Note: Commons QI requires manual jury/volunteer nominations).")
 
     return insights
 
@@ -745,12 +970,15 @@ def compute_yoy_influx(campaign_codes):
         for u in current_users:
             user_edition_counts[u] += 1
             
-        if not seen_all_prior:
+        is_baseline = not seen_all_prior
+        if is_baseline:
             # Baseline edition: all active are baseline entrants
             new_users = total_active
             returning_users = 0
             retention_from_prev = 0.0
             yoy_growth = 0.0
+            ratio = None
+            ratio_status = "Baseline Edition"
         else:
             new_set = current_users - seen_all_prior
             ret_set = current_users & seen_all_prior
@@ -765,9 +993,15 @@ def compute_yoy_influx(campaign_codes):
                 retention_from_prev = 0.0
                 yoy_growth = 0.0
                 
+            if returning_users > 0:
+                ratio = round(new_users / returning_users, 2)
+                ratio_status = "Active"
+            else:
+                ratio = None
+                ratio_status = "Zero Returning"
+                
         newcomer_share = (new_users / total_active * 100.0) if total_active > 0 else 0.0
         veteran_share = (returning_users / total_active * 100.0) if total_active > 0 else 0.0
-        ratio = (new_users / returning_users) if returning_users > 0 else float(new_users)
         
         seen_all_prior.update(current_users)
         cumulative_pool = len(seen_all_prior)
@@ -782,7 +1016,9 @@ def compute_yoy_influx(campaign_codes):
             'veteran_share_pct': round(veteran_share, 1),
             'retention_from_prev_pct': round(retention_from_prev, 1),
             'yoy_growth_pct': round(yoy_growth, 1),
-            'new_to_veteran_ratio': round(ratio, 2),
+            'new_to_veteran_ratio': ratio,
+            'ratio_status': ratio_status,
+            'is_baseline': is_baseline,
             'cumulative_pool': cumulative_pool,
             'breakdown_str': breakdown_str
         })
@@ -990,3 +1226,42 @@ def create_influx_plotly_chart(records, title="Year-over-Year Contributor Influx
         )
     )
     return fig
+
+# --- UNIVERSAL MULTI-FORMAT EXPORT UTILITIES ---
+def df_to_wikitext(df, title=None, table_class="wikitable sortable"):
+    """Convert pandas DataFrame to clean MediaWiki wikitext table format."""
+    if df.empty:
+        return f'{{| class="{table_class}"\n|-\n| \'\'No data available\'\'\n|}}'
+    
+    lines = [f'{{| class="{table_class}"']
+    if title:
+        lines.append(f"|+ {title}")
+    
+    # Headers
+    headers = [str(c) for c in df.columns]
+    lines.append("! " + " !! ".join(headers))
+    
+    # Rows
+    for _, row in df.iterrows():
+        cells = [str(row[c]) if pd.notna(row[c]) else "" for c in df.columns]
+        lines.append("|-")
+        lines.append("| " + " || ".join(cells))
+        
+    lines.append("|}")
+    return "\n".join(lines)
+
+def df_to_csv_with_metadata(df, metadata=None):
+    """Export DataFrame to CSV format prepended with provenance metadata headers."""
+    header_lines = [
+        "# Tool: CampAnalytics (https://campanalytics.toolforge.org/)",
+        f"# Generated: {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}",
+        "# License: GPL-2.0-or-later",
+        "# Data Source: Wikimedia Commons Action API / Toolforge Replica"
+    ]
+    if metadata:
+        for k, v in metadata.items():
+            header_lines.append(f"# {k}: {v}")
+            
+    csv_body = df.to_csv(index=False)
+    return "\n".join(header_lines) + "\n" + csv_body
+

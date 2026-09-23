@@ -1,4 +1,5 @@
 {
+  "$schema": "https://meta.wikimedia.org/wiki/Toolhub/Schema",
   "name": "campanalytics",
   "title": "CampAnalytics — Event Evaluation",
   "description": "High-performance analytics suite for Wikimedia Commons campaigns (Wiki Loves Monuments, Earth, Folklore, Africa, Bangla). Evaluates longitudinal participant retention, newcomer influx, and 5-dimension regional health benchmarking.",
