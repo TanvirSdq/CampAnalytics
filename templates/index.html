@@ -81,10 +81,19 @@
                             </div>
                             <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px;">
                                 <button type="button" class="btn btn-outline-primary" onclick="replaceBuilderCodes()" title="Replace target campaign codes with builder selection">
-                                    🔄 Replace Codes
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <polyline points="1 20 1 14 7 14"></polyline>
+                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                    </svg>
+                                    <span>Replace Codes</span>
                                 </button>
                                 <button type="button" class="btn btn-primary" onclick="appendBuilderCodes()" title="Append builder selection to target campaign codes">
-                                    ➕ Append Codes
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    <span>Append Codes</span>
                                 </button>
                             </div>
 
@@ -711,8 +720,13 @@
                 <div class="display-panel-header">
                     <span>Year-over-Year Influx Breakdown Data Table</span>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <button type="button" class="btn btn-sm" onclick="exportInfluxTableToCSV()" style="padding: 3px 10px; font-size: 0.78rem; background: #ffffff; color: var(--wiki-blue); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-weight: 500;">
-                            ⬇ Export Data (CSV)
+                        <button type="button" class="btn btn-sm" onclick="exportInfluxTableToCSV()" style="padding: 4px 12px; font-size: 0.8rem; background: #ffffff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 4px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 5px;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Export Data (CSV)</span>
                         </button>
                     </div>
                 </div>
@@ -962,11 +976,7 @@
     {# 5. TOOL LIST LANDING PAGE (DEFAULT)                                    #}
     {# ====================================================================== #}
     {% else %}
-        <div style="margin-bottom: 28px; padding-top: 6px;">
-            <div style="display: inline-flex; align-items: center; gap: 6px; background: #eef6ff; color: var(--wiki-blue); font-size: 0.78rem; font-weight: 600; padding: 4px 12px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #d4e4fc;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
-                Wikimedia Campaign Analytics Suite
-            </div>
+        <div style="margin-bottom: 28px; padding-top: 4px;">
             <h1 class="page-title" style="margin-bottom: 8px; font-size: 1.85rem; letter-spacing: -0.4px;">Campaign Analytics Suite</h1>
             <p class="page-subtitle" style="margin-bottom: 0; font-size: 0.98rem; color: var(--text-muted); max-width: 760px; line-height: 1.6;">
                 Evaluate longitudinal participant retention, community health scorecards, and newcomer contributor influx across Wikimedia photography competitions.
@@ -977,13 +987,15 @@
         <div class="methodology-cards-grid">
             <a href="/retention" class="tool-card">
                 <div>
-                    <div class="tool-card-icon-wrap">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="9" cy="12" r="6"></circle>
-                            <circle cx="15" cy="12" r="6"></circle>
-                        </svg>
+                    <div class="tool-card-top-row">
+                        <div class="tool-card-icon-wrap">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="9" cy="12" r="6"></circle>
+                                <circle cx="15" cy="12" r="6"></circle>
+                            </svg>
+                        </div>
+                        <span class="tool-card-badge">Tool 01 · Retention</span>
                     </div>
-                    <span class="tool-card-badge">Tool 01 · Retention</span>
                     <h3 class="tool-card-title">Retention Analytics</h3>
                     <p class="tool-card-desc">Evaluate longitudinal contributor movement and retention across multi-year editions. Analyze pairwise heatmaps, intersection matrices, and spatial choropleth maps across 50+ countries.</p>
                     <ul class="tool-card-features">
@@ -1009,12 +1021,14 @@
 
             <a href="/health" class="tool-card">
                 <div>
-                    <div class="tool-card-icon-wrap" style="background-color: #fef6ee; color: #d97706;">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                        </svg>
+                    <div class="tool-card-top-row">
+                        <div class="tool-card-icon-wrap" style="background-color: #fef6ee; color: #d97706;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg>
+                        </div>
+                        <span class="tool-card-badge" style="background-color: #fef3c7; color: #92400e;">Tool 02 · Health</span>
                     </div>
-                    <span class="tool-card-badge" style="background-color: #fef3c7; color: #92400e;">Tool 02 · Health</span>
                     <h3 class="tool-card-title">Health Evaluation</h3>
                     <p class="tool-card-desc">Assess campaign vitality across five weighted structural indicators calibrated dynamically against regional peer performance benchmarks and upper-quartile envelopes.</p>
                     <ul class="tool-card-features">
@@ -1040,15 +1054,17 @@
 
             <a href="/influx" class="tool-card">
                 <div>
-                    <div class="tool-card-icon-wrap" style="background-color: #f0fdf4; color: #16a34a;">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
+                    <div class="tool-card-top-row">
+                        <div class="tool-card-icon-wrap" style="background-color: #f0fdf4; color: #16a34a;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </div>
+                        <span class="tool-card-badge" style="background-color: #dcfce7; color: #15803d;">Tool 03 · Influx</span>
                     </div>
-                    <span class="tool-card-badge" style="background-color: #dcfce7; color: #15803d;">Tool 03 · Influx</span>
                     <h3 class="tool-card-title">New User Influx</h3>
                     <p class="tool-card-desc">Track newcomer acquisition, returning veteran retention, and community expansion over multi-year series. Includes stacked cohort visualizations and CSV data export.</p>
                     <ul class="tool-card-features">

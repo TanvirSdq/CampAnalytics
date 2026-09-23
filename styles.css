@@ -847,16 +847,23 @@ table.data-table tbody tr:hover td {
     background: var(--wiki-blue);
 }
 
+.tool-card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
 .tool-card-icon-wrap {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 10px;
     background-color: #f0f6ff;
     color: var(--wiki-blue);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 14px;
+    margin-bottom: 0;
     transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
 }
 
@@ -874,9 +881,9 @@ table.data-table tbody tr:hover td {
     letter-spacing: 0.6px;
     color: var(--nav-teal);
     background-color: #e6f4f1;
-    padding: 3px 9px;
+    padding: 4px 10px;
     border-radius: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
     width: fit-content;
 }
 
