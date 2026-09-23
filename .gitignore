@@ -38,6 +38,8 @@ pip-log.txt
 .streamlit/secrets.toml
 
 # Misc
+*.sqlite3
+*.db
 *.log
 *.tmp
 *.bak
