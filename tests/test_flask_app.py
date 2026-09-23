@@ -460,6 +460,29 @@ class TestInfluxRoute(BaseTestCase):
             "Expected geographic scope notice or no participant notice."
         )
 
+    def test_influx_all_campaigns_builder(self):
+        """Verify /influx evaluates multi-campaign influx when 'All Campaigns' is selected."""
+        response = self.client.get(
+            '/influx?influx_event_type=all&influx_country=de&influx_yr_start=2021&influx_yr_end=2024'
+        )
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('New User Influx', text)
+        self.assertIn('allde21', text)
+        self.assertIn('allde24', text)
+        self.assertIn('data:image/png;base64,', text)
+
+    def test_influx_builder_mismatch_reconciliation(self):
+        """Verify server reconciles out-of-sync codes when client explicitly selects 'all' campaign type."""
+        response = self.client.get(
+            '/influx?influx_event_type=all&influx_country=de&influx_yr_start=2021&influx_yr_end=2024&influx_codes=wlmde21+wlmde22+wlmde23'
+        )
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('New User Influx', text)
+        self.assertIn('allde21', text)
+        self.assertIn('data:image/png;base64,', text)
+
 
 class TestErrorHandlingAndSecurity(BaseTestCase):
     """Tests for HTTP error handling (404) and security headers."""

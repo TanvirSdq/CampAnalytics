@@ -731,7 +731,7 @@
         <h1 class="page-title">Year-over-Year New User Influx</h1>
         <p class="page-subtitle">Track newcomer acquisition, returning veteran retention, and community expansion across consecutive campaign editions.</p>
 
-        <form action="/influx" method="GET" id="influx-form">
+        <form action="/influx" method="GET" id="influx-form" onsubmit="syncInfluxBuilder()">
             <!-- Structured Panel: What to look up -->
             <div class="display-panel">
                 <div class="display-panel-header">
@@ -746,11 +746,11 @@
                             <div class="form-group">
                                 <label class="form-label">Campaign Type</label>
                                 <div class="pill-group" id="influx-event-group">
-                                    <input type="radio" name="influx_event_type" value="all" id="influx-evt-all" class="pill-checkbox" {% if influx_event_type == 'all' %}checked{% endif %} onchange="syncInfluxBuilder()">
-                                    <label for="influx-evt-all" class="pill-label">All Campaigns</label>
+                                    <input type="radio" name="influx_event_type" value="all" id="influx-evt-all" class="pill-checkbox" {% if influx_event_type == 'all' %}checked{% endif %} onchange="syncInfluxBuilder()" onclick="syncInfluxBuilder()">
+                                    <label for="influx-evt-all" class="pill-label" onclick="setTimeout(syncInfluxBuilder, 10)">All Campaigns</label>
                                     {% for event_key, event_val in EVENT_MAP.items() %}
-                                        <input type="radio" name="influx_event_type" value="{{ event_key }}" id="influx-evt-{{ event_key }}" class="pill-checkbox" {% if influx_event_type == event_key or (not influx_event_type and event_key == 'wlm') %}checked{% endif %} onchange="syncInfluxBuilder()">
-                                        <label for="influx-evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
+                                        <input type="radio" name="influx_event_type" value="{{ event_key }}" id="influx-evt-{{ event_key }}" class="pill-checkbox" {% if influx_event_type == event_key or (not influx_event_type and event_key == 'wlm') %}checked{% endif %} onchange="syncInfluxBuilder()" onclick="syncInfluxBuilder()">
+                                        <label for="influx-evt-{{ event_key }}" class="pill-label" onclick="setTimeout(syncInfluxBuilder, 10)">{{ event_val }}</label>
                                     {% endfor %}
                                 </div>
                             </div>
@@ -771,9 +771,9 @@
                                 <div class="form-group">
                                     <label class="form-label">Year Range</label>
                                     <div class="year-range-row">
-                                        <input type="number" id="influx_yr_start" name="influx_yr_start" class="form-control" value="{{ influx_yr_start|default(DEFAULT_START_YEAR) }}" min="2010" max="2040" onchange="syncInfluxBuilder()">
+                                        <input type="number" id="influx_yr_start" name="influx_yr_start" class="form-control" value="{{ influx_yr_start|default(DEFAULT_START_YEAR) }}" min="2010" max="2040" onchange="syncInfluxBuilder()" oninput="syncInfluxBuilder()">
                                         <span class="year-separator">to</span>
-                                        <input type="number" id="influx_yr_end" name="influx_yr_end" class="form-control" value="{{ influx_yr_end|default(CURRENT_YEAR) }}" min="2010" max="2040" onchange="syncInfluxBuilder()">
+                                        <input type="number" id="influx_yr_end" name="influx_yr_end" class="form-control" value="{{ influx_yr_end|default(CURRENT_YEAR) }}" min="2010" max="2040" onchange="syncInfluxBuilder()" oninput="syncInfluxBuilder()">
                                     </div>
                                 </div>
                             </div>
@@ -1449,6 +1449,84 @@
         </div>
     {% endif %}
 
+    <!-- Wikitext Export Preview Modal -->
+    <div id="wikitext-modal-overlay" class="wikitext-modal-overlay" style="display: none;" onclick="if(event.target === this) CampTableSuite.closeWikitextModal()">
+        <div class="wikitext-modal" role="dialog" aria-modal="true" aria-labelledby="wikitext-modal-title">
+            <div class="wikitext-modal-header">
+                <div class="wikitext-modal-title" id="wikitext-modal-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                    <span>MediaWiki Wikitext Table Export</span>
+                </div>
+                <button type="button" class="wikitext-modal-close" onclick="CampTableSuite.closeWikitextModal()" aria-label="Close dialog">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="wikitext-modal-body">
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 10px 0;">
+                    Formatted MediaWiki sortable table markup. Copy and paste directly into Wikimedia grant reports, talk pages, or project dashboards:
+                </p>
+                <textarea id="wikitext-modal-textarea" class="wikitext-textarea" readonly spellcheck="false"></textarea>
+            </div>
+            <div class="wikitext-modal-footer">
+                <button type="button" class="btn btn-sm" onclick="CampTableSuite.closeWikitextModal()" style="background: #ffffff; border: 1px solid var(--border-color); color: var(--text-ink); cursor: pointer;">
+                    Close
+                </button>
+                <button type="button" id="wikitext-copy-btn" class="btn btn-sm btn-primary" onclick="CampTableSuite.copyModalWikitext(this)">
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evaluation Export Report Modal -->
+    <div id="export-report-modal-overlay" class="wikitext-modal-overlay" style="display: none;" onclick="if(event.target === this) CampTableSuite.closeExportReportModal()">
+        <div class="wikitext-modal" role="dialog" aria-modal="true" aria-labelledby="export-report-modal-title" style="max-width: 760px;">
+            <div class="wikitext-modal-header">
+                <div class="wikitext-modal-title" id="export-report-modal-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <span>Export Evaluation Report</span>
+                </div>
+                <button type="button" class="wikitext-modal-close" onclick="CampTableSuite.closeExportReportModal()" aria-label="Close dialog">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="wikitext-modal-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">
+                        Structured campaign evaluation report ready for Wikimedia project talk pages, community dashboards, or documentation.
+                    </p>
+                    <div class="export-format-toggle">
+                        <button type="button" id="format-btn-wikitext" class="export-format-btn active" onclick="CampTableSuite.setReportFormat('wikitext')">Wikitext</button>
+                        <button type="button" id="format-btn-markdown" class="export-format-btn" onclick="CampTableSuite.setReportFormat('markdown')">Markdown</button>
+                    </div>
+                </div>
+                <textarea id="export-report-textarea" class="wikitext-textarea" readonly spellcheck="false" style="min-height: 340px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.82rem;"></textarea>
+            </div>
+            <div class="wikitext-modal-footer">
+                <button type="button" class="btn btn-sm" onclick="CampTableSuite.closeExportReportModal()" style="background: #ffffff; border: 1px solid var(--border-color); color: var(--text-ink); cursor: pointer;">
+                    Close
+                </button>
+                <button type="button" id="export-report-copy-btn" class="btn btn-sm btn-primary" onclick="CampTableSuite.copyReportText(this)">
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
     {# ====================================================================== #}
     {# CLIENT-SIDE LOGIC & BUILDER AUTO-SYNC                                  #}
     {# ====================================================================== #}
@@ -1938,85 +2016,6 @@
             }
         }
 
-    <!-- Wikitext Export Preview Modal -->
-    <div id="wikitext-modal-overlay" class="wikitext-modal-overlay" style="display: none;" onclick="if(event.target === this) CampTableSuite.closeWikitextModal()">
-        <div class="wikitext-modal" role="dialog" aria-modal="true" aria-labelledby="wikitext-modal-title">
-            <div class="wikitext-modal-header">
-                <div class="wikitext-modal-title" id="wikitext-modal-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                    </svg>
-                    <span>MediaWiki Wikitext Table Export</span>
-                </div>
-                <button type="button" class="wikitext-modal-close" onclick="CampTableSuite.closeWikitextModal()" aria-label="Close dialog">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="wikitext-modal-body">
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 10px 0;">
-                    Formatted MediaWiki sortable table markup. Copy and paste directly into Wikimedia grant reports, talk pages, or project dashboards:
-                </p>
-                <textarea id="wikitext-modal-textarea" class="wikitext-textarea" readonly spellcheck="false"></textarea>
-            </div>
-            <div class="wikitext-modal-footer">
-                <button type="button" class="btn btn-sm" onclick="CampTableSuite.closeWikitextModal()" style="background: #ffffff; border: 1px solid var(--border-color); color: var(--text-ink); cursor: pointer;">
-                    Close
-                </button>
-                <button type="button" id="wikitext-copy-btn" class="btn btn-sm btn-primary" onclick="CampTableSuite.copyModalWikitext(this)">
-                    Copy to Clipboard
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Evaluation Export Report Modal -->
-    <div id="export-report-modal-overlay" class="wikitext-modal-overlay" style="display: none;" onclick="if(event.target === this) CampTableSuite.closeExportReportModal()">
-        <div class="wikitext-modal" role="dialog" aria-modal="true" aria-labelledby="export-report-modal-title" style="max-width: 760px;">
-            <div class="wikitext-modal-header">
-                <div class="wikitext-modal-title" id="export-report-modal-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                    </svg>
-                    <span>Export Evaluation Report</span>
-                </div>
-                <button type="button" class="wikitext-modal-close" onclick="CampTableSuite.closeExportReportModal()" aria-label="Close dialog">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="wikitext-modal-body">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                    <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">
-                        Structured campaign evaluation report ready for Wikimedia project talk pages, community dashboards, or documentation.
-                    </p>
-                    <div class="export-format-toggle">
-                        <button type="button" id="format-btn-wikitext" class="export-format-btn active" onclick="CampTableSuite.setReportFormat('wikitext')">Wikitext</button>
-                        <button type="button" id="format-btn-markdown" class="export-format-btn" onclick="CampTableSuite.setReportFormat('markdown')">Markdown</button>
-                    </div>
-                </div>
-                <textarea id="export-report-textarea" class="wikitext-textarea" readonly spellcheck="false" style="min-height: 340px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.82rem;"></textarea>
-            </div>
-            <div class="wikitext-modal-footer">
-                <button type="button" class="btn btn-sm" onclick="CampTableSuite.closeExportReportModal()" style="background: #ffffff; border: 1px solid var(--border-color); color: var(--text-ink); cursor: pointer;">
-                    Close
-                </button>
-                <button type="button" id="export-report-copy-btn" class="btn btn-sm btn-primary" onclick="CampTableSuite.copyReportText(this)">
-                    Copy to Clipboard
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
         // ── CAMP ANALYTICS INTERACTIVE TABLE & EXPORT SUITE ───────────────────
         const CampTableSuite = {
             state: {},

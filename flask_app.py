@@ -107,9 +107,10 @@ def methodology():
 def influx():
     current_year = datetime.date.today().year - 1
     default_start = current_year - 4
+    has_explicit_event = ('influx_event_type' in request.args) or ('influx_event_type' in request.form)
     if request.method == 'POST':
-        event_type = request.form.get('influx_event_type', 'wlm').strip().lower()
-        country = request.form.get('influx_country', 'de').strip().lower()
+        event_type = request.form.get('influx_event_type', 'wlm').strip().lower() or 'wlm'
+        country = request.form.get('influx_country', 'de').strip().lower() or 'de'
         try:
             yr_start = int(request.form.get('influx_yr_start', default_start))
             yr_end = int(request.form.get('influx_yr_end', current_year))
@@ -118,21 +119,41 @@ def influx():
         raw_codes = request.form.get('influx_codes', '').strip()
         should_compute = True
     else:
-        event_type = request.args.get('influx_event_type', 'wlm').strip().lower()
-        country = request.args.get('influx_country', 'de').strip().lower()
+        event_type = request.args.get('influx_event_type', 'wlm').strip().lower() or 'wlm'
+        country = request.args.get('influx_country', 'de').strip().lower() or 'de'
         try:
             yr_start = int(request.args.get('influx_yr_start', default_start))
             yr_end = int(request.args.get('influx_yr_end', current_year))
         except (ValueError, TypeError):
             yr_start, yr_end = default_start, current_year
         raw_codes = request.args.get('influx_codes', '').strip()
-        should_compute = bool(request.args.get('influx_codes'))
+        should_compute = bool(raw_codes or ('influx_event_type' in request.args))
 
     if not raw_codes:
         raw_codes = ' '.join(f"{event_type}{country}{y % 100:02d}" for y in range(yr_start, yr_end + 1))
 
     codes = raw_codes.split()
     valid_codes = [c for c in codes if CODE_RE.match(c)]
+
+    # Defensive synchronization:
+    # If the user explicitly selected a campaign type (e.g. 'all') in the builder,
+    # but the submitted raw_codes has an out-of-sync campaign prefix (e.g. 'wlm' instead of 'all'),
+    # regenerate the sequence to faithfully honor the user's explicit selection.
+    if has_explicit_event and valid_codes:
+        first_m = CODE_RE.match(valid_codes[0])
+        if first_m and first_m.group(1) != event_type:
+            valid_codes = [f"{event_type}{country}{y % 100:02d}" for y in range(yr_start, yr_end + 1)]
+            raw_codes = ' '.join(valid_codes)
+    elif valid_codes and not has_explicit_event:
+        # If user directly provided raw_codes without explicit builder event selection,
+        # synchronize event_type and country to match the parsed codes.
+        first_m = CODE_RE.match(valid_codes[0])
+        if first_m:
+            code_evt, code_cc, _ = first_m.groups()
+            if code_evt:
+                event_type = code_evt
+            if code_cc and code_cc in COUNTRY_MAP:
+                country = code_cc
     
     error = None
     chart_b64 = ""
