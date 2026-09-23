@@ -63,14 +63,20 @@ def healthz():
 
 @app.route('/', methods=['GET'])
 def index():
-    mode = request.args.get('mode', 'Retention')
+    mode = request.args.get('mode', 'Tools')
     if mode in ('Retention Analytics', 'Retention'):
         return retention()
     elif mode in ('Health Evaluation', 'Health'):
         return health()
     elif mode in ('New User Influx', 'Influx', 'New Users'):
         return influx()
-    return render_template('index.html', mode='Methodology')
+    elif mode in ('Methodology', 'Methodology & Usage', 'info'):
+        return render_template('index.html', mode='Methodology')
+    return render_template('index.html', mode='Tools')
+
+@app.route('/tools', methods=['GET'])
+def tools():
+    return render_template('index.html', mode='Tools')
 
 @app.route('/methodology', methods=['GET'])
 def methodology():

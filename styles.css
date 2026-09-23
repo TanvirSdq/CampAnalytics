@@ -804,14 +804,20 @@ table.data-table tbody tr:hover {
 }
 
 .math-formula {
-    background-color: #f6f8fa;
+    background-color: #f8fafc;
     border-left: 3px solid var(--wiki-blue);
-    padding: 10px 14px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.85rem;
+    padding: 12px 16px;
+    font-size: 0.95rem;
     color: var(--text-ink);
     border-radius: 0 4px 4px 0;
-    margin: 10px 0;
+    margin: 12px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.math-formula .katex-display {
+    margin: 0.25em 0;
+    text-align: center;
 }
 
 /* ==========================================================================

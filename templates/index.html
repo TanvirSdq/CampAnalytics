@@ -778,7 +778,7 @@
     {# ====================================================================== #}
     {# 4. METHODOLOGY & USAGE GUIDE VIEW                                      #}
     {# ====================================================================== #}
-    {% else %}
+    {% elif mode in ('Methodology', 'Methodology & Usage') %}
         <h1 class="page-title">Methodology &amp; Usage Guide</h1>
         <p class="page-subtitle">Technical specifications, analytical formulations, and usage guidelines for the Campaign Analytics platform.</p>
 
@@ -791,7 +791,7 @@
                     <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 01</span>
                     <span style="font-weight: 700; font-size: 1.05rem;">Retention Analytics</span>
                 </div>
-                <a href="/retention" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; bbackground: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                <a href="/retention" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
                     Go To Tool →
                 </a>
             </div>
@@ -818,10 +818,10 @@
                         Directional retention from a baseline campaign cohort \(A\) to a subsequent target cohort \(B\) is defined as the proportion of unique contributors in cohort \(A\) who also submitted media in cohort \(B\):
                     </p>
                     <div class="math-formula">
-                        Retention(A → B) = (|U_A ∩ U_B| / |U_A|) × 100%
+                        \[ \text{Retention}(A \to B) = \frac{|U_A \cap U_B|}{|U_A|} \times 100\% \]
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
-                        Where \(U_A\) and \(U_B\) denote the discrete sets of verified upload accounts in each respective category. Retention is non-symmetric: \(Retention(A \to B) \neq Retention(B \to A)\) when total cohort sizes differ.
+                        Where \(U_A\) and \(U_B\) denote the discrete sets of verified upload accounts in each respective category. Retention is non-symmetric: \(\text{Retention}(A \to B) \neq \text{Retention}(B \to A)\) when total cohort sizes differ.
                     </p>
                 </div>
 
@@ -847,7 +847,7 @@
                     <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 02</span>
                     <span style="font-weight: 700; font-size: 1.05rem;">Health Evaluation</span>
                 </div>
-                <a href="/health" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; bbackground: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                <a href="/health" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
                     Go To Tool →
                 </a>
             </div>
@@ -871,7 +871,9 @@
                         <li><strong>Retention Index (32%):</strong> Proportion of prior-edition contributors who return in the target edition. The strongest single predictor of whether a campaign community survives across years rather than requiring constant re-acquisition.</li>
                         <li><strong>Content Utility (25%):</strong> Share of uploaded files actively deployed across Wikimedia projects (<code>prop=globalusage</code>). This is the Wikimedia-specific mission proxy — files that get used in articles deliver encyclopaedic value; files that don't are production without impact.</li>
                         <li><strong>Growth Capacity (18%):</strong> Share of the target cohort comprising first-time participants:
-                            <div class="math-formula" style="margin: 6px 0;">Growth(A → B) = (|U_B \setminus U_A| / |U_B|) × 100%</div>
+                            <div class="math-formula" style="margin: 6px 0;">
+                                \[ \text{Growth}(A \to B) = \frac{|U_B \setminus U_A|}{|U_B|} \times 100\% \]
+                            </div>
                             Growth matters, but is weighted below retention and utility because a campaign that recruits heavily but retains nobody is structurally fragile.
                         </li>
                         <li><strong>Contributor Diversity (15%):</strong> Concentration of upload activity among the top 10% of uploaders (lower concentration = higher score). Raised to reflect its role as a leading fragility indicator — campaigns dominated by a handful of power users are vulnerable to collapse when those users disengage.</li>
@@ -897,7 +899,7 @@
                     <span class="tool-card-badge" style="margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 03</span>
                     <span style="font-weight: 700; font-size: 1.05rem;">New User Influx</span>
                 </div>
-                <a href="/influx" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; bbackground: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                <a href="/influx" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
                     Go To Tool →
                 </a>
             </div>
@@ -921,13 +923,13 @@
                 <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Year-over-Year Newcomer Influx &amp; Retention</h4>
                     <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
-                        For edition \(C_t\) in a chronological series, newcomer influx isolates contributors not seen in any prior recorded edition \(U_{&lt;t}\):
+                        For edition \(C_t\) in a chronological series, newcomer influx isolates contributors not seen in any prior recorded edition \(U_{<t}\):
                     </p>
                     <div class="math-formula">
-                        Influx(C_t) = |U_t \setminus U_{&lt;t}|, \quad \text{Newcomer Share} = \left(\frac{Influx(C_t)}{|U_t|}\right) \times 100\%
+                        \[ \text{Influx}(C_t) = |U_t \setminus U_{<t}|, \quad \text{Newcomer Share} = \left(\frac{\text{Influx}(C_t)}{|U_t|}\right) \times 100\% \]
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
-                        Returning veterans are defined as \(R_t = |U_t \cap U_{&lt;t}|\), and direct retention from the immediate prior edition is given by \(Retention(C_{t-1} \to C_t) = (|U_t \cap U_{t-1}| / |U_{t-1}|) \times 100\%\).
+                        Returning veterans are defined as \(R_t = |U_t \cap U_{<t}|\), and direct retention from the immediate prior edition is given by \(\text{Retention}(C_{t-1} \to C_t) = \frac{|U_t \cap U_{t-1}|}{|U_{t-1}|} \times 100\%\).
                     </p>
                 </div>
 
@@ -937,7 +939,7 @@
                         When analyzing all campaigns together (<code>all[country][year]</code>), participant sets across all active Wiki Loves photography contests in edition year \(t\) are aggregated into a unified ecosystem cohort \(U_t\):
                     </p>
                     <div class="math-formula">
-                        U_t = \bigcup_{e \in E} U_{e, t}, \quad I_t = U_t \setminus \bigcup_{j < t} U_j, \quad R_t = U_t \cap \bigcup_{j < t} U_j
+                        \[ U_t = \bigcup_{e \in E} U_{e, t}, \quad I_t = U_t \setminus \bigcup_{j < t} U_j, \quad R_t = U_t \cap \bigcup_{j < t} U_j \]
                     </div>
                     <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
                         Where \(E = \{\text{WLM}, \text{WLE}, \text{WLF}, \text{WLA}, \text{WLB}\}\). Contributor cross-participation across contests is de-duplicated, measuring the total net new individuals brought into the Wikimedia movement annually.
@@ -950,9 +952,84 @@
                         The cumulative community pool milestone measures the total distinct individuals who have engaged across the evaluated series up to edition year \(t\):
                     </p>
                     <div class="math-formula">
-                        \text{Cumulative Pool}_t = \left|\bigcup_{j \le t} U_j\right|
+                        \[ \text{Cumulative Pool}_t = \left|\bigcup_{j \le t} U_j\right| \]
                     </div>
                 </div>
+            </div>
+        </div>
+
+    {# ====================================================================== #}
+    {# 5. TOOL LIST LANDING PAGE (DEFAULT)                                    #}
+    {# ====================================================================== #}
+    {% else %}
+        <div style="margin-bottom: 24px;">
+            <h1 class="page-title" style="margin-bottom: 6px;">Campaign Analytics Suite</h1>
+            <p class="page-subtitle" style="margin-bottom: 0;">Cross-campaign participant retention, community health evaluation, and contributor influx analytics for Wikimedia campaigns.</p>
+        </div>
+
+        <!-- Tool Cards Grid -->
+        <div class="methodology-cards-grid">
+            <div class="tool-card">
+                <div>
+                    <span class="tool-card-badge">Tool 01</span>
+                    <h3 class="tool-card-title">Retention Analytics</h3>
+                    <p class="tool-card-desc">Evaluate longitudinal contributor movement and retention across multi-year editions. Analyze pairwise retention heatmaps, intersection matrices, and spatial choropleth maps across 50+ countries.</p>
+                    <ul style="margin: 0 0 20px 0; padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+                        <li>Directional cohort intersect shares</li>
+                        <li>Consecutive edition heatmaps</li>
+                        <li>Global choropleth distribution map</li>
+                    </ul>
+                </div>
+                <a href="/retention" class="btn btn-primary" style="text-align: center; text-decoration: none; font-weight: 600; padding: 10px 16px; border-radius: 4px; display: block; margin-top: auto;">
+                    Launch Retention Analytics &rarr;
+                </a>
+            </div>
+
+            <div class="tool-card">
+                <div>
+                    <span class="tool-card-badge">Tool 02</span>
+                    <h3 class="tool-card-title">Health Evaluation</h3>
+                    <p class="tool-card-desc">Assess campaign vitality across five weighted structural indicators calibrated dynamically against regional peer performance benchmarks and upper-quartile envelopes.</p>
+                    <ul style="margin: 0 0 20px 0; padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+                        <li>Weighted composite health score (0–100)</li>
+                        <li>Dynamic regional peer normalization</li>
+                        <li>Commons GlobalUsage &amp; quality footprint</li>
+                    </ul>
+                </div>
+                <a href="/health" class="btn btn-primary" style="text-align: center; text-decoration: none; font-weight: 600; padding: 10px 16px; border-radius: 4px; display: block; margin-top: auto;">
+                    Launch Health Evaluation &rarr;
+                </a>
+            </div>
+
+            <div class="tool-card">
+                <div>
+                    <span class="tool-card-badge">Tool 03</span>
+                    <h3 class="tool-card-title">New User Influx</h3>
+                    <p class="tool-card-desc">Track newcomer acquisition, returning veteran retention, and community expansion over multi-year series. Includes stacked cohort visualizations and CSV data export.</p>
+                    <ul style="margin: 0 0 20px 0; padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+                        <li>First-time entrants vs. returning veterans</li>
+                        <li>Visual stacked bar dynamics &amp; cumulative pool</li>
+                        <li>YoY net growth &amp; newcomer share table</li>
+                    </ul>
+                </div>
+                <a href="/influx" class="btn btn-primary" style="text-align: center; text-decoration: none; font-weight: 600; padding: 10px 16px; border-radius: 4px; display: block; margin-top: auto;">
+                    Launch New User Influx &rarr;
+                </a>
+            </div>
+        </div>
+
+        <!-- Documentation Card -->
+        <div class="display-panel" style="margin-top: 10px;">
+            <div class="display-panel-body" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 18px 22px;">
+                <div>
+                    <h4 style="margin: 0 0 4px 0; font-size: 0.98rem; color: var(--text-ink);">Need Technical Documentation or Formulations?</h4>
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                        Read mathematical definitions, weighting models, and data ingestion specifications in the methodology guide.
+                    </p>
+                </div>
+                <a href="/methodology" class="btn btn-sm" style="padding: 8px 16px; font-size: 0.84rem; background: #ffffff; color: var(--wiki-blue); border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; font-weight: 600; white-space: nowrap;">
+                    View Methodology &amp; Usage Guide &rarr;
+                </a>
             </div>
         </div>
     {% endif %}
