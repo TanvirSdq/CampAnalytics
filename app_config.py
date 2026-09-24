@@ -30,7 +30,7 @@ BG_DEEP = "#ffffff"
 BG_MID = "#fbfcfd"
 TEXT_LIGHT = "#202122"
 
-KORIKATH_LOGO_URL = "https://commons.wikimedia.org/wiki/Special:FilePath/Project_Korikath_Logo-dark.svg"
+KORIKATH_LOGO_URL = "https://upload.wikimedia.org/wikipedia/commons/9/99/Project_Korikath_Logo-dark.svg"
 
 def get_custom_css():
     """Returns CSS for Flask application."""
