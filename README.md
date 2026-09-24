@@ -42,49 +42,88 @@ Both interfaces run on the identical core analytics engine ([`analytics.py`](ana
 | `wlb` | Wiki Loves Bangla | Regional cultural & biodiversity heritage | `Images_from_Wiki_Loves_Bangla_YYYY` |
 | `all` | All Campaigns | Ecosystem combination per country | Scoped aggregate across all active campaigns for the target country |
 
-CampAnalytics answers three core programmatic questions:
+CampAnalytics answers five core programmatic questions:
 
-1. **Contributor Continuity** — How effectively do campaigns retain participant cohorts across consecutive editions?
-2. **Ecosystem Vitality** — How healthy is a specific campaign edition compared to top-performing regional peers?
+1. **Ecosystem Vitality** — How healthy is a specific campaign edition compared to top-performing regional peers?
+2. **Contributor Continuity** — How effectively do campaigns retain participant cohorts across consecutive editions?
 3. **True Newcomer Influx** — Across all campaigns in a year and country, how many genuinely new people entered the Wikimedia movement?
+4. **Encyclopedic Utility** — How effectively are uploaded media files integrated into Wikipedia and sister project articles?
+5. **Quality Recognition** — What proportion of submissions attain formal artistic and curatorial recognition (Quality Images, Featured Pictures, Valued Images)?
 
 ---
 
-## Four Analytical Modules
+## Five Analytical Tools
 
-### 1. Retention Analytics
+### 1. Health Evaluation (`/health`)
 
-- **Selection Builder**: Choose any combination of campaigns, countries, and year ranges. Codes follow the pattern `[event][country][YY]` (e.g. `wlmde22` = Wiki Loves Monuments, Germany, 2022).
-- **Directional Retention Matrix**: Exact account persistence from baseline edition $A$ to subsequent edition $B$:
-  $$\text{Retention}(A \to B) = \left( \frac{|U_A \cap U_B|}{|U_A|} \right) \times 100\%$$
-- **Three Visualization Models**: Data Table · Heatmap Matrix (Seaborn) · Choropleth World Map (Plotly)
-
-### 2. Health Evaluation (5-Dimension Scorecard)
-
-Scores a campaign edition on a 0–100 scale across five defensible dimensions structured into paired analytical pillars summing to 100%, each benchmarked against empirical regional reference thresholds:
+Scores a campaign edition on a standardized 0–100 scale across five defensible dimensions structured into paired analytical pillars summing to 100%, each benchmarked against empirical regional reference thresholds:
 
 | Dimension | Weight | Pillar | What it Measures |
 |:---|:---:|:---|:---|
-| Retention Index | **25%** | Community Vitality (50%) | Returning contributors from the prior edition — primary sustainability signal |
-| Growth Capacity | **25%** | Community Vitality (50%) | First-time newcomer acquisition share across campaign lifecycle |
-| Content Utility | **20%** | Content Impact (35%) | Files actively used across Wikimedia wikis (`prop=globalusage`) |
-| Quality Recognition | **15%** | Content Impact (35%) | Commons QI/FP recognition rate of uploaded media |
-| Contributor Diversity | **15%** | Participation Equity (15%) | Upload distribution equity (top-10% uploader concentration) |
+| **Retention Index** ($S_{\text{ret}}$) | **25%** | Community Vitality (50%) | Returning contributors from the prior edition — primary community sustainability signal |
+| **Growth Capacity** ($S_{\text{grow}}$) | **25%** | Community Vitality (50%) | First-time newcomer acquisition share across the campaign lifecycle |
+| **Content Utility** ($S_{\text{util}}$) | **20%** | Content Impact (35%) | Files actively deployed across Wikimedia wikis (`prop=globalusage`) |
+| **Quality Recognition** ($S_{\text{qual}}$) | **15%** | Content Impact (35%) | Proportion of submissions receiving formal Commons quality designations (QI / FP / VI) |
+| **Contributor Diversity** ($S_{\text{div}}$) | **15%** | Participation Equity (15%) | Upload distribution equity (inverse top-10% uploader concentration) |
 
-Regional benchmarks are regularized using Empirical Bayesian shrinkage ($B_{\text{effective}} = \frac{N}{N + 3} B_{\text{regional}} + \frac{3}{N + 3} B_{\text{global}}$), preventing small-sample distortion in sparse regions.
+#### How the System Evaluates:
+- **Composite Index Formulation**:
+  $$\text{Evaluation Index} = 0.25 S_{\text{ret}} + 0.25 S_{\text{grow}} + 0.20 S_{\text{util}} + 0.15 S_{\text{qual}} + 0.15 S_{\text{div}}$$
+- **Continuous Utility Functions**: Rather than linear scoring ($x/B$), scores map through a continuous concave utility curve:
+  $$S(x, B) = \begin{cases} 0.0 & \text{if } x \le 0 \\ 70.0 \times \left(\frac{x}{B}\right)^{0.75} & \text{if } 0 < x \le B \\ 70.0 + 30.0 \times \left(1 - \exp\left(-1.2 \times \frac{x - B}{B}\right)\right) & \text{if } x > B \end{cases}$$
+  *Key properties*: Strict zero-floor integrity ($S(0) = 0$), exact regional alignment ($S(B) = 70.0$), sub-linear encouragement below benchmark, and asymptotic damping above benchmark (capped at 100).
+- **Inverse Diversity Scoring**: High concentration in the top 10% indicates fragile reliance on a few power uploaders; broad distribution achieves up to 100 points.
+- **Empirical Bayesian Regularization**:
+  $$B_{\text{effective}} = \frac{N}{N + M} \cdot \bar{B}_{\text{regional}} + \frac{M}{N + M} \cdot B_{\text{global}}$$
+  with shrinkage pseudo-count $M = 3.0$. In regions with few peer editions ($N \le 3$), benchmarks blend toward global movement baselines to eliminate small-sample volatility or division-by-zero artifacts.
+- **Qualitative Star Tiers**:
+  - ★★★★★ **Outstanding** (85.0–100.0) · Exceeds regional and global standards
+  - ★★★★☆ **Strong** (70.0–84.9) · Meets or slightly surpasses regional benchmarks
+  - ★★★☆☆ **Moderate** (50.0–69.9) · Solid fundamentals with identifiable growth opportunities
+  - ★★☆☆☆ **Emerging** (30.0–49.9) · Early-stage progress requiring strategic development
+  - ★☆☆☆☆ **Critical** (0.0–29.9) · Severe structural concentration or minimal continuity
 
-### 3. New User Influx & Growth
+### 2. Retention Analytics (`/retention`)
 
-- **Year span**: 2010–2040
-- **Single-campaign mode**: Follows consecutive editions (e.g. `wlmde20 wlmde21 wlmde22`)
-- **All Campaigns mode** (`all[cc][YY]`): Aggregates all campaigns valid for that country and year, de-duplicates cross-participation, and isolates true movement-wide newcomers from returning veterans
-- **Scope intelligence**: Each campaign has a declared country scope in `config.json`. The `all` aggregator only queries campaign × country pairs that are documented on Commons — preventing phantom category lookups (e.g. WL Bangla will not be queried for Germany; WL Africa will not be queried for Europe)
-- **Longevity segmentation**: 1-Time Entrants · Repeaters (2–3 editions) · Core Veterans (4+ editions)
-- **Campaign breakdown**: Per-year breakdown of which campaigns contributed to the composite cohort
+- **Selection Builder**: Flexible multi-event, multi-nation, and multi-year comparative matrices (`[event][country][YY]`, e.g. `wlmde22`, `wlmbd24`).
+- **Directional Retention Matrix**: Exact longitudinal account persistence from baseline edition $A$ to target edition $B$:
+  $$\text{Retention}(A \to B) = \left( \frac{|U_A \cap U_B|}{|U_A|} \right) \times 100\%$$
+- **Three Visualization Projections**: Interactive sortable Data Table · Pairwise Seaborn Heatmap Matrix · Global Choropleth World Map with regional peer filtering.
 
-### 4. Scientific Methodology & Formal Specifications
+### 3. Contributor Influx & Growth (`/influx`)
 
-CampAnalytics is backed by a formal mathematical methodology with zero-floor utility scoring, concave progress curves, and academic citations.
+- **Temporal Span**: Consecutive annual sequence analysis from 2010 to 2040.
+- **Single-Campaign vs. Ecosystem Aggregation**:
+  - *Single Campaign*: Tracks consecutive editions of a specific contest (e.g. `wlmde20` $\to$ `wlmde24`).
+  - *All Campaigns* (`all[cc][YY]`): De-duplicates contributors across all active photo competitions within a nation to isolate true movement-level recruitment from inter-campaign migration.
+- **Scope Enforcement**: Governed by `EVENT_COUNTRY_SCOPE` in `config.json` to prevent phantom queries for geographically inapplicable contests.
+- **Lifecycle Cohort Segmentation**:
+  - **1-Time Entrants**: Single-edition participants.
+  - **Repeaters**: Active across 2–3 campaign editions.
+  - **Core Veterans**: Long-term stalwarts participating in 4+ editions.
+- **Visual Trajectory**: Dual-axis stacked bar chart illustrating annual newcomer influx ($I_t$), returning veterans ($R_t$), and the cumulative contributor footprint.
+
+### 4. Content Utility (`/utility`)
+
+- **Encyclopedic Reuse Analysis**: Connects to the Wikimedia Commons Action API (`prop=globalusage`) to track the exact propagation of campaign media across live Wikipedia language editions, Wikidata, Wikivoyage, and Wikimedia Commons galleries.
+- **Metrics Computed**:
+  - **Overall Utility Rate**: Proportion of uploaded files embedded in at least one article.
+  - **Total Article Inclusions**: Cumulative cross-wiki deployment count.
+  - **Wiki Project Footprint**: Breakdown of usage by project (e.g. English Wikipedia, German Wikipedia, Wikidata, Wikimedia Commons).
+  - **Photographer Leaderboard**: Ranks contributors whose files have achieved the widest readership and highest reuse.
+
+### 5. Quality Recognition (`/quality`)
+
+- **Curatorial Honors Engine**: Analyzes submissions that have passed peer-reviewed quality processes on Wikimedia Commons:
+  - **Quality Images (QI)**: Assessed by the Commons Quality committee for technical photographic standards.
+  - **Featured Pictures (FP)**: The finest images on Wikimedia Commons, representing community-wide consensus.
+  - **Valued Images (VI)**: Canonical subject-matter reference illustrations.
+- **Showcase Gallery & Metadata**: Interactive showcase with lazy-loaded thumbnails, direct Wikimedia Commons file links, photographer attributions, and exportable data tables (CSV, Wikitext, JSON).
+- **Photographer Hall of Fame**: Recognizes top-performing contributors with formal honors badges.
+
+### 6. Scientific Methodology & Documentation (`/documentation`)
+
+CampAnalytics is grounded in published literature on peer production, open collaboration, and composite indicator design.
 
 👉 **[Read the Full Methodology Paper (METHODOLOGY.md)](METHODOLOGY.md)**
 
@@ -204,6 +243,52 @@ Supported country codes: `bd` `in` `de` `it` `fr` `us` `ca` `uk` `nl` `pl` `br` 
 
 ---
 
+## Deployment Architecture & Operations
+
+CampAnalytics is deployed as a cloud-native webservice on **Wikimedia Toolforge** (Kubernetes backend) using the Toolforge Buildpacks Service (Tekton CI/CD pipeline).
+
+### 1. Toolforge Deployment Workflow
+
+The production service is built and deployed directly from GitHub:
+
+```bash
+# 1. SSH into the Toolforge bastion
+ssh <username>@login.toolforge.org
+
+# 2. Switch to the tool account
+become campanalytics
+
+# 3. Trigger a container build from GitHub (Heroku/CNB Python buildpack)
+toolforge build start https://github.com/TanvirSdq/CampAnalytics.git
+
+# 4. Perform a zero-downtime rolling restart of the Kubernetes webservice
+webservice --backend=kubernetes buildservice restart
+```
+
+### 2. Runtime & Process Configuration
+
+- **Process Model (`Procfile`)**:
+  ```procfile
+  web: gunicorn --workers=2 --threads=4 --timeout=240 --bind=0.0.0.0:8000 --limit-request-line=8190 --forwarded-allow-ips=* flask_app:app
+  ```
+  - `gthread` worker engine with 2 worker processes and 4 threads per worker, allowing concurrent servicing of API requests.
+  - Generous 240-second timeout to accommodate multi-category deep harvests on Commons without gateway drops.
+  - `--forwarded-allow-ips=*` properly preserves client protocol and IP information across the Wikimedia ingress proxy.
+
+- **Dynamic Payload Compression**:
+  Integrated with `Flask-Compress` (supporting Gzip and Brotli compression). Compresses analytical HTML payloads from ~280 KB down to ~27 KB (an 85%+ reduction), preventing ingress proxy throttling and eliminating browser loading hangs.
+
+- **Persistent Volume Caching**:
+  Because buildpack containers run on an ephemeral container filesystem that resets on every deployment or replica restart, the cache is explicitly routed to the tool's persistent NFS storage:
+  - Cache Path: `/data/project/campanalytics/campaign_cache.sqlite3`
+  - Ensures multi-year participant sets, global usage metrics, and Commons quality badges are preserved across releases and pod restarts.
+  - Automatically falls back to local SQLite in development or replica MariaDB (`replica.my.cnf`) when configured.
+
+- **Offline Prefetch & Warmup**:
+  Run `python3 refresh_cache.py` to pre-populate multi-year metrics offline, ensuring immediate sub-second dashboard rendering for organizers.
+
+---
+
 ## Installation & Local Usage
 
 ### Prerequisites
@@ -211,7 +296,7 @@ Supported country codes: `bd` `in` `de` `it` `fr` `us` `ca` `uk` `nl` `pl` `br` 
 
 ### Clone & Install
 ```bash
-git clone https://github.com/siddiquetanvir/CampAnalytics.git
+git clone https://github.com/TanvirSdq/CampAnalytics.git
 cd CampAnalytics
 pip install -r requirements.txt
 ```
@@ -230,31 +315,40 @@ streamlit run streamlit_app.py
 ```
 Visit: `http://localhost:8501`
 
+### Running the Test Suite
+```bash
+python3 -m unittest discover tests
+```
+The automated test suite contains 58 unit tests validating all five tool routes, edge-case resilience, scoping, and data aggregations.
+
 ---
 
 ## Repository Layout
 
 ```
 CampAnalytics/
-├── app.py                   # Production Toolforge WSGI entrypoint
-├── flask_app.py             # Flask route controllers & UI
-├── streamlit_app.py         # Streamlit interactive dashboard
-├── analytics.py             # Core engine: caching, Commons API, math, charts
-├── app_config.py            # Global palette and settings
-├── campaign_cache.py        # Persistent SQLite participant cache
-├── config.json              # 5 campaigns · 51 countries · 9 regional clusters
-├── METHODOLOGY.md           # Scientific methodology paper & mathematical specifications
-├── styles.css               # Flask stylesheet & mobile ergonomics
-├── streamlit_styles.css     # Streamlit theme and sidebar stylesheet
-├── toolhub.yaml             # Wikimedia Toolhub 2.0.0 manifest
-├── toolinfo.json            # Wikimedia Toolinfo registry metadata
-├── Procfile                 # Web process definition
-├── requirements.txt         # Python dependencies
+├── app.py                   # Local launcher & WSGI fallback
+├── flask_app.py             # Production Flask application & 5-tool routing engine
+├── streamlit_app.py         # Streamlit interactive exploratory dashboard
+├── analytics.py             # Core analytical engine (Commons API, replica DB, math, plotting)
+├── app_config.py            # Global styles, palette, typography & layout parameters
+├── campaign_cache.py        # Dual-backend persistent cache (Toolforge NFS SQLite & MariaDB)
+├── refresh_cache.py         # Offline batch prefetcher and cache warmer
+├── config.json              # 5 campaigns · 51 countries · 9 regional clusters & scopes
+├── METHODOLOGY.md           # Formal mathematical framework, formulas & peer benchmark specs
+├── README.md                # Project documentation, deployment architecture & quickstart
+├── styles.css               # Modern responsive design system, mobile drawer & print styles
+├── streamlit_styles.css     # Streamlit theme and responsive stylesheet
+├── toolhub.yaml             # Wikimedia Toolhub 2.0.0 metadata specification
+├── toolinfo.json            # Wikimedia Toolinfo registry definition
+├── Procfile                 # Toolforge Buildpacks process definition for Gunicorn
+├── requirements.txt         # Production Python dependencies (Flask, Compress, PyMySQL, etc.)
 ├── templates/
-│   ├── base.html            # Layout shell, top navbar, Project Korikath brand
-│   └── index.html           # 4-mode suite: Evaluation · Retention · Influx · Methodology
+│   ├── base.html            # Foundation template, responsive navbar, mobile off-canvas drawer
+│   └── index.html           # Unified template: 5 tools (Evaluation, Retention, Influx, Utility, Quality) & Documentation
 └── tests/
-    └── test_flask_app.py    # Automated test suite (43 unit tests)
+    ├── __init__.py          # Test suite package marker
+    └── test_flask_app.py    # Automated test suite (58 unit tests covering all routes and edge cases)
 ```
 
 ---

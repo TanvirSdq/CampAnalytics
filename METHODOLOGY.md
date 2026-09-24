@@ -8,10 +8,12 @@ This document outlines the theoretical foundations, mathematical formulations, c
 
 CampAnalytics is an analytical suite designed for organizers, researchers, and grant committees within the Wikimedia ecosystem. The platform provides empirical visibility into contributor dynamics and content outcomes across annual photography competitions (Wiki Loves Monuments, Wiki Loves Earth, Wiki Loves Folklore, Wiki Loves Africa, and Wiki Loves Bangla).
 
-The suite comprises three primary analytical tools:
+The suite comprises five primary analytical tools:
 1. **Evaluation (Tool 01)**: Multi-dimensional campaign evaluation combining volunteer continuity, newcomer recruitment, content utility, quality recognition, and participation equity into a standardized 0–100 index.
 2. **Retention (Tool 02)**: Longitudinal participant continuity analysis across multi-year editions, directional cohort retention matrices, and geographic choropleth mappings.
 3. **Influx (Tool 03)**: Year-over-Year (YoY) contributor segmentation distinguishing first-time participants from returning veterans to assess participant pipeline sustainability.
+4. **Content Utility (Tool 04)**: Live encyclopedic reuse tracking across Wikimedia projects (`prop=globalusage`), article inclusion volume, cross-wiki project breadth, and photographer impact rankings.
+5. **Quality Recognition (Tool 05)**: Movement-wide curatorial and technical honors tracking (Quality Images, Featured Pictures, Valued Images) with structured Commons category harvesting and contributor hall of fame.
 
 ---
 
@@ -186,7 +188,52 @@ Individual dimension scores and the composite overall score map to standard qual
 
 ---
 
-## 8. References and Literature
+---
+
+## 8. Content Utility Modeling (`prop=globalusage`)
+
+Content Utility evaluates the direct downstream encyclopedic impact of uploaded files. Media uploaded to Wikimedia Commons is evaluated against live deployment across global Wikimedia projects (Wikipedia language editions, Wikidata, Wikivoyage, Wikinews, etc.).
+
+### 8.1 Utility Rate Formulation
+Let $F$ denote the total set of verified files uploaded during campaign edition $C$. For each file $f \in F$, let $P(f)$ represent the set of distinct wiki pages in which file $f$ is actively embedded, obtained via `prop=globalusage`.
+
+The subset of utilized files is defined as:
+$$F_{\text{in-use}} = \{ f \in F \mid |P(f)| > 0 \}$$
+
+The **Campaign File Utility Rate** ($U_r$) is:
+$$U_r = \frac{|F_{\text{in-use}}|}{|F|} \times 100\%$$
+
+### 8.2 Global Inclusions & Cross-Wiki Footprint
+1. **Total Article Inclusions ($I_{\text{total}}$)**: Cumulative instances of media deployment across all client wikis:
+   $$I_{\text{total}} = \sum_{f \in F} |P(f)|$$
+2. **Project Breadth Index ($B_{\text{proj}}$)**: Count of distinct Wikimedia domains (e.g. `en.wikipedia.org`, `de.wikipedia.org`, `wikidata.org`) hosting at least one campaign submission:
+   $$B_{\text{proj}} = \left| \bigcup_{f \in F} \{ \text{domain}(p) \mid p \in P(f) \} \right|$$
+3. **Photographer Impact Contribution**: For uploader $u$, the aggregate usage volume of their portfolio is evaluated to construct the campaign contributor utility leaderboard.
+
+---
+
+## 9. Quality Recognition Modeling (Commons Curatorial Standards)
+
+Quality Recognition quantifies formal artistic, technical, and canonical achievements awarded by established Wikimedia Commons peer review processes.
+
+### 9.1 Community Designation Types
+Submissions are evaluated against three formal Commons award categories:
+1. **Quality Images (QI)**: Images meeting rigorous technical standards (composition, exposure, sharpness, lighting), evaluated and ratified by the Commons Quality Images committee.
+2. **Featured Pictures (FP)**: The movement's premier visual content, selected by community consensus via strict multi-day candidacy votes.
+3. **Valued Images (VI)**: Images recognized as the most valuable of their kind for depicting particular encyclopedic subjects or concepts.
+
+### 9.2 Quality Rate Formulation
+Let $F_{\text{honored}} \subseteq F$ denote the set of campaign files awarded at least one formal designation ($QI \cup FP \cup VI$), discovered via structured Commons category trees (`Quality images from [Campaign]`, `Featured pictures from [Campaign]`, or `Valued images from [Campaign]`):
+
+The **Quality Distinction Rate** ($Q_r$) is:
+$$Q_r = \frac{|F_{\text{honored}}|}{|F|} \times 100\%$$
+
+The **Honored Photographers Count** ($H$) quantifies distinct uploaders who created at least one recognized work:
+$$H = |\{ \text{uploader}(f) \mid f \in F_{\text{honored}} \}|$$
+
+---
+
+## 10. References and Literature
 
 1. **OECD / European Commission JRC (2008)**. *Handbook on Constructing Composite Indicators: Methodology and User Guide*. OECD Publishing, Paris.
 2. **Halfaker, A., Geiger, R. S., Morgan, J. T., & Riedl, J. (2013)**. The Rise and Decline of an Open Collaboration System: How Wikipedia’s reaction to popularity is causing its decline. *American Behavioral Scientist*, 57(5), 664–688.

@@ -1866,7 +1866,104 @@
                         \[ \text{Cumulative Pool}_t = \left|\bigcup_{j \le t} U_j\right| \]
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <!-- ================================================================== -->
+        <!-- 4. CONTENT UTILITY SECTION                                         -->
+        <!-- ================================================================== -->
+        <div class="display-panel" id="utility-guide">
+            <div class="display-panel-header">
+                <div>
+                    <span class="tool-card-badge" style="background-color: #ede9fe; color: #6d28d9; margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 04</span>
+                    <span style="font-weight: 700; font-size: 1.05rem;">Content Utility</span>
+                </div>
+                <a href="/utility" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                    Go To Tool →
+                </a>
+            </div>
+            <div class="display-panel-body">
+                <p style="color: var(--text-muted); line-height: 1.6;">
+                    The Content Utility module evaluates the direct encyclopedic deployment of campaign media across all Wikimedia projects via live <code>prop=globalusage</code> API queries:
+                </p>
+                <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
+                    <li><strong>Target Campaign Selection:</strong> Choose a campaign, country, and edition year (e.g. <code>wlmde24</code> or <code>wlmbd23</code>).</li>
+                    <li><strong>Usage Harvesting &amp; Namespace Filtering:</strong> Analyzes uploaded files to identify whether they are embedded in encyclopedic articles (Mainspace 0) or user/discussion pages.</li>
+                    <li><strong>Analytics &amp; Output Breakdown:</strong>
+                        <ul style="margin-top: 4px; padding-left: 18px;">
+                            <li><strong>Overall Utility Rate (\(U_r\)):</strong> Percentage of uploaded files actively utilized in at least one Wikimedia project.</li>
+                            <li><strong>Article Inclusions:</strong> Cumulative count of live article instances illustrating encyclopedic knowledge.</li>
+                            <li><strong>Cross-Wiki Footprint:</strong> Distribution across Wikipedia language editions (e.g. English, German, French, Bengali), Wikidata, Wikivoyage, and Commons galleries.</li>
+                            <li><strong>Contributor Impact Leaderboard:</strong> Top photographers ranked by total downstream article usage.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <div class="math-panel">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Encyclopedic Utility Rate Formulation</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+                        For campaign file collection \(F\), let \(P(f)\) denote the set of pages where file \(f\) is actively integrated:
+                    </p>
+                    <div class="math-formula">
+                        \[ F_{\text{in-use}} = \{ f \in F \mid |P(f)| > 0 \}, \quad \text{Utility Rate } U_r = \left(\frac{|F_{\text{in-use}}|}{|F|}\right) \times 100\% \]
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
+                        Total article deployment volume is given by \(I_{\text{total}} = \sum_{f \in F} |P(f)|\).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- 5. QUALITY RECOGNITION SECTION                                     -->
+        <!-- ================================================================== -->
+        <div class="display-panel" id="quality-guide">
+            <div class="display-panel-header">
+                <div>
+                    <span class="tool-card-badge" style="background-color: #fef9c3; color: #a16207; margin-bottom: 0; vertical-align: middle; margin-right: 8px;">Tool 05</span>
+                    <span style="font-weight: 700; font-size: 1.05rem;">Quality Recognition</span>
+                </div>
+                <a href="/quality" class="btn btn-sm" style="padding: 4px 12px; font-size: 0.8rem; background: #f8f9fa; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; text-decoration: none; font-weight: 500;">
+                    Go To Tool →
+                </a>
+            </div>
+            <div class="display-panel-body">
+                <p style="color: var(--text-muted); line-height: 1.6;">
+                    The Quality Recognition module audits formal community curatorial designations awarded to campaign submissions by Wikimedia Commons peer-review committees:
+                </p>
+                <ol style="color: var(--text-ink); line-height: 1.6; padding-left: 20px;">
+                    <li><strong>Campaign Query:</strong> Select target event, country, and year (e.g. <code>wlmde24</code>, <code>wleua21</code>).</li>
+                    <li><strong>Commons Category Tree Harvesting:</strong> Traverses structured subcategories including <code>Quality images from [Campaign]</code>, <code>Featured pictures from [Campaign]</code>, and <code>Valued images from [Campaign]</code>.</li>
+                    <li><strong>Honors &amp; Showcase Outputs:</strong>
+                        <ul style="margin-top: 4px; padding-left: 18px;">
+                            <li><strong>Overall Quality Rate (\(Q_r\)):</strong> Percentage of submissions achieving formal quality recognition.</li>
+                            <li><strong>Honors Breakdown:</strong> Itemized counts of Quality Images (QI), Featured Pictures (FP), and Valued Images (VI).</li>
+                            <li><strong>Recognized Files Showcase:</strong> Interactive media gallery with lazy-loaded thumbnails, file titles, badge tags, and direct Commons links.</li>
+                            <li><strong>Honored Photographers Hall of Fame:</strong> Distinct accredited photographers whose works were honored by the community.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <div class="math-panel">
+                    <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Quality Distinction Rate Formulation</h4>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+                        For campaign upload portfolio \(F\), let \(F_{\text{honored}}\) denote files awarded QI, FP, or VI status:
+                    </p>
+                    <div class="math-formula">
+                        \[ Q_r = \left(\frac{|F_{\text{honored}}|}{|F|}\right) \times 100\%, \quad \text{Honored Photographers } H = |\{ \text{uploader}(f) \mid f \in F_{\text{honored}} \}| \]
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- 6. ACADEMIC REFERENCES & GLOSSARY                                  -->
+        <!-- ================================================================== -->
+        <div class="display-panel" id="glossary-guide">
+            <div class="display-panel-header">
+                <span style="font-weight: 700; font-size: 1.05rem;">Academic Literature &amp; Metric Glossary</span>
+            </div>
+            <div class="display-panel-body">
                 <div class="math-panel">
                     <h4 style="margin: 0 0 8px 0; color: var(--text-ink);">Academic Literature &amp; Foundational Research</h4>
                     <ul style="color: var(--text-ink); font-size: 0.85rem; line-height: 1.6; margin: 0; padding-left: 20px;">
@@ -1888,18 +1985,33 @@
                         </thead>
                         <tbody>
                             <tr>
+                                <td><strong>Evaluation Index</strong></td>
+                                <td>\(0.25 S_{\text{ret}} + 0.25 S_{\text{grow}} + 0.20 S_{\text{util}} + 0.15 S_{\text{qual}} + 0.15 S_{\text{div}}\)</td>
+                                <td>Composite 0–100 campaign health score regularized with Empirical Bayesian shrinkage against regional peers.</td>
+                            </tr>
+                            <tr>
                                 <td><strong>Directional Retention (\(R_{A \to B}\))</strong></td>
                                 <td>\(\frac{|U_A \cap U_B|}{|U_A|} \times 100\%\)</td>
                                 <td>Percentage of distinct uploaders from cohort \(A\) who returned to submit at least one file in subsequent edition \(B\).</td>
                             </tr>
                             <tr>
-                                <td><strong>Content Utility (\(S_{\text{util}}\))</strong></td>
+                                <td><strong>Growth Capacity (\(S_{\text{grow}}\))</strong></td>
+                                <td>\(\frac{|U_{\text{target}} \setminus U_{\text{base}}|}{|U_{\text{target}}|} \times 100\%\)</td>
+                                <td>Proportion of target edition uploaders who are first-time entrants relative to the baseline edition.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Content Utility (\(S_{\text{util}}\) / \(U_r\))</strong></td>
                                 <td>\(\frac{|F_{\text{in-use}}|}{|F_{\text{total}}|} \times 100\%\)</td>
-                                <td>Proportion of campaign uploads embedded across Wikipedia articles, Wikidata, Wikivoyage, or other Wikimedia projects via <code>prop=globalusage</code>.</td>
+                                <td>Proportion of campaign uploads embedded across Wikipedia articles, Wikidata, Wikivoyage, or sister projects via <code>prop=globalusage</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Quality Recognition (\(S_{\text{qual}}\) / \(Q_r\))</strong></td>
+                                <td>\(\frac{|F_{\text{honored}}|}{|F_{\text{total}}|} \times 100\%\)</td>
+                                <td>Proportion of submissions receiving formal Commons designations (Quality Images, Featured Pictures, Valued Images).</td>
                             </tr>
                             <tr>
                                 <td><strong>Newcomer Influx (\(I_t\))</strong></td>
-                                <td>\(U_t \setminus \bigcup_{j &lt; t} U_j\)</td>
+                                <td>\(U_t \setminus \bigcup_{j < t} U_j\)</td>
                                 <td>First-time participants in edition \(t\) with no prior upload history in any previous edition of the evaluated contest series.</td>
                             </tr>
                             <tr>
@@ -1908,7 +2020,7 @@
                                 <td>Total unique contributors ever mobilized by the campaign series through edition year \(t\).</td>
                             </tr>
                             <tr>
-                                <td><strong>Top-10% Concentration</strong></td>
+                                <td><strong>Top-10% Concentration (\(S_{\text{div}}\))</strong></td>
                                 <td>\(\frac{\sum_{i=1}^{\lfloor 0.1 N \rfloor} u_i}{\sum_{i=1}^N u_i} \times 100\%\)</td>
                                 <td>Share of total submissions uploaded by the most active 10% of participants; measures structural reliance on power users.</td>
                             </tr>
