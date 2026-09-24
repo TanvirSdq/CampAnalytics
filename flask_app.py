@@ -13,7 +13,9 @@ import matplotlib
 matplotlib.use('Agg') # Ensure matplotlib can run headlessly
 import matplotlib.pyplot as plt
 import datetime
+import threading
 
+_plot_lock = threading.Lock()
 # Import configurations
 import app_config
 from app_config import (
@@ -297,8 +299,9 @@ def influx():
                     else:
                         event_name = EVENT_MAP.get(event_type, event_type.upper())
                         chart_title = f"Wiki Loves {event_name} · {country_name}"
-                    fig = analytics.create_influx_barchart(influx_result['records'], title=chart_title)
-                    chart_b64 = fig_to_base64(fig)
+                    with _plot_lock:
+                        fig = analytics.create_influx_barchart(influx_result['records'], title=chart_title)
+                        chart_b64 = fig_to_base64(fig)
             except Exception as e:
                 error = f"Error evaluating influx trends: {str(e)}"
             
@@ -422,8 +425,9 @@ def retention():
                     tables.append(df.to_html(classes="data-table", index=False))
             elif view_mode == 'Heatmap':
                 for country_code, events in valid_countries.items():
-                    fig = analytics.create_heatmap(events, COUNTRY_MAP.get(country_code, country_code))
-                    heatmaps.append((COUNTRY_MAP.get(country_code, country_code), fig_to_base64(fig)))
+                    with _plot_lock:
+                        fig = analytics.create_heatmap(events, COUNTRY_MAP.get(country_code, country_code))
+                        heatmaps.append((COUNTRY_MAP.get(country_code, country_code), fig_to_base64(fig)))
             elif view_mode == 'Worldmap':
                 world_df = analytics.build_world_data(valid_countries, metric_choice)
                 if not world_df.empty:

@@ -1819,6 +1819,7 @@ table.data-table tfoot td:first-child {
         display: flex;
         align-items: center;
         gap: 8px;
+        white-space: nowrap;
     }
 
     .navbar-brand {
@@ -1830,9 +1831,7 @@ table.data-table tfoot td:first-child {
     }
 
     .navbar-right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        display: none !important;
     }
 
     .nav-util-text {
