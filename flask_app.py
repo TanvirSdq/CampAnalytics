@@ -6,6 +6,7 @@ import io
 import re
 from collections import defaultdict
 from flask import Flask, render_template, request, redirect, url_for
+from flask_compress import Compress
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -35,6 +36,7 @@ for reg_name, ccs in REGION_COUNTRY_MAPPING.items():
         COUNTRY_TO_REGION[cc] = reg_name
 
 app = Flask(__name__)
+Compress(app)
 
 # Make config variables available to all templates
 @app.context_processor

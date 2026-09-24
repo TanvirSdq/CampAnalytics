@@ -9,3 +9,4 @@ packaging
 flask
 gunicorn
 PyMySQL
+Flask-Compress
