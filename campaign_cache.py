@@ -86,10 +86,13 @@ def _backend_key():
     config = _mariadb_config()
     if config:
         return ("mariadb", config["host"], config["port"], config["database"], config["user"])
-    # Never silently create a production SQLite file on Toolforge.
-    if os.getenv("TOOLFORGE") or os.getenv("TOOLFORGE_TOOL_NAME"):
-        return None
-    return ("sqlite", os.path.abspath(os.getenv("CAMPAIGN_CACHE_SQLITE_PATH", "campaign_cache.sqlite3")))
+    
+    if os.path.exists("/data/project/campanalytics"):
+        db_path = "/data/project/campanalytics/campaign_cache.sqlite3"
+    else:
+        db_path = os.getenv("CAMPAIGN_CACHE_SQLITE_PATH", "campaign_cache.sqlite3")
+        
+    return ("sqlite", os.path.abspath(db_path))
 
 
 def _new_connection(key):

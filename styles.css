@@ -54,7 +54,7 @@ html, body {
 }
 
 .navbar-container {
-    max-width: min(1760px, 96vw);
+    max-width: min(1440px, 92vw);
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -233,7 +233,7 @@ html, body {
    Main Content Layout
    ========================================================================== */
 .main-wrapper {
-    max-width: min(1760px, 96vw);
+    max-width: min(1440px, 92vw);
     margin: 0 auto;
     padding: 24px clamp(16px, 2vw, 32px) 48px;
     min-height: calc(100vh - 120px);
