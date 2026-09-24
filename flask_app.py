@@ -91,7 +91,7 @@ def index():
         return health()
     elif mode in ('New User Influx', 'Influx', 'New Users'):
         return influx()
-    elif mode in ('Methodology', 'Methodology & Usage', 'info'):
+    elif mode in ('Methodology', 'Methodology & Usage', 'info', 'Info'):
         return render_template('index.html', mode='Methodology')
     return render_template('index.html', mode='Tools')
 
@@ -100,6 +100,7 @@ def tools():
     return render_template('index.html', mode='Tools')
 
 @app.route('/methodology', methods=['GET'])
+@app.route('/info', methods=['GET'])
 def methodology():
     return render_template('index.html', mode='Methodology')
 

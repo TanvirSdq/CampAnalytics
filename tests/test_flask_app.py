@@ -98,6 +98,13 @@ class TestIndexAndNavigationRoutes(BaseTestCase):
             "Expected KaTeX scripts, styles, or LaTeX mathematical notation in methodology view."
         )
 
+    def test_info_route(self):
+        """Verify dedicated /info endpoint returns 200 and renders Info tab."""
+        response = self.client.get('/info')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Info', text)
+
 
 class TestRetentionRoute(BaseTestCase):
     """Tests for /retention endpoint across table, heatmap, and worldmap views."""

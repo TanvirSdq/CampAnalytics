@@ -72,7 +72,7 @@
                             <a href="/influx" class="nav-tab-link {% if mode == 'New User Influx' or request.path == '/influx' %}active{% endif %}">Influx</a>
                         </li>
                         <li class="nav-tab-item">
-                            <a href="/methodology" class="nav-tab-link {% if mode in ('Methodology', 'Methodology & Usage') or request.path == '/methodology' %}active{% endif %}">Methodology</a>
+                            <a href="/methodology" class="nav-tab-link {% if mode in ('Methodology', 'Methodology & Usage', 'Info') or request.path in ('/methodology', '/info') %}active{% endif %}">Info</a>
                         </li>
                     </ul>
                 </nav>
