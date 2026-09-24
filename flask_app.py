@@ -117,7 +117,7 @@ def utility():
     year = req_dict.get('utility_year', '').strip()
 
     default_year = 2024
-    default_code = "wlmbd24"
+    default_code = "wlmde24"
 
     if request.method == 'GET' and not request.args:
         target_campaign = default_code
@@ -142,7 +142,7 @@ def utility():
     error = None
     m = CODE_RE.match(target_campaign.lower())
     if not m:
-        error = f"Invalid campaign code format '{target_campaign}'. Please specify in standard syntax e.g. wlmbd24, wlede22."
+        error = f"Invalid campaign code format '{target_campaign}'. Please specify in standard syntax e.g. wlmde24, wlmit23."
     else:
         evt, cc, yr = m.group(1), m.group(2), m.group(3)
         scope_notice = analytics.get_campaign_scope_notice(evt, cc)
@@ -159,7 +159,7 @@ def utility():
         mode='Content Utility',
         target_campaign=target_campaign,
         utility_event_type=m.group(1) if m else (event_type or 'wlm'),
-        utility_country=m.group(2) if m else (country or 'bd'),
+        utility_country=m.group(2) if m else (country or 'de'),
         utility_year=str(2000 + int(m.group(3))) if m else (year or '2024'),
         utility_result=utility_result,
         error=error
@@ -451,10 +451,10 @@ def health():
         return render_template(
             'index.html',
             mode='Health Evaluation',
-            target_event=f'wlmbd{current_year_short}',
+            target_event=f'wlmde{current_year_short}',
             comp_mode='Previous Year Baseline',
             baseline_event='',
-            region='South Asia',
+            region='Northern & Western Europe',
             error=None,
             metrics=None,
             insights=None,

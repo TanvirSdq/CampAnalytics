@@ -136,29 +136,25 @@
                                     <strong>allde21 allde22</strong>
                                     <span class="preset-tag-label">All Campaigns Germany ('21–'22)</span>
                                 </button>
-                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('allbd22 allbd23')">
-                                    <strong>allbd22 allbd23</strong>
-                                    <span class="preset-tag-label">All Campaigns Bangladesh ('22–'23)</span>
-                                </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('wlmde21 wlmde22')">
                                     <strong>wlmde21 wlmde22</strong>
                                     <span class="preset-tag-label">Monuments Germany ('21–'22)</span>
                                 </button>
-                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('wlmbd22 wlmbd23')">
-                                    <strong>wlmbd22 wlmbd23</strong>
-                                    <span class="preset-tag-label">Monuments Bangladesh ('22–'23)</span>
+                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('wlmit21 wlmit22 wlmit23')">
+                                    <strong>wlmit21 wlmit22 wlmit23</strong>
+                                    <span class="preset-tag-label">Monuments Italy ('21–'23)</span>
                                 </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('wlein21 wlein22')">
                                     <strong>wlein21 wlein22</strong>
                                     <span class="preset-tag-label">Earth India ('21–'22)</span>
                                 </button>
-                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('wlfbd22 wlfbd23')">
-                                    <strong>wlfbd22 wlfbd23</strong>
-                                    <span class="preset-tag-label">Folklore Bangladesh ('22–'23)</span>
+                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('allbd22 allbd23')">
+                                    <strong>allbd22 allbd23</strong>
+                                    <span class="preset-tag-label">All Campaigns Bangladesh ('22–'23)</span>
                                 </button>
-                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('wlmit21 wlmit22 wlmit23')">
-                                    <strong>wlmit21 wlmit22 wlmit23</strong>
-                                    <span class="preset-tag-label">Monuments Italy ('21–'23)</span>
+                                <button type="button" class="preset-tag-btn" onclick="loadRetentionPreset('wlmbd22 wlmbd23')">
+                                    <strong>wlmbd22 wlmbd23</strong>
+                                    <span class="preset-tag-label">Monuments Bangladesh ('22–'23)</span>
                                 </button>
                             </div>
                             <div style="margin-top: 12px; font-size: 0.76rem; color: var(--text-muted); line-height: 1.4;">
@@ -377,7 +373,7 @@
                                     <select id="health_country" name="health_country" class="form-control" onchange="syncHealthBuilderToCode()">
                                         <option value="">-- Select Country --</option>
                                         {% for country_key in COUNTRY_OPTIONS %}
-                                            <option value="{{ country_key }}" {% if (target_event and target_event[3:5] == country_key) or (not target_event and country_key == 'bd') %}selected{% endif %}>{{ COUNTRY_MAP[country_key].replace('_', ' ') }} ({{ country_key|upper }})</option>
+                                            <option value="{{ country_key }}" {% if (target_event and target_event[3:5] == country_key) or (not target_event and country_key == 'de') %}selected{% endif %}>{{ COUNTRY_MAP[country_key].replace('_', ' ') }} ({{ country_key|upper }})</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -394,8 +390,8 @@
                                     Target Campaign Registry Code
                                     <span style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">(Auto-assembled from selection or editable)</span>
                                 </label>
-                                <input type="text" id="target_event" name="target_event" value="{{ target_event if target_event else 'wlmbd24' }}" placeholder="e.g., wlmbd24" class="form-control form-control-code" required oninput="parseCodeToHealthBuilder()">
-                                <div class="form-hint" id="health-scope-hint">Standard event code syntax: prefix (all / wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmbd24, allde24, wlang23).</div>
+                                <input type="text" id="target_event" name="target_event" value="{{ target_event if target_event else 'wlmde24' }}" placeholder="e.g., wlmde24" class="form-control form-control-code" required oninput="parseCodeToHealthBuilder()">
+                                <div class="form-hint" id="health-scope-hint">Standard event code syntax: prefix (all / wlm / wle / wlf / wla / wlb) + country code (2 letters) + 2-digit year (e.g. wlmde24, allde24, wlang23).</div>
                             </div>
 
                             <div class="form-group">
@@ -414,7 +410,7 @@
 
                             <div class="form-group" id="custom-baseline-group" style="{% if comp_mode != 'Custom Verification Code' %}display: none;{% endif %}">
                                 <label for="baseline_event" class="form-label">Custom Baseline Campaign Code</label>
-                                <input type="text" id="baseline_event" name="baseline_event" value="{{ baseline_event if baseline_event else '' }}" placeholder="e.g., wlmbd22" class="form-control form-control-code">
+                                <input type="text" id="baseline_event" name="baseline_event" value="{{ baseline_event if baseline_event else '' }}" placeholder="e.g., wlmde22" class="form-control form-control-code">
                                 <div class="form-hint">Specify prior reference edition for custom longitudinal comparison.</div>
                             </div>
 
@@ -422,7 +418,7 @@
                                 <label for="region" class="form-label">Geographic Standardization Framework</label>
                                 <select id="region" name="region" class="form-control">
                                     {% for reg in REGION_COUNTRY_MAPPING.keys() %}
-                                        <option value="{{ reg }}" {% if region == reg or (not region and 'South Asia' in reg) %}selected{% endif %}>{{ reg }}</option>
+                                        <option value="{{ reg }}" {% if region == reg or (not region and 'Northern & Western Europe' in reg) %}selected{% endif %}>{{ reg }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="form-hint">Regional benchmark norms are calibrated against top peer campaigns in this geographic cluster (auto-detected from country).</div>
@@ -441,17 +437,13 @@
                                     <strong>allde22</strong>
                                     <span class="preset-tag-label">All Campaigns Germany</span>
                                 </button>
-                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('allbd{{ CURRENT_YEAR % 100 }}', 'South Asia', '')">
-                                    <strong>allbd{{ CURRENT_YEAR % 100 }}</strong>
-                                    <span class="preset-tag-label">All Campaigns Bangladesh</span>
-                                </button>
-                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmbd{{ CURRENT_YEAR % 100 }}', 'South Asia', '')">
-                                    <strong>wlmbd{{ CURRENT_YEAR % 100 }}</strong>
-                                    <span class="preset-tag-label">Monuments Bangladesh (South Asia)</span>
-                                </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmde22', 'Northern & Western Europe', '')">
                                     <strong>wlmde22</strong>
                                     <span class="preset-tag-label">Monuments Germany (Northern & Western Europe)</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmit23', 'Southern Europe', '')">
+                                    <strong>wlmit23</strong>
+                                    <span class="preset-tag-label">Monuments Italy (Southern Europe)</span>
                                 </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlein22', 'South Asia', '')">
                                     <strong>wlein22</strong>
@@ -461,9 +453,13 @@
                                     <strong>wlfph23</strong>
                                     <span class="preset-tag-label">Folklore Philippines (ESEAP)</span>
                                 </button>
-                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmit23', 'Southern Europe', '')">
-                                    <strong>wlmit23</strong>
-                                    <span class="preset-tag-label">Monuments Italy (Southern Europe)</span>
+                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('wlmbd{{ CURRENT_YEAR % 100 }}', 'South Asia', '')">
+                                    <strong>wlmbd{{ CURRENT_YEAR % 100 }}</strong>
+                                    <span class="preset-tag-label">Monuments Bangladesh (South Asia)</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadHealthPreset('allbd{{ CURRENT_YEAR % 100 }}', 'South Asia', '')">
+                                    <strong>allbd{{ CURRENT_YEAR % 100 }}</strong>
+                                    <span class="preset-tag-label">All Campaigns Bangladesh</span>
                                 </button>
                             </div>
                             <div style="margin-top: 12px; font-size: 0.76rem; color: var(--text-muted); line-height: 1.4;">
@@ -816,29 +812,29 @@
                             <div class="example-box">
                                 <div class="example-box-title">Featured Multi-Year Presets</div>
                                 <div class="preset-tags">
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'bd', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
-                                        allbd{{ DEFAULT_START_YEAR % 100 }} ... allbd{{ CURRENT_YEAR % 100 }}
-                                        <span class="preset-tag-label">All Campaigns · Bangladesh</span>
-                                    </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'de', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
                                         allde{{ DEFAULT_START_YEAR % 100 }} ... allde{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">All Campaigns · Germany</span>
-                                    </button>
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wla', 'ng', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
-                                        wlang{{ DEFAULT_START_YEAR % 100 }} ... wlang{{ CURRENT_YEAR % 100 }}
-                                        <span class="preset-tag-label">Africa · Nigeria</span>
                                     </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlm', 'de', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
                                         wlmde{{ DEFAULT_START_YEAR % 100 }} ... wlmde{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">Monuments · Germany</span>
                                     </button>
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlf', 'it', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        wlfit{{ DEFAULT_START_YEAR % 100 }} ... wlfit{{ CURRENT_YEAR % 100 }}
+                                        <span class="preset-tag-label">Folklore · Italy</span>
+                                    </button>
                                     <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wle', 'in', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
                                         wlein{{ DEFAULT_START_YEAR % 100 }} ... wlein{{ CURRENT_YEAR % 100 }}
                                         <span class="preset-tag-label">Earth · India</span>
                                     </button>
-                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wlf', 'it', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
-                                        wlfit{{ DEFAULT_START_YEAR % 100 }} ... wlfit{{ CURRENT_YEAR % 100 }}
-                                        <span class="preset-tag-label">Folklore · Italy</span>
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('wla', 'ng', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        wlang{{ DEFAULT_START_YEAR % 100 }} ... wlang{{ CURRENT_YEAR % 100 }}
+                                        <span class="preset-tag-label">Africa · Nigeria</span>
+                                    </button>
+                                    <button type="button" class="preset-tag-btn" onclick="loadInfluxPreset('all', 'bd', {{ DEFAULT_START_YEAR }}, {{ CURRENT_YEAR }})">
+                                        allbd{{ DEFAULT_START_YEAR % 100 }} ... allbd{{ CURRENT_YEAR % 100 }}
+                                        <span class="preset-tag-label">All Campaigns · Bangladesh</span>
                                     </button>
                                 </div>
                             </div>
@@ -1131,7 +1127,7 @@
                                     <label for="utility_country" class="form-label">Target Country</label>
                                     <select id="utility_country" name="utility_country" class="form-control" onchange="syncUtilityBuilder()">
                                         {% for country_key in COUNTRY_OPTIONS %}
-                                            <option value="{{ country_key }}" {% if (utility_country or 'bd') == country_key %}selected{% endif %}>
+                                            <option value="{{ country_key }}" {% if (utility_country or 'de') == country_key %}selected{% endif %}>
                                                 {{ COUNTRY_MAP[country_key].replace('_', ' ') }} ({{ country_key|upper }})
                                             </option>
                                         {% endfor %}
@@ -1147,7 +1143,7 @@
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label for="target_campaign_utility" class="form-label">Target Campaign Code</label>
                                 <div style="display: flex; gap: 8px; align-items: center;">
-                                    <input type="text" id="target_campaign_utility" name="target_campaign" value="{{ target_campaign or 'wlmbd24' }}" placeholder="e.g. wlmbd24" class="form-control form-control-code" style="max-width: 240px;" oninput="parseCodeToUtilityBuilder()">
+                                    <input type="text" id="target_campaign_utility" name="target_campaign" value="{{ target_campaign or 'wlmde24' }}" placeholder="e.g. wlmde24" class="form-control form-control-code" style="max-width: 240px;" oninput="parseCodeToUtilityBuilder()">
                                     <button type="submit" class="btn btn-primary" style="min-height: 42px; padding: 0 20px;">
                                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                             <circle cx="11" cy="11" r="8"></circle>
@@ -1164,9 +1160,9 @@
                         <div class="example-box">
                             <div class="example-box-title">Quick Preset Examples</div>
                             <div class="preset-tags">
-                                <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wlm', 'bd', 2024)">
-                                    <strong>wlmbd24</strong>
-                                    <span class="preset-tag-label">Monuments Bangladesh 2024</span>
+                                <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wlm', 'de', 2024)">
+                                    <strong>wlmde24</strong>
+                                    <span class="preset-tag-label">Monuments Germany 2024</span>
                                 </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wlm', 'de', 2023)">
                                     <strong>wlmde23</strong>
@@ -1179,6 +1175,10 @@
                                 <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wlf', 'in', 2022)">
                                     <strong>wlfin22</strong>
                                     <span class="preset-tag-label">Folklore India 2022</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wlm', 'bd', 2024)">
+                                    <strong>wlmbd24</strong>
+                                    <span class="preset-tag-label">Monuments Bangladesh 2024</span>
                                 </button>
                             </div>
                         </div>
@@ -1454,10 +1454,6 @@
                                     <strong>wlmde24</strong>
                                     <span class="preset-tag-label">Monuments Germany 2024</span>
                                 </button>
-                                <button type="button" class="preset-tag-btn" onclick="loadQualityPreset('wlm', 'bd', 2024)">
-                                    <strong>wlmbd24</strong>
-                                    <span class="preset-tag-label">Monuments Bangladesh 2024</span>
-                                </button>
                                 <button type="button" class="preset-tag-btn" onclick="loadQualityPreset('wle', 'ua', 2021)">
                                     <strong>wleua21</strong>
                                     <span class="preset-tag-label">Earth Ukraine 2021</span>
@@ -1465,6 +1461,10 @@
                                 <button type="button" class="preset-tag-btn" onclick="loadQualityPreset('wle', 'se', 2022)">
                                     <strong>wlese22</strong>
                                     <span class="preset-tag-label">Earth Sweden 2022</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadQualityPreset('wlm', 'bd', 2024)">
+                                    <strong>wlmbd24</strong>
+                                    <span class="preset-tag-label">Monuments Bangladesh 2024</span>
                                 </button>
                             </div>
                         </div>
@@ -2744,7 +2744,7 @@
             const checkedEvt = document.querySelector('input[name="utility_event_type"]:checked');
             const evt = checkedEvt ? checkedEvt.value : 'wlm';
             const countrySelect = document.getElementById('utility_country');
-            const cc = countrySelect ? countrySelect.value.toLowerCase() : 'bd';
+            const cc = countrySelect ? countrySelect.value.toLowerCase() : 'de';
             const yrInput = document.getElementById('utility_year');
             const yr = parseInt(yrInput ? yrInput.value : '', 10) || ({{ CURRENT_YEAR }} - 1);
             const yy = String(yr % 100).padStart(2, '0');
