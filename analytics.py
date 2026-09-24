@@ -403,9 +403,55 @@ def get_campaign_structural_metrics(code):
     if cached_metrics is not None:
         return cached_metrics
 
+    match = CODE_RE.match(code_clean)
+    if match and match.group(1) == 'all':
+        event, cc, yr = match.groups()
+        sub_codes = []
+        for e in EVENT_MAP.keys():
+            scope = EVENT_COUNTRY_SCOPE.get(e, '*')
+            if isinstance(scope, dict):
+                allowed = scope.get('countries', [])
+                if cc in allowed:
+                    if scope.get('no_country_suffix'):
+                        sub_codes.append(f"{e}{yr}")
+                    else:
+                        sub_codes.append(f"{e}{cc}{yr}")
+            elif scope == '*':
+                sub_codes.append(f"{e}{cc}{yr}")
+            elif isinstance(scope, list) and cc in scope:
+                sub_codes.append(f"{e}{cc}{yr}")
+
+        sub_results = fetch_structural_metrics_concurrently(sub_codes)
+        
+        total_uploads_all = 0
+        quality_uploads_all = 0
+        used_uploads_all = 0
+        top10_uploads_all = 0
+        
+        for sc, m in sub_results.items():
+            t = m.get("total_uploads", 0)
+            if t > 0:
+                total_uploads_all += t
+                quality_uploads_all += (m.get("quality_image_share", 0.0) / 100.0) * t
+                used_uploads_all += (m.get("usage_share", 0.0) / 100.0) * t
+                top10_uploads_all += (m.get("top10_uploader_share", 0.0) / 100.0) * t
+        
+        if total_uploads_all > 0:
+            agg_metrics = {
+                "quality_image_share": (quality_uploads_all / total_uploads_all) * 100,
+                "top10_uploader_share": (top10_uploads_all / total_uploads_all) * 100,
+                "usage_share": (used_uploads_all / total_uploads_all) * 100,
+                "total_uploads": total_uploads_all
+            }
+        else:
+            agg_metrics = {"quality_image_share": 0.0, "top10_uploader_share": 100.0, "usage_share": 0.0, "total_uploads": 0}
+            
+        campaign_cache.put_metrics(code_clean, agg_metrics)
+        return agg_metrics
+
     category = code_to_category(code)
     if not category:
-        return {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "usage_share": 0.0, "total_uploads": 0}
+        return {"quality_image_share": 0.0, "top10_uploader_share": 100.0, "usage_share": 0.0, "total_uploads": 0}
 
     toolforge_uploaders = _fetch_toolforge_data(category)
 
@@ -463,7 +509,7 @@ def fetch_structural_metrics_concurrently(codes, threads=8):
             try:
                 results[code] = future.result()
             except Exception:
-                results[code] = {"quality_image_share": 0.0, "top10_uploader_share": 0.0, "usage_share": 0.0, "total_uploads": 0}
+                results[code] = {"quality_image_share": 0.0, "top10_uploader_share": 100.0, "usage_share": 0.0, "total_uploads": 0}
 
     return results
 
