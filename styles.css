@@ -54,12 +54,12 @@ html, body {
 }
 
 .navbar-container {
-    max-width: min(1520px, 95vw);
+    max-width: min(1760px, 96vw);
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 clamp(16px, 2.5vw, 36px);
+    padding: 0 clamp(16px, 2vw, 32px);
     height: 52px;
 }
 
@@ -221,9 +221,9 @@ html, body {
    Main Content Layout
    ========================================================================== */
 .main-wrapper {
-    max-width: min(1520px, 95vw);
+    max-width: min(1760px, 96vw);
     margin: 0 auto;
-    padding: 24px clamp(16px, 2.5vw, 36px) 48px;
+    padding: 24px clamp(16px, 2vw, 32px) 48px;
     min-height: calc(100vh - 120px);
 }
 

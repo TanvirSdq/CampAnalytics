@@ -116,8 +116,8 @@ def utility():
     country = req_dict.get('utility_country', '').strip().lower()
     year = req_dict.get('utility_year', '').strip()
 
-    current_year_short = str(datetime.date.today().year - 1)[-2:]
-    default_code = f"wlmbd{current_year_short}"
+    default_year = 2024
+    default_code = "wlmbd24"
 
     if request.method == 'GET' and not request.args:
         target_campaign = default_code
@@ -160,7 +160,7 @@ def utility():
         target_campaign=target_campaign,
         utility_event_type=m.group(1) if m else (event_type or 'wlm'),
         utility_country=m.group(2) if m else (country or 'bd'),
-        utility_year=str(2000 + int(m.group(3))) if m else (year or str(datetime.date.today().year - 1)),
+        utility_year=str(2000 + int(m.group(3))) if m else (year or '2024'),
         utility_result=utility_result,
         error=error
     )
@@ -173,8 +173,8 @@ def quality():
     country = req_dict.get('quality_country', '').strip().lower()
     year = req_dict.get('quality_year', '').strip()
 
-    current_year_short = str(datetime.date.today().year - 1)[-2:]
-    default_code = f"wlmde{current_year_short}"
+    default_year = 2024
+    default_code = "wlmde24"
 
     if request.method == 'GET' and not request.args:
         target_campaign = default_code
@@ -217,7 +217,7 @@ def quality():
         target_campaign=target_campaign,
         quality_event_type=m.group(1) if m else (event_type or 'wlm'),
         quality_country=m.group(2) if m else (country or 'de'),
-        quality_year=str(2000 + int(m.group(3))) if m else (year or str(datetime.date.today().year - 1)),
+        quality_year=str(2000 + int(m.group(3))) if m else (year or '2024'),
         quality_result=quality_result,
         error=error
     )
