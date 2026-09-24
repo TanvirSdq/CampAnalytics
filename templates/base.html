@@ -60,7 +60,7 @@
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
                 </button>
-                <div class="navbar-brand-group" style="gap: 10px; display: flex; align-items: center;">
+                <div class="navbar-brand-group">
                     <a href="https://meta.wikimedia.org/wiki/Project_Korikath" class="nav-korikath-link" target="_blank" rel="noopener noreferrer" title="Project Korikath — Wikimedia Community Initiative">
                         <img src="{{ KORIKATH_LOGO_URL }}" alt="Project Korikath Logo" class="korikath-navbar-logo">
                     </a>
@@ -68,29 +68,31 @@
                         <span class="brand-bold">Camp</span><span class="brand-accent">Analytics</span>
                     </a>
                 </div>
-                <nav class="navbar-nav">
-                    <ul class="nav-tabs">
-                        <li class="nav-tab-item">
-                            <a href="/health" class="nav-tab-link {% if mode == 'Health Evaluation' or request.path == '/health' %}active{% endif %}">Evaluation</a>
-                        </li>
-                        <li class="nav-tab-item">
-                            <a href="/retention" class="nav-tab-link {% if mode == 'Retention Analytics' or request.path == '/retention' %}active{% endif %}">Retention</a>
-                        </li>
-                        <li class="nav-tab-item">
-                            <a href="/influx" class="nav-tab-link {% if mode == 'New User Influx' or request.path == '/influx' %}active{% endif %}">Influx</a>
-                        </li>
-                        <li class="nav-tab-item">
-                            <a href="/utility" class="nav-tab-link {% if mode == 'Content Utility' or request.path == '/utility' %}active{% endif %}">Utility</a>
-                        </li>
-                        <li class="nav-tab-item">
-                            <a href="/quality" class="nav-tab-link {% if mode == 'Quality Recognition' or request.path == '/quality' %}active{% endif %}">Quality</a>
-                        </li>
-                        <li class="nav-tab-item">
-                            <a href="/info" class="nav-tab-link {% if mode in ('Methodology', 'Methodology & Usage', 'Info') or request.path in ('/methodology', '/info') %}active{% endif %}">Info</a>
-                        </li>
-                    </ul>
-                </nav>
             </div>
+
+            <nav class="navbar-nav">
+                <ul class="nav-tabs">
+                    <li class="nav-tab-item">
+                        <a href="/health" class="nav-tab-link {% if mode in ('Health Evaluation', 'Evaluation') or request.path == '/health' %}active{% endif %}">Evaluation</a>
+                    </li>
+                    <li class="nav-tab-item">
+                        <a href="/retention" class="nav-tab-link {% if mode in ('Retention Analytics', 'Retention') or request.path == '/retention' %}active{% endif %}">Retention</a>
+                    </li>
+                    <li class="nav-tab-item">
+                        <a href="/influx" class="nav-tab-link {% if mode in ('New User Influx', 'Participant Influx', 'Influx') or request.path == '/influx' %}active{% endif %}">Influx</a>
+                    </li>
+                    <li class="nav-tab-item">
+                        <a href="/utility" class="nav-tab-link {% if mode in ('Content Utility', 'Utility') or request.path == '/utility' %}active{% endif %}">Utility</a>
+                    </li>
+                    <li class="nav-tab-item">
+                        <a href="/quality" class="nav-tab-link {% if mode in ('Quality Recognition', 'Quality') or request.path == '/quality' %}active{% endif %}">Quality</a>
+                    </li>
+                    <li class="nav-tab-item">
+                        <a href="/documentation" class="nav-tab-link {% if mode in ('Info & Documentation', 'Documentation', 'Methodology', 'Methodology & Usage', 'Info') or request.path in ('/documentation', '/info', '/methodology') %}active{% endif %}">Documentation</a>
+                    </li>
+                </ul>
+            </nav>
+
             <div class="navbar-right">
                 <a href="https://github.com/TanvirSdq/CampAnalytics" class="nav-util-link" target="_blank" rel="noopener noreferrer" title="View Source on GitHub">
                     <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" fill="currentColor">
@@ -121,7 +123,7 @@
         </div>
         <div class="mobile-nav-section-label">Analytical Tools Suite</div>
         <nav class="mobile-nav-menu">
-            <a href="/health" class="mobile-nav-item {% if mode == 'Health Evaluation' or request.path == '/health' %}active{% endif %}">
+            <a href="/health" class="mobile-nav-item {% if mode in ('Health Evaluation', 'Evaluation') or request.path == '/health' %}active{% endif %}">
                 <div class="mobile-nav-item-icon icon-eval">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
                 </div>
@@ -131,7 +133,7 @@
                 </div>
                 <span class="mobile-nav-tag tag-01">01</span>
             </a>
-            <a href="/retention" class="mobile-nav-item {% if mode == 'Retention Analytics' or request.path == '/retention' %}active{% endif %}">
+            <a href="/retention" class="mobile-nav-item {% if mode in ('Retention Analytics', 'Retention') or request.path == '/retention' %}active{% endif %}">
                 <div class="mobile-nav-item-icon icon-ret">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="6"></circle><circle cx="15" cy="12" r="6"></circle></svg>
                 </div>
@@ -141,7 +143,7 @@
                 </div>
                 <span class="mobile-nav-tag tag-02">02</span>
             </a>
-            <a href="/influx" class="mobile-nav-item {% if mode == 'New User Influx' or request.path == '/influx' %}active{% endif %}">
+            <a href="/influx" class="mobile-nav-item {% if mode in ('New User Influx', 'Participant Influx', 'Influx') or request.path == '/influx' %}active{% endif %}">
                 <div class="mobile-nav-item-icon icon-influx">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </div>
@@ -151,22 +153,22 @@
                 </div>
                 <span class="mobile-nav-tag tag-03">03</span>
             </a>
-            <a href="/utility" class="mobile-nav-item {% if mode == 'Content Utility' or request.path == '/utility' %}active{% endif %}">
+            <a href="/utility" class="mobile-nav-item {% if mode in ('Content Utility', 'Utility') or request.path == '/utility' %}active{% endif %}">
                 <div class="mobile-nav-item-icon icon-utility">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                 </div>
                 <div class="mobile-nav-item-content">
-                    <div class="mobile-nav-item-title">Content Utility</div>
+                    <div class="mobile-nav-item-title">Utility</div>
                     <div class="mobile-nav-item-desc">Global usage &amp; wiki propagation</div>
                 </div>
                 <span class="mobile-nav-tag tag-04">04</span>
             </a>
-            <a href="/quality" class="mobile-nav-item {% if mode == 'Quality Recognition' or request.path == '/quality' %}active{% endif %}">
+            <a href="/quality" class="mobile-nav-item {% if mode in ('Quality Recognition', 'Quality') or request.path == '/quality' %}active{% endif %}">
                 <div class="mobile-nav-item-icon icon-quality">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </div>
                 <div class="mobile-nav-item-content">
-                    <div class="mobile-nav-item-title">Quality Recognition</div>
+                    <div class="mobile-nav-item-title">Quality</div>
                     <div class="mobile-nav-item-desc">QI, FP &amp; photographer hall of fame</div>
                 </div>
                 <span class="mobile-nav-tag tag-05">05</span>
@@ -175,13 +177,13 @@
         <div class="mobile-nav-divider"></div>
         <div class="mobile-nav-section-label">Documentation</div>
         <nav class="mobile-nav-menu">
-            <a href="/info" class="mobile-nav-item {% if mode in ('Methodology', 'Methodology & Usage', 'Info') or request.path in ('/methodology', '/info') %}active{% endif %}">
+            <a href="/documentation" class="mobile-nav-item {% if mode in ('Info & Documentation', 'Documentation', 'Methodology', 'Methodology & Usage', 'Info') or request.path in ('/documentation', '/info', '/methodology') %}active{% endif %}">
                 <div class="mobile-nav-item-icon icon-info">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                 </div>
                 <div class="mobile-nav-item-content">
-                    <div class="mobile-nav-item-title">Methodology &amp; Info</div>
-                    <div class="mobile-nav-item-desc">Statistical formulations &amp; references</div>
+                    <div class="mobile-nav-item-title">Documentation</div>
+                    <div class="mobile-nav-item-desc">Statistical formulations, specs &amp; usage</div>
                 </div>
             </a>
         </nav>

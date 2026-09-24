@@ -248,7 +248,7 @@
                         <div class="math-panel" style="margin-top: 14px; margin-bottom: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 16px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                                 <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-ink);">Longitudinal Cohort Retention Formulation</div>
-                                <a href="/methodology#retention-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">Methodology Documentation →</a>
+                                <a href="/documentation#retention-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">Info &amp; Documentation →</a>
                             </div>
                             <div class="math-formula" style="margin: 4px 0; font-size: 0.92rem;">
                                 \[ \text{Retention}(C_A \to C_B) = \frac{|U_A \cap U_B|}{|U_A|} \times 100\% \]
@@ -331,7 +331,7 @@
                 <h1 class="page-title" style="margin-bottom: 4px;">Evaluation</h1>
                 <p class="page-subtitle" style="margin-bottom: 0;">Multi-dimensional campaign health evaluation calibrated against regional peer performance benchmarks.</p>
             </div>
-            <a href="/methodology#health-guide" class="btn btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.82rem; font-weight: 600; background: #ffffff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 4px; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.04); margin-top: 4px;">
+            <a href="/documentation#health-guide" class="btn btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.82rem; font-weight: 600; background: #ffffff; color: var(--wiki-blue); border: 1px solid #c8dafc; border-radius: 4px; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.04); margin-top: 4px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
                     <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
@@ -479,7 +479,7 @@
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
                         <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--nav-teal);">Evaluation Scorecard</span>
                         <span style="color: #cbd5e1;">·</span>
-                        <a href="/methodology#health-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">Methodology &amp; Usage Guide →</a>
+                        <a href="/documentation#health-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">Info &amp; Documentation →</a>
                     </div>
                     <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-ink);">Campaign: {{ target_event|upper }}</div>
                     <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 2px;">Regional Calibration Framework: {{ region }}</div>
@@ -582,8 +582,8 @@
             <div class="math-panel" style="margin-top: 14px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                     <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-ink);">Composite Community Health Weighting Formula</div>
-                    <a href="/methodology#health-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">
-                        Methodology Documentation →
+                    <a href="/documentation#health-guide" style="font-size: 0.78rem; color: var(--wiki-blue); text-decoration: none; font-weight: 500;">
+                        Info &amp; Documentation →
                     </a>
                 </div>
                 <div class="math-formula" style="margin: 4px 0; font-size: 0.92rem;">
@@ -1684,11 +1684,11 @@
         {% endif %}
 
     {# ====================================================================== #}
-    {# 6. METHODOLOGY & USAGE GUIDE VIEW                                      #}
+    {# 6. INFO & DOCUMENTATION VIEW                                           #}
     {# ====================================================================== #}
-    {% elif mode in ('Methodology', 'Methodology & Usage', 'Info') %}
-        <h1 class="page-title">Methodology &amp; Usage Guide</h1>
-        <p class="page-subtitle">Technical specifications, analytical formulations, and usage guidelines for the Campaign Analytics platform.</p>
+    {% elif mode in ('Info & Documentation', 'Documentation', 'Methodology', 'Methodology & Usage', 'Info') %}
+        <h1 class="page-title">Info &amp; Documentation</h1>
+        <p class="page-subtitle">Technical specifications, statistical formulations, and analytical usage guidelines for the Campaign Analytics platform.</p>
 
         <!-- ================================================================== -->
         <!-- 1. EVALUATION SECTION                                              -->
@@ -1944,9 +1944,9 @@
                                 <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
                             </svg>
                         </div>
-                        <span class="tool-card-badge" style="background-color: #fef3c7; color: #92400e;">Tool 01 · Evaluation</span>
+                        <span class="tool-card-badge" style="background-color: #fef3c7; color: #92400e;">Tool 01 · Health Evaluation</span>
                     </div>
-                    <h3 class="tool-card-title">Evaluation</h3>
+                    <h3 class="tool-card-title">Health Evaluation</h3>
                     <p class="tool-card-desc">Evaluate campaign vitality across five weighted structural indicators calibrated against regional peer performance benchmarks and movement baselines.</p>
                     <ul class="tool-card-features">
                         <li class="tool-card-feature-item">
@@ -1978,9 +1978,9 @@
                                 <circle cx="15" cy="12" r="6"></circle>
                             </svg>
                         </div>
-                        <span class="tool-card-badge">Tool 02 · Retention</span>
+                        <span class="tool-card-badge">Tool 02 · Retention Analytics</span>
                     </div>
-                    <h3 class="tool-card-title">Retention</h3>
+                    <h3 class="tool-card-title">Retention Analytics</h3>
                     <p class="tool-card-desc">Track longitudinal contributor movement and retention across multi-year editions. Analyze pairwise heatmaps, intersection matrices, and spatial choropleth maps across 50+ countries.</p>
                     <ul class="tool-card-features">
                         <li class="tool-card-feature-item">
@@ -2014,9 +2014,9 @@
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
                         </div>
-                        <span class="tool-card-badge" style="background-color: #dcfce7; color: #15803d;">Tool 03 · Influx</span>
+                        <span class="tool-card-badge" style="background-color: #dcfce7; color: #15803d;">Tool 03 · Participant Influx</span>
                     </div>
-                    <h3 class="tool-card-title">Influx</h3>
+                    <h3 class="tool-card-title">Participant Influx</h3>
                     <p class="tool-card-desc">Analyze newcomer acquisition, returning veteran retention, and community expansion over multi-year series. Includes stacked cohort visualizations and CSV data export.</p>
                     <ul class="tool-card-features">
                         <li class="tool-card-feature-item">
@@ -2050,7 +2050,7 @@
                                 <polyline points="21 15 16 10 5 21"></polyline>
                             </svg>
                         </div>
-                        <span class="tool-card-badge" style="background-color: #ede9fe; color: #6d28d9;">Tool 04 · Utility</span>
+                        <span class="tool-card-badge" style="background-color: #ede9fe; color: #6d28d9;">Tool 04 · Content Utility</span>
                     </div>
                     <h3 class="tool-card-title">Content Utility</h3>
                     <p class="tool-card-desc">Track global usage propagation across Wikimedia projects, article distribution, and media consumption footprints across Wikimedia Commons uploads.</p>
@@ -2084,7 +2084,7 @@
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                             </svg>
                         </div>
-                        <span class="tool-card-badge" style="background-color: #fef9c3; color: #a16207;">Tool 05 · Quality</span>
+                        <span class="tool-card-badge" style="background-color: #fef9c3; color: #a16207;">Tool 05 · Quality Recognition</span>
                     </div>
                     <h3 class="tool-card-title">Quality Recognition</h3>
                     <p class="tool-card-desc">Evaluate curatorial excellence, community recognition, Quality Images (QI), and Featured Pictures (FP) with contributor honor rolls.</p>
@@ -2116,11 +2116,11 @@
                 <div>
                     <h4 style="margin: 0 0 4px 0; font-size: 0.98rem; color: var(--text-ink); font-weight: 600;">Need Technical Documentation or Mathematical Formulations?</h4>
                     <p style="margin: 0; font-size: 0.86rem; color: var(--text-muted); line-height: 1.5;">
-                        Read formal definitions, weighting models, and data extraction specifications in the methodology guide.
+                        Read formal definitions, weighting models, and analytical specifications in the documentation.
                     </p>
                 </div>
-                <a href="/info" class="btn btn-secondary" style="padding: 8px 18px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
-                    View Methodology &amp; Info &rarr;
+                <a href="/documentation" class="btn btn-secondary" style="padding: 8px 18px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+                    View Info &amp; Documentation &rarr;
                 </a>
             </div>
         </div>

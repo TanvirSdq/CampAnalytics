@@ -95,18 +95,19 @@ def index():
         return utility()
     elif mode in ('Quality Recognition', 'Quality'):
         return quality()
-    elif mode in ('Methodology', 'Methodology & Usage', 'info', 'Info'):
-        return render_template('index.html', mode='Methodology')
+    elif mode in ('Methodology', 'Methodology & Usage', 'info', 'Info', 'Documentation', 'Info & Documentation'):
+        return render_template('index.html', mode='Info & Documentation')
     return render_template('index.html', mode='Tools')
 
 @app.route('/tools', methods=['GET'])
 def tools():
     return render_template('index.html', mode='Tools')
 
-@app.route('/methodology', methods=['GET'])
+@app.route('/documentation', methods=['GET'])
 @app.route('/info', methods=['GET'])
-def methodology():
-    return render_template('index.html', mode='Methodology')
+@app.route('/methodology', methods=['GET'])
+def documentation():
+    return render_template('index.html', mode='Info & Documentation')
 
 @app.route('/utility', methods=['GET', 'POST'])
 def utility():

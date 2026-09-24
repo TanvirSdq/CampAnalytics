@@ -99,11 +99,11 @@ class TestIndexAndNavigationRoutes(BaseTestCase):
         self.assertIn('mobile-nav-drawer', html)
         self.assertIn('mobile-nav-backdrop', html)
         # All 5 tools rendered in tools landing suite
-        self.assertIn('Tool 01 · Evaluation', html)
-        self.assertIn('Tool 02 · Retention', html)
-        self.assertIn('Tool 03 · Influx', html)
-        self.assertIn('Tool 04 · Utility', html)
-        self.assertIn('Tool 05 · Quality', html)
+        self.assertTrue('Tool 01 · Health Evaluation' in html or 'Tool 01 · Evaluation' in html)
+        self.assertTrue('Tool 02 · Retention Analytics' in html or 'Tool 02 · Retention' in html)
+        self.assertTrue('Tool 03 · Participant Influx' in html or 'Tool 03 · Influx' in html)
+        self.assertTrue('Tool 04 · Content Utility' in html or 'Tool 04 · Utility' in html)
+        self.assertTrue('Tool 05 · Quality Recognition' in html or 'Tool 05 · Quality' in html)
 
     def test_tools_route(self):
         """Verify dedicated /tools endpoint returns 200 and renders tools."""
@@ -117,19 +117,26 @@ class TestIndexAndNavigationRoutes(BaseTestCase):
         response = self.client.get('/methodology')
         self.assertEqual(response.status_code, 200)
         text = response.data.decode('utf-8')
-        self.assertIn('Methodology', text)
+        self.assertIn('Documentation', text)
         # Check for KaTeX resources or LaTeX mathematical expressions
         self.assertTrue(
             'katex' in text.lower() or '$$' in text or r'\(' in text or 'math' in text.lower(),
             "Expected KaTeX scripts, styles, or LaTeX mathematical notation in methodology view."
         )
 
+    def test_documentation_route(self):
+        """Verify dedicated /documentation endpoint returns 200 and renders Info & Documentation."""
+        response = self.client.get('/documentation')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Info &amp; Documentation', text)
+
     def test_info_route(self):
-        """Verify dedicated /info endpoint returns 200 and renders Info tab."""
+        """Verify dedicated /info endpoint returns 200 and renders Info & Documentation tab."""
         response = self.client.get('/info')
         self.assertEqual(response.status_code, 200)
         text = response.data.decode('utf-8')
-        self.assertIn('Info', text)
+        self.assertIn('Info &amp; Documentation', text)
 
 
 class TestRetentionRoute(BaseTestCase):
