@@ -1097,9 +1097,596 @@
         {% endif %}
 
     {# ====================================================================== #}
-    {# 4. METHODOLOGY & USAGE GUIDE VIEW                                      #}
+    {# 4. CONTENT UTILITY ANALYTICS VIEW                                      #}
     {# ====================================================================== #}
-    {% elif mode in ('Methodology', 'Methodology & Usage') %}
+    {% elif mode == 'Content Utility' %}
+        <h1 class="page-title">Content Utility Analytics</h1>
+        <p class="page-subtitle">Global usage footprint, Wikimedia project propagation, and cross-wiki integration across Wikimedia Commons uploads.</p>
+
+        <form action="/utility" method="GET" id="utility-form">
+            <!-- Structured Panel: Selection Builder -->
+            <div class="display-panel">
+                <div class="display-panel-header">
+                    <span>What to look up · Selection Builder</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Configure Campaign Target</span>
+                </div>
+                <div class="display-panel-body">
+                    <div class="builder-layout">
+                        <!-- Left: Form Controls -->
+                        <div>
+                            <!-- Event Matrix Radios -->
+                            <div class="form-group">
+                                <label class="form-label">Campaign Type</label>
+                                <div class="pill-group" id="utility-pill-group">
+                                    {% for event_key, event_val in EVENT_MAP.items() %}
+                                        <input type="radio" name="utility_event_type" value="{{ event_key }}" id="util-evt-{{ event_key }}" class="pill-checkbox" {% if (utility_event_type or 'wlm') == event_key %}checked{% endif %} onchange="syncUtilityBuilder()">
+                                        <label for="util-evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Target Country & Year in Grid -->
+                            <div class="form-row-2col">
+                                <div class="form-group">
+                                    <label for="utility_country" class="form-label">Target Country</label>
+                                    <select id="utility_country" name="utility_country" class="form-control" onchange="syncUtilityBuilder()">
+                                        {% for country_key in COUNTRY_OPTIONS %}
+                                            <option value="{{ country_key }}" {% if (utility_country or 'bd') == country_key %}selected{% endif %}>
+                                                {{ COUNTRY_MAP[country_key].replace('_', ' ') }} ({{ country_key|upper }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="utility_year" class="form-label">Campaign Edition Year</label>
+                                    <input type="number" id="utility_year" name="utility_year" value="{{ utility_year or (CURRENT_YEAR - 1) }}" min="2010" max="2040" class="form-control" onchange="syncUtilityBuilder()" oninput="syncUtilityBuilder()">
+                                </div>
+                            </div>
+
+                            <!-- Campaign Code Input & Submit -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="target_campaign_utility" class="form-label">Target Campaign Code</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" id="target_campaign_utility" name="target_campaign" value="{{ target_campaign or 'wlmbd24' }}" placeholder="e.g. wlmbd24" class="form-control form-control-code" style="max-width: 240px;" oninput="parseCodeToUtilityBuilder()">
+                                    <button type="submit" class="btn btn-primary" style="min-height: 42px; padding: 0 20px;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                        <span>Evaluate Utility</span>
+                                    </button>
+                                </div>
+                                <div class="form-hint" id="utility-scope-hint">Single campaign code for content utility &amp; global usage analysis.</div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Quick Presets -->
+                        <div class="example-box">
+                            <div class="example-box-title">Quick Preset Examples</div>
+                            <div class="preset-tags">
+                                <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wlm', 'bd', 2024)">
+                                    <strong>wlmbd24</strong>
+                                    <span class="preset-tag-label">Monuments Bangladesh 2024</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wlm', 'de', 2023)">
+                                    <strong>wlmde23</strong>
+                                    <span class="preset-tag-label">Monuments Germany 2023</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wle', 'ua', 2021)">
+                                    <strong>wleua21</strong>
+                                    <span class="preset-tag-label">Earth Ukraine 2021</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadUtilityPreset('wlf', 'in', 2022)">
+                                    <strong>wlfin22</strong>
+                                    <span class="preset-tag-label">Folklore India 2022</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% if utility_result %}
+            <!-- Summary Metric Cards -->
+            <div class="display-panel" style="margin-top: 24px;">
+                <div class="display-panel-header">
+                    <span>Campaign Utility Summary · {{ utility_result.code|upper }}</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ utility_result.year }} Edition</span>
+                </div>
+                <div class="display-panel-body">
+                    <div class="scorecard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="dimension-card">
+                            <div class="dim-title">Global Utility Rate</div>
+                            <div class="dim-score-val" style="color: var(--wiki-blue); font-size: 1.8rem; font-weight: 700;">
+                                {{ utility_result.global_utility_rate_pct }}%
+                            </div>
+                            <div class="dim-metric-subtext">Uploads used across Wikimedia projects</div>
+                        </div>
+                        <div class="dimension-card">
+                            <div class="dim-title">Total Global Usages</div>
+                            <div class="dim-score-val" style="color: #7c3aed; font-size: 1.8rem; font-weight: 700;">
+                                {{ utility_result.total_global_usages }}
+                            </div>
+                            <div class="dim-metric-subtext">Cumulative page embeds across wikis</div>
+                        </div>
+                        <div class="dimension-card">
+                            <div class="dim-title">Unique Articles Reached</div>
+                            <div class="dim-score-val" style="color: #16a34a; font-size: 1.8rem; font-weight: 700;">
+                                {{ utility_result.unique_articles_count }}
+                            </div>
+                            <div class="dim-metric-subtext">Distinct articles illustrating content</div>
+                        </div>
+                        <div class="dimension-card">
+                            <div class="dim-title">Top Consuming Project</div>
+                            <div class="dim-score-val" style="color: var(--text-ink); font-size: 1.35rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ utility_result.top_consuming_project }}
+                            </div>
+                            <div class="dim-metric-subtext">Leading consumer wiki domain</div>
+                        </div>
+                        <div class="dimension-card">
+                            <div class="dim-title">Evaluated Upload Pool</div>
+                            <div class="dim-score-val" style="color: var(--text-muted); font-size: 1.8rem; font-weight: 700;">
+                                {{ utility_result.total_sampled }}
+                            </div>
+                            <div class="dim-metric-subtext">Sampled competition submissions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Articles Breakdown Table -->
+            <div class="display-panel" style="margin-top: 24px;">
+                <div class="display-panel-header">
+                    <span>Live Media Articles Utilization Breakdown</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ utility_result.media_usages|length }} Documented Embeds</span>
+                </div>
+                <div class="display-panel-body" style="padding: 0;">
+                    <div class="table-interactive-wrapper" data-table-id="utility-media-table">
+                        <div class="table-toolbar">
+                            <div class="table-toolbar-left">
+                                <div class="table-search-wrapper">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" class="table-search-input" placeholder="Search file, article, wiki..." oninput="CampTableSuite.filterTable('utility-media-table', this.value)">
+                                </div>
+                            </div>
+                            <div class="table-toolbar-right">
+                                <div class="btn-export-group">
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportCSV('utility-media-table', '{{ utility_result.code }}_content_utility.csv')">Export CSV</button>
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportWikitext('utility-media-table')">Export Wikitext</button>
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportJSON('utility-media-table', '{{ utility_result.code }}_content_utility.json')">Export JSON</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-scroll-container">
+                            <table class="data-table" id="utility-media-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 56px;">Preview</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('utility-media-table', 1)">File Title</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('utility-media-table', 2)">Utilizing Article</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('utility-media-table', 3)">Wiki Project</th>
+                                        <th style="width: 80px; text-align: center;">Commons</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in utility_result.media_usages %}
+                                        <tr>
+                                            <td>
+                                                {% if row.thumb_url %}
+                                                    <img src="{{ row.thumb_url }}" alt="Thumb" class="media-thumb-img" loading="lazy">
+                                                {% else %}
+                                                    <div class="media-thumb-img" style="display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.7rem;">File</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ row.commons_url }}" target="_blank" rel="noopener noreferrer" class="media-file-link">
+                                                    {{ row.file_title }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <strong>{{ row.article }}</strong>
+                                            </td>
+                                            <td>
+                                                <span class="wiki-project-badge">{{ row.wiki }}</span>
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <a href="{{ row.commons_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="padding: 2px 8px; font-size: 0.76rem;">
+                                                    View &rarr;
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                                No global usage embeds detected for sampled files in this cohort.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination-bar" data-target="utility-media-table">
+                            <div class="table-pagination-info">Showing rows...</div>
+                            <div class="table-pagination-nav"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Utilized Photographers Leaderboard -->
+            <div class="display-panel" style="margin-top: 24px;">
+                <div class="display-panel-header">
+                    <span>Top Utilized Photographers Leaderboard</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Impact by Contributor</span>
+                </div>
+                <div class="display-panel-body" style="padding: 0;">
+                    <div class="table-interactive-wrapper" data-table-id="utility-photographers-table">
+                        <div class="table-toolbar">
+                            <div class="table-toolbar-left">
+                                <div class="table-search-wrapper">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" class="table-search-input" placeholder="Search contributor..." oninput="CampTableSuite.filterTable('utility-photographers-table', this.value)">
+                                </div>
+                            </div>
+                            <div class="table-toolbar-right">
+                                <div class="btn-export-group">
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportCSV('utility-photographers-table', '{{ utility_result.code }}_utilized_photographers.csv')">Export CSV</button>
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportWikitext('utility-photographers-table')">Export Wikitext</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-scroll-container">
+                            <table class="data-table" id="utility-photographers-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px; text-align: center;">Rank</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('utility-photographers-table', 1)">Contributor</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('utility-photographers-table', 2)" style="text-align: right;">Utilized Files</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('utility-photographers-table', 3)" style="text-align: right;">Total Article Usages</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in utility_result.top_photographers %}
+                                        <tr>
+                                            <td style="text-align: center; font-weight: 600;">#{{ p.rank }}</td>
+                                            <td>
+                                                <a href="https://commons.wikimedia.org/wiki/User:{{ p.uploader | replace(' ', '_') }}" target="_blank" rel="noopener noreferrer" style="color: var(--wiki-blue); text-decoration: none; font-weight: 500;">
+                                                    {{ p.uploader }}
+                                                </a>
+                                            </td>
+                                            <td style="text-align: right; font-weight: 600;">{{ p.used_files_count }}</td>
+                                            <td style="text-align: right; font-weight: 700; color: #7c3aed;">{{ p.total_usages }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                                No contributor data available.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination-bar" data-target="utility-photographers-table">
+                            <div class="table-pagination-info">Showing rows...</div>
+                            <div class="table-pagination-nav"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    {# ====================================================================== #}
+    {# 5. QUALITY RECOGNITION ANALYTICS VIEW                                   #}
+    {# ====================================================================== #}
+    {% elif mode == 'Quality Recognition' %}
+        <h1 class="page-title">Quality Recognition Analytics</h1>
+        <p class="page-subtitle">Distinction metrics, Quality Images (QI), Featured Pictures (FP), and Valued Images (VI) across competition cohorts.</p>
+
+        <form action="/quality" method="GET" id="quality-form">
+            <!-- Structured Panel: Selection Builder -->
+            <div class="display-panel">
+                <div class="display-panel-header">
+                    <span>What to look up · Selection Builder</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Configure Campaign Target</span>
+                </div>
+                <div class="display-panel-body">
+                    <div class="builder-layout">
+                        <!-- Left: Form Controls -->
+                        <div>
+                            <!-- Event Matrix Radios -->
+                            <div class="form-group">
+                                <label class="form-label">Campaign Type</label>
+                                <div class="pill-group" id="quality-pill-group">
+                                    {% for event_key, event_val in EVENT_MAP.items() %}
+                                        <input type="radio" name="quality_event_type" value="{{ event_key }}" id="qual-evt-{{ event_key }}" class="pill-checkbox" {% if (quality_event_type or 'wlm') == event_key %}checked{% endif %} onchange="syncQualityBuilder()">
+                                        <label for="qual-evt-{{ event_key }}" class="pill-label">{{ event_val }}</label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Target Country & Year in Grid -->
+                            <div class="form-row-2col">
+                                <div class="form-group">
+                                    <label for="quality_country" class="form-label">Target Country</label>
+                                    <select id="quality_country" name="quality_country" class="form-control" onchange="syncQualityBuilder()">
+                                        {% for country_key in COUNTRY_OPTIONS %}
+                                            <option value="{{ country_key }}" {% if (quality_country or 'de') == country_key %}selected{% endif %}>
+                                                {{ COUNTRY_MAP[country_key].replace('_', ' ') }} ({{ country_key|upper }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="quality_year" class="form-label">Campaign Edition Year</label>
+                                    <input type="number" id="quality_year" name="quality_year" value="{{ quality_year or (CURRENT_YEAR - 1) }}" min="2010" max="2040" class="form-control" onchange="syncQualityBuilder()" oninput="syncQualityBuilder()">
+                                </div>
+                            </div>
+
+                            <!-- Campaign Code Input & Submit -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="target_campaign_quality" class="form-label">Target Campaign Code</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" id="target_campaign_quality" name="target_campaign" value="{{ target_campaign or 'wlmde24' }}" placeholder="e.g. wlmde24" class="form-control form-control-code" style="max-width: 240px;" oninput="parseCodeToQualityBuilder()">
+                                    <button type="submit" class="btn btn-primary" style="min-height: 42px; padding: 0 20px;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                        <span>Evaluate Quality</span>
+                                    </button>
+                                </div>
+                                <div class="form-hint" id="quality-scope-hint">Single campaign code for quality recognition &amp; honors analysis.</div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Quick Presets -->
+                        <div class="example-box">
+                            <div class="example-box-title">Quick Preset Examples</div>
+                            <div class="preset-tags">
+                                <button type="button" class="preset-tag-btn" onclick="loadQualityPreset('wlm', 'de', 2024)">
+                                    <strong>wlmde24</strong>
+                                    <span class="preset-tag-label">Monuments Germany 2024</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadQualityPreset('wlm', 'bd', 2024)">
+                                    <strong>wlmbd24</strong>
+                                    <span class="preset-tag-label">Monuments Bangladesh 2024</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadQualityPreset('wle', 'ua', 2021)">
+                                    <strong>wleua21</strong>
+                                    <span class="preset-tag-label">Earth Ukraine 2021</span>
+                                </button>
+                                <button type="button" class="preset-tag-btn" onclick="loadQualityPreset('wle', 'se', 2022)">
+                                    <strong>wlese22</strong>
+                                    <span class="preset-tag-label">Earth Sweden 2022</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% if quality_result %}
+            <!-- Summary Metric Cards -->
+            <div class="display-panel" style="margin-top: 24px;">
+                <div class="display-panel-header">
+                    <span>Campaign Quality Distinction · {{ quality_result.code|upper }}</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ quality_result.year }} Edition</span>
+                </div>
+                <div class="display-panel-body">
+                    <div class="scorecard-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                        <div class="dimension-card">
+                            <div class="dim-title">Overall Quality Rate</div>
+                            <div class="dim-score-val" style="color: #ca8a04; font-size: 1.8rem; font-weight: 700;">
+                                {{ quality_result.quality_rate_pct }}%
+                            </div>
+                            <div class="dim-metric-subtext">Proportion of submissions receiving honors</div>
+                        </div>
+                        <div class="dimension-card">
+                            <div class="dim-title">Quality Images (QI)</div>
+                            <div class="dim-score-val" style="color: #0369a1; font-size: 1.8rem; font-weight: 700;">
+                                {{ quality_result.qi_count }}
+                            </div>
+                            <div class="dim-metric-subtext">Assessed by Commons Quality committee</div>
+                        </div>
+                        <div class="dimension-card">
+                            <div class="dim-title">Featured Pictures (FP)</div>
+                            <div class="dim-score-val" style="color: #92400e; font-size: 1.8rem; font-weight: 700;">
+                                {{ quality_result.fp_count }}
+                            </div>
+                            <div class="dim-metric-subtext">Movement-wide Featured designations</div>
+                        </div>
+                        <div class="dimension-card">
+                            <div class="dim-title">Valued Images (VI)</div>
+                            <div class="dim-score-val" style="color: #7c3aed; font-size: 1.8rem; font-weight: 700;">
+                                {{ quality_result.vi_count }}
+                            </div>
+                            <div class="dim-metric-subtext">Subject-matter canonical images</div>
+                        </div>
+                        <div class="dimension-card">
+                            <div class="dim-title">Honored Photographers</div>
+                            <div class="dim-score-val" style="color: var(--text-ink); font-size: 1.8rem; font-weight: 700;">
+                                {{ quality_result.honored_photographers_count }}
+                            </div>
+                            <div class="dim-metric-subtext">Distinct recognized contributors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recognized Files Table -->
+            <div class="display-panel" style="margin-top: 24px;">
+                <div class="display-panel-header">
+                    <span>Recognized Files Showcase</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">{{ quality_result.recognized_files|length }} Documented Works</span>
+                </div>
+                <div class="display-panel-body" style="padding: 0;">
+                    <div class="table-interactive-wrapper" data-table-id="quality-files-table">
+                        <div class="table-toolbar">
+                            <div class="table-toolbar-left">
+                                <div class="table-search-wrapper">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" class="table-search-input" placeholder="Search title, honor, uploader..." oninput="CampTableSuite.filterTable('quality-files-table', this.value)">
+                                </div>
+                            </div>
+                            <div class="table-toolbar-right">
+                                <div class="btn-export-group">
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportCSV('quality-files-table', '{{ quality_result.code }}_quality_files.csv')">Export CSV</button>
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportWikitext('quality-files-table')">Export Wikitext</button>
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportJSON('quality-files-table', '{{ quality_result.code }}_quality_files.json')">Export JSON</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-scroll-container">
+                            <table class="data-table" id="quality-files-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 56px;">Preview</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('quality-files-table', 1)">File Title</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('quality-files-table', 2)">Honors &amp; Badges</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('quality-files-table', 3)">Photographer</th>
+                                        <th style="width: 80px; text-align: center;">Commons</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in quality_result.recognized_files %}
+                                        <tr>
+                                            <td>
+                                                {% if row.thumb_url %}
+                                                    <img src="{{ row.thumb_url }}" alt="Thumb" class="media-thumb-img" loading="lazy">
+                                                {% else %}
+                                                    <div class="media-thumb-img" style="display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.7rem;">QI</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ row.commons_url }}" target="_blank" rel="noopener noreferrer" class="media-file-link">
+                                                    {{ row.title }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {% if 'Featured Picture' in row.honors %}
+                                                    <span class="badge-fp">★ FP</span>
+                                                {% endif %}
+                                                {% if 'Quality Image' in row.honors %}
+                                                    <span class="badge-qi">✓ QI</span>
+                                                {% endif %}
+                                                {% if 'Valued Image' in row.honors %}
+                                                    <span class="badge-vi">◆ VI</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="https://commons.wikimedia.org/wiki/User:{{ row.uploader | replace(' ', '_') }}" target="_blank" rel="noopener noreferrer" style="color: var(--wiki-blue); text-decoration: none; font-weight: 500;">
+                                                    {{ row.uploader }}
+                                                </a>
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <a href="{{ row.commons_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="padding: 2px 8px; font-size: 0.76rem;">
+                                                    View &rarr;
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                                No individual honor files recorded in sample. Statistical rate is calibrated against cohort totals.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination-bar" data-target="quality-files-table">
+                            <div class="table-pagination-info">Showing rows...</div>
+                            <div class="table-pagination-nav"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Photographer Hall of Fame Leaderboard -->
+            <div class="display-panel" style="margin-top: 24px;">
+                <div class="display-panel-header">
+                    <span>Photographer Hall of Fame Leaderboard</span>
+                    <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Top Quality Image Creators</span>
+                </div>
+                <div class="display-panel-body" style="padding: 0;">
+                    <div class="table-interactive-wrapper" data-table-id="quality-hall-of-fame-table">
+                        <div class="table-toolbar">
+                            <div class="table-toolbar-left">
+                                <div class="table-search-wrapper">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" class="table-search-input" placeholder="Search photographer..." oninput="CampTableSuite.filterTable('quality-hall-of-fame-table', this.value)">
+                                </div>
+                            </div>
+                            <div class="table-toolbar-right">
+                                <div class="btn-export-group">
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportCSV('quality-hall-of-fame-table', '{{ quality_result.code }}_hall_of_fame.csv')">Export CSV</button>
+                                    <button type="button" class="btn btn-sm btn-export" onclick="CampTableSuite.exportWikitext('quality-hall-of-fame-table')">Export Wikitext</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-scroll-container">
+                            <table class="data-table" id="quality-hall-of-fame-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px; text-align: center;">Rank</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('quality-hall-of-fame-table', 1)">Photographer</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('quality-hall-of-fame-table', 2)" style="text-align: right;">Total Honors</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('quality-hall-of-fame-table', 3)" style="text-align: right;">QI Count</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('quality-hall-of-fame-table', 4)" style="text-align: right;">FP Count</th>
+                                        <th class="sortable" onclick="CampTableSuite.sortTable('quality-hall-of-fame-table', 5)" style="text-align: right;">VI Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in quality_result.leaderboard %}
+                                        <tr>
+                                            <td style="text-align: center; font-weight: 600;">#{{ p.rank }}</td>
+                                            <td>
+                                                <a href="https://commons.wikimedia.org/wiki/User:{{ p.uploader | replace(' ', '_') }}" target="_blank" rel="noopener noreferrer" style="color: var(--wiki-blue); text-decoration: none; font-weight: 500;">
+                                                    {{ p.uploader }}
+                                                </a>
+                                            </td>
+                                            <td style="text-align: right; font-weight: 700; color: #ca8a04;">{{ p.total_honors }}</td>
+                                            <td style="text-align: right; font-weight: 600; color: #0369a1;">{{ p.qi_count }}</td>
+                                            <td style="text-align: right; font-weight: 600; color: #92400e;">{{ p.fp_count }}</td>
+                                            <td style="text-align: right; font-weight: 600; color: #7c3aed;">{{ p.vi_count }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                                No individual contributor leaderboard records.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination-bar" data-target="quality-hall-of-fame-table">
+                            <div class="table-pagination-info">Showing rows...</div>
+                            <div class="table-pagination-nav"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    {# ====================================================================== #}
+    {# 6. METHODOLOGY & USAGE GUIDE VIEW                                      #}
+    {# ====================================================================== #}
+    {% elif mode in ('Methodology', 'Methodology & Usage', 'Info') %}
         <h1 class="page-title">Methodology &amp; Usage Guide</h1>
         <p class="page-subtitle">Technical specifications, analytical formulations, and usage guidelines for the Campaign Analytics platform.</p>
 
@@ -1451,6 +2038,76 @@
                     <span class="arrow-icon">&rarr;</span>
                 </div>
             </a>
+
+            <!-- Tool 04: Content Utility -->
+            <a href="/utility" class="tool-card">
+                <div>
+                    <div class="tool-card-top-row">
+                        <div class="tool-card-icon-wrap" style="background-color: #f5f3ff; color: #7c3aed;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </div>
+                        <span class="tool-card-badge" style="background-color: #ede9fe; color: #6d28d9;">Tool 04 · Utility</span>
+                    </div>
+                    <h3 class="tool-card-title">Content Utility</h3>
+                    <p class="tool-card-desc">Track global usage propagation across Wikimedia projects, article distribution, and media consumption footprints across Wikimedia Commons uploads.</p>
+                    <ul class="tool-card-features">
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Global usage rate &amp; article reach</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Cross-wiki project usage breakdown</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Top utilized photographers leaderboard</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tool-card-btn">
+                    <span>Launch Utility</span>
+                    <span class="arrow-icon">&rarr;</span>
+                </div>
+            </a>
+
+            <!-- Tool 05: Quality Recognition -->
+            <a href="/quality" class="tool-card">
+                <div>
+                    <div class="tool-card-top-row">
+                        <div class="tool-card-icon-wrap" style="background-color: #fefce8; color: #ca8a04;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </div>
+                        <span class="tool-card-badge" style="background-color: #fef9c3; color: #a16207;">Tool 05 · Quality</span>
+                    </div>
+                    <h3 class="tool-card-title">Quality Recognition</h3>
+                    <p class="tool-card-desc">Evaluate curatorial excellence, community recognition, Quality Images (QI), and Featured Pictures (FP) with contributor honor rolls.</p>
+                    <ul class="tool-card-features">
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>QI, FP &amp; Valued Image (VI) ratios</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Live Commons recognition showcase</span>
+                        </li>
+                        <li class="tool-card-feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Photographer hall of fame leaderboard</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tool-card-btn">
+                    <span>Launch Quality</span>
+                    <span class="arrow-icon">&rarr;</span>
+                </div>
+            </a>
         </div>
 
         <!-- Documentation Card -->
@@ -1462,8 +2119,8 @@
                         Read formal definitions, weighting models, and data extraction specifications in the methodology guide.
                     </p>
                 </div>
-                <a href="/methodology" class="btn btn-secondary" style="padding: 8px 18px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
-                    View Methodology Guide &rarr;
+                <a href="/info" class="btn btn-secondary" style="padding: 8px 18px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+                    View Methodology &amp; Info &rarr;
                 </a>
             </div>
         </div>
@@ -2079,6 +2736,128 @@
                         influxHint.innerText = 'Chronological campaign sequence to evaluate.';
                     }
                 }
+            }
+        }
+
+        // ── Utility Builder Helper ───────────────────────────────────────────
+        function syncUtilityBuilder() {
+            const checkedEvt = document.querySelector('input[name="utility_event_type"]:checked');
+            const evt = checkedEvt ? checkedEvt.value : 'wlm';
+            const countrySelect = document.getElementById('utility_country');
+            const cc = countrySelect ? countrySelect.value.toLowerCase() : 'bd';
+            const yrInput = document.getElementById('utility_year');
+            const yr = parseInt(yrInput ? yrInput.value : '', 10) || ({{ CURRENT_YEAR }} - 1);
+            const yy = String(yr % 100).padStart(2, '0');
+            const targetInput = document.getElementById('target_campaign_utility');
+            if (targetInput) {
+                targetInput.value = evt + cc + yy;
+            }
+            const hint = document.getElementById('utility-scope-hint');
+            if (hint) {
+                const notice = getScopeNoticeJS(evt, cc);
+                if (notice) {
+                    hint.innerHTML = '<span style="color: #d97706; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> ' + notice + '</span>';
+                } else {
+                    hint.innerText = 'Single campaign code for content utility & global usage analysis.';
+                }
+            }
+        }
+
+        function loadUtilityPreset(evt, cc, yr) {
+            const evtRadio = document.getElementById('util-evt-' + evt);
+            if (evtRadio) evtRadio.checked = true;
+            const countrySelect = document.getElementById('utility_country');
+            if (countrySelect) countrySelect.value = cc;
+            const yrInput = document.getElementById('utility_year');
+            if (yrInput) yrInput.value = yr;
+            syncUtilityBuilder();
+            const targetInput = document.getElementById('target_campaign_utility');
+            if (targetInput) {
+                targetInput.style.borderColor = 'var(--wiki-blue)';
+                targetInput.style.boxShadow = '0 0 0 3px rgba(54, 89, 227, 0.25)';
+                setTimeout(() => {
+                    targetInput.style.borderColor = '';
+                    targetInput.style.boxShadow = '';
+                }, 1000);
+            }
+        }
+
+        function parseCodeToUtilityBuilder() {
+            const targetInput = document.getElementById('target_campaign_utility');
+            if (!targetInput) return;
+            const val = targetInput.value.trim().toLowerCase();
+            const m = val.match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$/);
+            if (m) {
+                const evt = m[1];
+                const cc = m[2];
+                const yr = 2000 + parseInt(m[3], 10);
+                const evtRadio = document.getElementById('util-evt-' + evt);
+                if (evtRadio) evtRadio.checked = true;
+                const countrySelect = document.getElementById('utility_country');
+                if (countrySelect && cc) countrySelect.value = cc;
+                const yrInput = document.getElementById('utility_year');
+                if (yrInput) yrInput.value = yr;
+            }
+        }
+
+        // ── Quality Builder Helper ───────────────────────────────────────────
+        function syncQualityBuilder() {
+            const checkedEvt = document.querySelector('input[name="quality_event_type"]:checked');
+            const evt = checkedEvt ? checkedEvt.value : 'wlm';
+            const countrySelect = document.getElementById('quality_country');
+            const cc = countrySelect ? countrySelect.value.toLowerCase() : 'de';
+            const yrInput = document.getElementById('quality_year');
+            const yr = parseInt(yrInput ? yrInput.value : '', 10) || ({{ CURRENT_YEAR }} - 1);
+            const yy = String(yr % 100).padStart(2, '0');
+            const targetInput = document.getElementById('target_campaign_quality');
+            if (targetInput) {
+                targetInput.value = evt + cc + yy;
+            }
+            const hint = document.getElementById('quality-scope-hint');
+            if (hint) {
+                const notice = getScopeNoticeJS(evt, cc);
+                if (notice) {
+                    hint.innerHTML = '<span style="color: #d97706; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> ' + notice + '</span>';
+                } else {
+                    hint.innerText = 'Single campaign code for quality recognition & honors analysis.';
+                }
+            }
+        }
+
+        function loadQualityPreset(evt, cc, yr) {
+            const evtRadio = document.getElementById('qual-evt-' + evt);
+            if (evtRadio) evtRadio.checked = true;
+            const countrySelect = document.getElementById('quality_country');
+            if (countrySelect) countrySelect.value = cc;
+            const yrInput = document.getElementById('quality_year');
+            if (yrInput) yrInput.value = yr;
+            syncQualityBuilder();
+            const targetInput = document.getElementById('target_campaign_quality');
+            if (targetInput) {
+                targetInput.style.borderColor = 'var(--wiki-blue)';
+                targetInput.style.boxShadow = '0 0 0 3px rgba(54, 89, 227, 0.25)';
+                setTimeout(() => {
+                    targetInput.style.borderColor = '';
+                    targetInput.style.boxShadow = '';
+                }, 1000);
+            }
+        }
+
+        function parseCodeToQualityBuilder() {
+            const targetInput = document.getElementById('target_campaign_quality');
+            if (!targetInput) return;
+            const val = targetInput.value.trim().toLowerCase();
+            const m = val.match(/^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$/);
+            if (m) {
+                const evt = m[1];
+                const cc = m[2];
+                const yr = 2000 + parseInt(m[3], 10);
+                const evtRadio = document.getElementById('qual-evt-' + evt);
+                if (evtRadio) evtRadio.checked = true;
+                const countrySelect = document.getElementById('quality_country');
+                if (countrySelect && cc) countrySelect.value = cc;
+                const yrInput = document.getElementById('quality_year');
+                if (yrInput) yrInput.value = yr;
             }
         }
 

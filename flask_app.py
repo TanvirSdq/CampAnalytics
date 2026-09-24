@@ -91,6 +91,10 @@ def index():
         return health()
     elif mode in ('New User Influx', 'Influx', 'New Users'):
         return influx()
+    elif mode in ('Content Utility', 'Utility'):
+        return utility()
+    elif mode in ('Quality Recognition', 'Quality'):
+        return quality()
     elif mode in ('Methodology', 'Methodology & Usage', 'info', 'Info'):
         return render_template('index.html', mode='Methodology')
     return render_template('index.html', mode='Tools')
@@ -103,6 +107,120 @@ def tools():
 @app.route('/info', methods=['GET'])
 def methodology():
     return render_template('index.html', mode='Methodology')
+
+@app.route('/utility', methods=['GET', 'POST'])
+def utility():
+    req_dict = request.form if request.method == 'POST' else request.args
+    target_campaign = req_dict.get('target_campaign', '').strip()
+    event_type = req_dict.get('utility_event_type', '').strip().lower()
+    country = req_dict.get('utility_country', '').strip().lower()
+    year = req_dict.get('utility_year', '').strip()
+
+    current_year_short = str(datetime.date.today().year - 1)[-2:]
+    default_code = f"wlmbd{current_year_short}"
+
+    if request.method == 'GET' and not request.args:
+        target_campaign = default_code
+
+    if not target_campaign and country and year:
+        evt = event_type or 'wlm'
+        try:
+            yy = int(year) % 100
+            target_campaign = f"{evt}{country}{yy:02d}"
+        except (ValueError, TypeError):
+            pass
+
+    if 'utility_event_type' in req_dict and target_campaign:
+        match_curr = CODE_RE.match(target_campaign.lower())
+        if match_curr and match_curr.group(1) != event_type and event_type:
+            target_campaign = f"{event_type}{match_curr.group(2)}{match_curr.group(3)}"
+
+    if not target_campaign:
+        target_campaign = default_code
+
+    utility_result = None
+    error = None
+    m = CODE_RE.match(target_campaign.lower())
+    if not m:
+        error = f"Invalid campaign code format '{target_campaign}'. Please specify in standard syntax e.g. wlmbd24, wlede22."
+    else:
+        evt, cc, yr = m.group(1), m.group(2), m.group(3)
+        scope_notice = analytics.get_campaign_scope_notice(evt, cc)
+        if scope_notice:
+            error = scope_notice
+        else:
+            try:
+                utility_result = analytics.compute_content_utility_deep(target_campaign)
+            except Exception as e:
+                error = f"Error evaluating content utility: {str(e)}"
+
+    return render_template(
+        'index.html',
+        mode='Content Utility',
+        target_campaign=target_campaign,
+        utility_event_type=m.group(1) if m else (event_type or 'wlm'),
+        utility_country=m.group(2) if m else (country or 'bd'),
+        utility_year=str(2000 + int(m.group(3))) if m else (year or str(datetime.date.today().year - 1)),
+        utility_result=utility_result,
+        error=error
+    )
+
+@app.route('/quality', methods=['GET', 'POST'])
+def quality():
+    req_dict = request.form if request.method == 'POST' else request.args
+    target_campaign = req_dict.get('target_campaign', '').strip()
+    event_type = req_dict.get('quality_event_type', '').strip().lower()
+    country = req_dict.get('quality_country', '').strip().lower()
+    year = req_dict.get('quality_year', '').strip()
+
+    current_year_short = str(datetime.date.today().year - 1)[-2:]
+    default_code = f"wlmde{current_year_short}"
+
+    if request.method == 'GET' and not request.args:
+        target_campaign = default_code
+
+    if not target_campaign and country and year:
+        evt = event_type or 'wlm'
+        try:
+            yy = int(year) % 100
+            target_campaign = f"{evt}{country}{yy:02d}"
+        except (ValueError, TypeError):
+            pass
+
+    if 'quality_event_type' in req_dict and target_campaign:
+        match_curr = CODE_RE.match(target_campaign.lower())
+        if match_curr and match_curr.group(1) != event_type and event_type:
+            target_campaign = f"{event_type}{match_curr.group(2)}{match_curr.group(3)}"
+
+    if not target_campaign:
+        target_campaign = default_code
+
+    quality_result = None
+    error = None
+    m = CODE_RE.match(target_campaign.lower())
+    if not m:
+        error = f"Invalid campaign code format '{target_campaign}'. Please specify in standard syntax e.g. wlmde24, wlmbd24."
+    else:
+        evt, cc, yr = m.group(1), m.group(2), m.group(3)
+        scope_notice = analytics.get_campaign_scope_notice(evt, cc)
+        if scope_notice:
+            error = scope_notice
+        else:
+            try:
+                quality_result = analytics.compute_quality_recognition_deep(target_campaign)
+            except Exception as e:
+                error = f"Error evaluating quality recognition: {str(e)}"
+
+    return render_template(
+        'index.html',
+        mode='Quality Recognition',
+        target_campaign=target_campaign,
+        quality_event_type=m.group(1) if m else (event_type or 'wlm'),
+        quality_country=m.group(2) if m else (country or 'de'),
+        quality_year=str(2000 + int(m.group(3))) if m else (year or str(datetime.date.today().year - 1)),
+        quality_result=quality_result,
+        error=error
+    )
 
 @app.route('/influx', methods=['GET', 'POST'])
 def influx():

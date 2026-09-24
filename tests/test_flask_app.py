@@ -79,6 +79,32 @@ class TestIndexAndNavigationRoutes(BaseTestCase):
         self.assertEqual(res_influx.status_code, 200)
         self.assertIn('Influx', res_influx.data.decode('utf-8'))
 
+        # Mode = Utility
+        res_utility = self.client.get('/?mode=Utility')
+        self.assertEqual(res_utility.status_code, 200)
+        self.assertIn('Content Utility', res_utility.data.decode('utf-8'))
+
+        # Mode = Quality
+        res_quality = self.client.get('/?mode=Quality')
+        self.assertEqual(res_quality.status_code, 200)
+        self.assertIn('Quality Recognition', res_quality.data.decode('utf-8'))
+
+    def test_mobile_drawer_and_5_tools_rendered(self):
+        """Verify mobile navigation drawer, hamburger button, and 5-tool cards are rendered."""
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        html = response.data.decode('utf-8')
+        # Mobile navigation drawer & hamburger presence
+        self.assertIn('nav-hamburger-btn', html)
+        self.assertIn('mobile-nav-drawer', html)
+        self.assertIn('mobile-nav-backdrop', html)
+        # All 5 tools rendered in tools landing suite
+        self.assertIn('Tool 01 · Evaluation', html)
+        self.assertIn('Tool 02 · Retention', html)
+        self.assertIn('Tool 03 · Influx', html)
+        self.assertIn('Tool 04 · Utility', html)
+        self.assertIn('Tool 05 · Quality', html)
+
     def test_tools_route(self):
         """Verify dedicated /tools endpoint returns 200 and renders tools."""
         response = self.client.get('/tools')
@@ -520,6 +546,110 @@ class TestInfluxRoute(BaseTestCase):
         self.assertIn('New User Influx', text)
         self.assertIn('allde21', text)
         self.assertIn('data:image/png;base64,', text)
+
+
+class TestUtilityRoute(BaseTestCase):
+    """Tests for the Content Utility analytical route (/utility)."""
+
+    def test_utility_bare_get(self):
+        """Verify bare GET /utility returns 200 and presents content utility view."""
+        response = self.client.get('/utility')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Content Utility', text)
+        self.assertIn('Selection Builder', text)
+
+    def test_utility_with_target(self):
+        """Verify /utility with target_campaign renders global usage metrics and tables."""
+        response = self.client.get('/utility?target_campaign=wlmbd24')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Content Utility', text)
+        self.assertIn('Global Utility Rate', text)
+        self.assertIn('utility-media-table', text)
+        self.assertIn('utility-photographers-table', text)
+
+    def test_utility_post_request(self):
+        """Verify POST /utility processes form submissions correctly."""
+        response = self.client.post('/utility', data={'target_campaign': 'wlmbd24'})
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Content Utility', text)
+        self.assertIn('Global Utility Rate', text)
+
+    def test_utility_builder_params(self):
+        """Verify /utility auto-assembles target code from builder parameters."""
+        response = self.client.get('/utility?utility_event_type=wlm&utility_country=bd&utility_year=2024')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('wlmbd24', text)
+        self.assertIn('Global Utility Rate', text)
+
+    def test_utility_invalid_syntax_edge_case(self):
+        """Verify invalid campaign code syntax displays validation notice."""
+        response = self.client.get('/utility?target_campaign=invalid123')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Invalid campaign code format', text)
+
+    def test_utility_out_of_scope_edge_case(self):
+        """Verify out-of-scope regional combination returns scope notice."""
+        response = self.client.get('/utility?target_campaign=wlbde24')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Wiki Loves Bangla', text)
+
+
+class TestQualityRoute(BaseTestCase):
+    """Tests for the Quality Recognition analytical route (/quality)."""
+
+    def test_quality_bare_get(self):
+        """Verify bare GET /quality returns 200 and presents quality recognition view."""
+        response = self.client.get('/quality')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Quality Recognition', text)
+        self.assertIn('Selection Builder', text)
+
+    def test_quality_with_target(self):
+        """Verify /quality with target_campaign renders quality distinction metrics and tables."""
+        response = self.client.get('/quality?target_campaign=wlmde24')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Quality Recognition', text)
+        self.assertIn('Overall Quality Rate', text)
+        self.assertIn('quality-files-table', text)
+        self.assertIn('quality-hall-of-fame-table', text)
+
+    def test_quality_post_request(self):
+        """Verify POST /quality processes form submissions correctly."""
+        response = self.client.post('/quality', data={'target_campaign': 'wlmde24'})
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Quality Recognition', text)
+        self.assertIn('Overall Quality Rate', text)
+
+    def test_quality_builder_params(self):
+        """Verify /quality auto-assembles target code from builder parameters."""
+        response = self.client.get('/quality?quality_event_type=wlm&quality_country=de&quality_year=2024')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('wlmde24', text)
+        self.assertIn('Overall Quality Rate', text)
+
+    def test_quality_invalid_syntax_edge_case(self):
+        """Verify invalid campaign code syntax displays validation notice."""
+        response = self.client.get('/quality?target_campaign=invalid123')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Invalid campaign code format', text)
+
+    def test_quality_out_of_scope_edge_case(self):
+        """Verify out-of-scope regional combination returns scope notice."""
+        response = self.client.get('/quality?target_campaign=wlbde24')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        self.assertIn('Wiki Loves Bangla', text)
 
 
 class TestErrorHandlingAndSecurity(BaseTestCase):
