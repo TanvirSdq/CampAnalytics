@@ -302,6 +302,11 @@ html, body {
     font-size: 1.15rem;
 }
 
+.mobile-nav-brand .navbar-brand {
+    font-size: 1.18rem;
+    line-height: 1;
+}
+
 .mobile-nav-logo {
     height: 28px;
     width: auto;
