@@ -173,25 +173,7 @@
                 </div>
                 <div class="display-panel-body">
                     <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
-                        <div>
-                            <label class="form-label" style="margin-bottom: 8px;">Visualization Model</label>
-                            <div class="radio-options">
-                                <label class="radio-option">
-                                    <input type="radio" name="view_mode" value="Table" {% if view_mode == 'Table' or not view_mode %}checked{% endif %} onchange="toggleMetricSelector()">
-                                    <strong>Data Table</strong>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="view_mode" value="Heatmap" {% if view_mode == 'Heatmap' %}checked{% endif %} onchange="toggleMetricSelector()">
-                                    <strong>Heatmap Matrix</strong>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="view_mode" value="Worldmap" {% if view_mode == 'Worldmap' %}checked{% endif %} onchange="toggleMetricSelector()">
-                                    <strong>Choropleth World Map</strong>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div id="metric-vector-group" style="{% if view_mode != 'Worldmap' %}display: none;{% endif %}">
+                        <div id="metric-vector-group">
                             <label class="form-label" style="margin-bottom: 8px;">Map Metric Vector</label>
                             <div class="radio-options">
                                 <label class="radio-option">
@@ -217,7 +199,7 @@
         {% if tables or heatmaps or worldmap_html %}
             <div class="display-panel" id="retention-results">
                 <div class="display-panel-header">
-                    <span>Analysis Output: {{ view_mode }} Model</span>
+                    <span>Unified Analysis Dashboard</span>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <span style="font-weight: normal; font-size: 0.82rem; color: var(--text-muted);">Longitudinal Contributor Overlap</span>
                         <button type="button" class="share-btn" onclick="copyCurrentURL(this)" title="Copy shareable link to these results">
@@ -231,17 +213,10 @@
                 </div>
                 <div class="display-panel-body">
                     {% if worldmap_html %}
-                        <div class="chart-container">
+                        <div class="chart-container" style="margin-bottom: 24px;">
+                            <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--text-ink);">Global Choropleth Projection</h3>
                             {{ worldmap_html | safe }}
                         </div>
-                    {% endif %}
-
-                    {% if heatmaps %}
-                        {% for country_title, heatmap_b64 in heatmaps %}
-                            <div class="chart-container">
-                                <img src="data:image/png;base64,{{ heatmap_b64 }}" alt="{{ country_title }} Retention Heatmap" class="chart-img">
-                            </div>
-                        {% endfor %}
                     {% endif %}
 
                     {% if tables %}
@@ -317,6 +292,22 @@
                                 </div>
                             </div>
                         {% endfor %}
+                    {% endif %}
+
+                    {% if heatmaps %}
+                        <div style="margin-top: 32px; margin-bottom: 16px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+                            <h3 style="font-size: 1.1rem; color: var(--text-ink); margin-bottom: 4px;">Regional Heatmap Matrix</h3>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Cross-campaign cohort intersections by country.</div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(30%, 1fr)); gap: 16px;">
+                                {% for country_title, heatmap_b64 in heatmaps %}
+                                    <div class="chart-container" style="margin-bottom: 0; padding: 12px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                        <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-ink); margin-bottom: 8px; text-align: center;">{{ country_title }}</div>
+                                        <img src="data:image/png;base64,{{ heatmap_b64 }}" alt="{{ country_title }} Retention Heatmap" style="width: 100%; height: auto; border-radius: 4px; cursor: zoom-in;" onclick="this.classList.toggle('zoomed-img')">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     {% endif %}
                 </div>
             </div>

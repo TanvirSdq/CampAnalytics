@@ -419,21 +419,19 @@ def retention():
             else:
                 error = "No comparative vectors resolved. Verify that at least two overlapping temporal editions exist for your selected countries."
         else:
-            if view_mode == 'Table':
-                df = analytics.build_global_table(valid_countries)
-                if not df.empty:
-                    tables.append(df.to_html(classes="data-table", index=False))
-            elif view_mode == 'Heatmap':
-                for country_code, events in valid_countries.items():
-                    with _plot_lock:
-                        fig = analytics.create_heatmap(events, COUNTRY_MAP.get(country_code, country_code))
-                        heatmaps.append((COUNTRY_MAP.get(country_code, country_code), fig_to_base64(fig)))
-            elif view_mode == 'Worldmap':
-                world_df = analytics.build_world_data(valid_countries, metric_choice)
-                if not world_df.empty:
-                    fig = analytics.create_worldmap(world_df, metric_choice)
-                    worldmap_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
-                    tables.append(world_df.to_html(classes="data-table", index=False))
+            world_df = analytics.build_world_data(valid_countries, metric_choice)
+            if not world_df.empty:
+                fig = analytics.create_worldmap(world_df, metric_choice)
+                worldmap_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+                
+            df = analytics.build_global_table(valid_countries)
+            if not df.empty:
+                tables.append(df.to_html(classes="data-table", index=False))
+                
+            for country_code, events in valid_countries.items():
+                with _plot_lock:
+                    fig = analytics.create_heatmap(events, COUNTRY_MAP.get(country_code, country_code))
+                    heatmaps.append((COUNTRY_MAP.get(country_code, country_code), fig_to_base64(fig)))
 
     return render_template('index.html', mode='Retention Analytics', 
                            target_campaigns=target_campaigns, view_mode=view_mode,

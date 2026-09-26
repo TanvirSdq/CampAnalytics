@@ -2348,3 +2348,28 @@ table.data-table tfoot td:first-child {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+
+/* Image Zoom for Grid Layouts */
+.zoomed-img {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+    z-index: 9999 !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
+    background: white;
+    cursor: zoom-out !important;
+    border-radius: 8px !important;
+    padding: 10px;
+}
+
+/* Optional overlay when zoomed */
+.zoomed-img::before {
+    content: '';
+    position: fixed;
+    top: -50vh; left: -50vw; width: 200vw; height: 200vh;
+    background: rgba(0,0,0,0.8);
+    z-index: -1;
+}
