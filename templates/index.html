@@ -296,10 +296,19 @@
 
                     {% if heatmaps %}
                         <div style="margin-top: 32px; margin-bottom: 16px; border-top: 1px solid var(--border-color); padding-top: 24px;">
-                            <h3 style="font-size: 1.1rem; color: var(--text-ink); margin-bottom: 4px;">Regional Heatmap Matrix</h3>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Cross-campaign cohort intersections by country.</div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+                                <div>
+                                    <h3 style="font-size: 1.1rem; color: var(--text-ink); margin-bottom: 4px;">Regional Heatmap Matrix</h3>
+                                    <div style="font-size: 0.85rem; color: var(--text-muted);">Cross-campaign cohort intersections by country.</div>
+                                </div>
+                                {% if total_heatmaps_count > heatmaps|length %}
+                                    <div id="heatmap-counter" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">
+                                        Showing <span id="heatmap-shown-count">{{ heatmaps|length }}</span> of {{ total_heatmaps_count }} matrices
+                                    </div>
+                                {% endif %}
+                            </div>
                             
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(30%, 1fr)); gap: 16px;">
+                            <div id="retention-heatmap-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(30%, 1fr)); gap: 16px;">
                                 {% for country_title, heatmap_b64 in heatmaps %}
                                     <div class="chart-container" style="margin-bottom: 0; padding: 12px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                                         <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-ink); margin-bottom: 8px; text-align: center;">{{ country_title }}</div>
@@ -307,6 +316,17 @@
                                     </div>
                                 {% endfor %}
                             </div>
+
+                            {% if remaining_heatmaps_count > 0 %}
+                                <div id="heatmap-load-more-wrap" style="text-align: center; margin-top: 24px; padding: 16px 0;">
+                                    <button type="button" id="btn-load-more-heatmaps" class="btn btn-primary" onclick="loadMoreHeatmaps()" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 22px; font-weight: 600; font-size: 0.9rem; border-radius: 4px; cursor: pointer;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                        <span id="btn-load-more-text">Load More Matrices ({{ remaining_heatmaps_count }} remaining)</span>
+                                    </button>
+                                </div>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>
@@ -3472,6 +3492,77 @@
                 btn.style.cursor = '';
             });
         });
+
+        let currentHeatmapOffset = {{ heatmaps|length }};
+        const targetCampaignsValue = {{ target_campaigns|default('')|tojson }};
+        const totalHeatmapsCount = {{ total_heatmaps_count|default(0) }};
+
+        async function loadMoreHeatmaps() {
+            const btn = document.getElementById('btn-load-more-heatmaps');
+            const grid = document.getElementById('retention-heatmap-grid');
+            const counter = document.getElementById('heatmap-shown-count');
+            if (!btn || !grid) return;
+
+            btn.disabled = true;
+            btn.style.opacity = '0.75';
+            btn.innerHTML = '<span class="loading-spinner" style="display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;"></span> Loading matrices…';
+
+            try {
+                const url = `/api/retention/heatmaps?target_campaigns=${encodeURIComponent(targetCampaignsValue)}&offset=${currentHeatmapOffset}&limit=6`;
+                const resp = await fetch(url);
+                if (!resp.ok) {
+                    throw new Error(`Server responded with ${resp.status}`);
+                }
+                const data = await resp.json();
+                if (data.heatmaps && data.heatmaps.length > 0) {
+                    data.heatmaps.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'chart-container';
+                        card.style.cssText = 'margin-bottom: 0; padding: 12px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);';
+                        
+                        const title = document.createElement('div');
+                        title.style.cssText = 'font-weight: 600; font-size: 0.95rem; color: var(--text-ink); margin-bottom: 8px; text-align: center;';
+                        title.textContent = item.country_title;
+                        
+                        const img = document.createElement('img');
+                        img.src = `data:image/png;base64,${item.heatmap_b64}`;
+                        img.alt = `${item.country_title} Retention Heatmap`;
+                        img.style.cssText = 'width: 100%; height: auto; border-radius: 4px; cursor: zoom-in;';
+                        img.onclick = function() { this.classList.toggle('zoomed-img'); };
+                        
+                        card.appendChild(title);
+                        card.appendChild(img);
+                        grid.appendChild(card);
+                    });
+
+                    currentHeatmapOffset = data.offset;
+                    if (counter) {
+                        counter.textContent = currentHeatmapOffset;
+                    }
+
+                    if (data.has_more && data.remaining_count > 0) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg> <span>Load More Matrices (${data.remaining_count} remaining)</span>`;
+                    } else {
+                        const wrap = document.getElementById('heatmap-load-more-wrap');
+                        if (wrap) {
+                            wrap.innerHTML = '<span style="font-size: 0.88rem; color: var(--text-muted); font-weight: 500;">All matrices loaded.</span>';
+                        }
+                    }
+                } else {
+                    const wrap = document.getElementById('heatmap-load-more-wrap');
+                    if (wrap) {
+                        wrap.innerHTML = '<span style="font-size: 0.88rem; color: var(--text-muted); font-weight: 500;">All matrices loaded.</span>';
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load more heatmaps:', err);
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerHTML = 'Error loading matrices. Click to retry.';
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize Interactive Table Suite across all rendered tables

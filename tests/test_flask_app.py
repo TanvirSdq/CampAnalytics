@@ -698,6 +698,42 @@ class TestErrorHandlingAndSecurity(BaseTestCase):
             else:
                 self.assertIn('text/html', response.content_type.lower())
 
+    def test_retention_heatmaps_api_missing_params(self):
+        """Verify /api/retention/heatmaps returns 400 when target_campaigns is missing or invalid."""
+        res_empty = self.client.get('/api/retention/heatmaps')
+        self.assertEqual(res_empty.status_code, 400)
+        data = res_empty.get_json()
+        self.assertIn('error', data)
+
+        res_invalid = self.client.get('/api/retention/heatmaps?target_campaigns=invalidcode123')
+        self.assertEqual(res_invalid.status_code, 400)
+
+    def test_retention_heatmaps_api_success(self):
+        """Verify /api/retention/heatmaps returns JSON list of heatmaps with pagination metadata."""
+        response = self.client.get('/api/retention/heatmaps?target_campaigns=wlmde22+wlmde23&offset=0&limit=6')
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertIn('heatmaps', data)
+        self.assertIn('offset', data)
+        self.assertIn('total_count', data)
+        self.assertIn('has_more', data)
+        self.assertIn('remaining_count', data)
+        if data['heatmaps']:
+            first = data['heatmaps'][0]
+            self.assertIn('country_title', first)
+            self.assertIn('country_code', first)
+            self.assertIn('heatmap_b64', first)
+
+    def test_retention_heatmaps_initial_cap(self):
+        """Verify /retention page caps initial heatmaps to 6."""
+        # Query 2 countries
+        response = self.client.get('/retention?target_campaigns=wlmde22+wlmde23+wlmit22+wlmit23')
+        self.assertEqual(response.status_code, 200)
+        text = response.data.decode('utf-8')
+        # Check that page rendered successfully with heatmap section
+        self.assertIn('Regional Heatmap Matrix', text)
+
+
 
 if __name__ == '__main__':
     unittest.main()

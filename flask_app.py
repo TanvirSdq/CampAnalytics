@@ -5,7 +5,7 @@ import base64
 import io
 import re
 from collections import defaultdict
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_compress import Compress
 import pandas as pd
 import numpy as np
@@ -366,7 +366,9 @@ def retention():
             error=None,
             tables=[],
             heatmaps=[],
-            worldmap_html=''
+            worldmap_html='',
+            total_heatmaps_count=0,
+            remaining_heatmaps_count=0
         )
     
     if not target_campaigns:
@@ -389,6 +391,8 @@ def retention():
     worldmap_html = ""
     tables = []
     heatmaps = []
+    total_heatmaps_count = 0
+    remaining_heatmaps_count = 0
 
     if not valid:
         error = "Please provide valid campaign codes (e.g., wlmde21 wlmde22) or use the Selection Builder above."
@@ -428,16 +432,97 @@ def retention():
             if not df.empty:
                 tables.append(df.to_html(classes="data-table", index=False))
                 
-            for country_code, events in valid_countries.items():
+            sorted_countries = sorted(
+                valid_countries.items(),
+                key=lambda item: sum(len(users) for users in item[1].values()),
+                reverse=True
+            )
+            total_heatmaps_count = len(sorted_countries)
+            initial_limit = 6
+            for country_code, events in sorted_countries[:initial_limit]:
                 with _plot_lock:
                     fig = analytics.create_heatmap(events, COUNTRY_MAP.get(country_code, country_code))
                     heatmaps.append((COUNTRY_MAP.get(country_code, country_code), fig_to_base64(fig)))
+            remaining_heatmaps_count = max(0, total_heatmaps_count - initial_limit)
 
     return render_template('index.html', mode='Retention Analytics', 
                            target_campaigns=target_campaigns, view_mode=view_mode,
                            metric_choice=metric_choice,
                            error=error, tables=tables, heatmaps=heatmaps, 
-                           worldmap_html=worldmap_html)
+                           worldmap_html=worldmap_html,
+                           total_heatmaps_count=total_heatmaps_count,
+                           remaining_heatmaps_count=remaining_heatmaps_count)
+
+@app.route('/api/retention/heatmaps', methods=['GET'])
+def api_retention_heatmaps():
+    """Asynchronously fetch additional heatmap matrices in batches of 6 (or custom limit)."""
+    target_campaigns = request.args.get('target_campaigns', '').strip()
+    try:
+        offset = max(0, int(request.args.get('offset', 6)))
+    except (ValueError, TypeError):
+        offset = 6
+    try:
+        limit = max(1, min(24, int(request.args.get('limit', 6))))
+    except (ValueError, TypeError):
+        limit = 6
+
+    if not target_campaigns:
+        return jsonify({'error': 'Missing target_campaigns parameter', 'heatmaps': []}), 400
+
+    raw_codes = target_campaigns.split()
+    codes = []
+    for c in (re.sub(r'\s+', '', cd).lower() for cd in raw_codes):
+        m_wild = re.match(r'^(all|wla|wlf|wle|wlm|wlb)(\*|all)(\d{2})$', c)
+        if m_wild:
+            evt, _, yr = m_wild.groups()
+            for cc in COUNTRY_OPTIONS:
+                codes.append(f"{evt}{cc}{yr}")
+        else:
+            codes.append(c)
+    valid = [c for c in codes if CODE_RE.match(c)]
+    if not valid:
+        return jsonify({'error': 'No valid campaign codes found', 'heatmaps': []}), 400
+
+    participant_results = analytics.fetch_all_concurrently(valid)
+    country_events = defaultdict(dict)
+    for code in valid:
+        match = CODE_RE.match(code)
+        if not match: continue
+        event, cc, yr = match.groups()
+        participants = participant_results.get(code, set())
+        if cc in COUNTRY_MAP and participants:
+            country_events[cc][code] = participants
+
+    valid_countries = {code: events for code, events in country_events.items() if len(events) >= 2}
+    sorted_countries = sorted(
+        valid_countries.items(),
+        key=lambda item: sum(len(users) for users in item[1].values()),
+        reverse=True
+    )
+    total_count = len(sorted_countries)
+    slice_countries = sorted_countries[offset:offset + limit]
+
+    rendered_heatmaps = []
+    for country_code, events in slice_countries:
+        with _plot_lock:
+            fig = analytics.create_heatmap(events, COUNTRY_MAP.get(country_code, country_code))
+            rendered_heatmaps.append({
+                'country_code': country_code,
+                'country_title': COUNTRY_MAP.get(country_code, country_code),
+                'heatmap_b64': fig_to_base64(fig)
+            })
+
+    next_offset = offset + len(rendered_heatmaps)
+    remaining_count = max(0, total_count - next_offset)
+
+    return jsonify({
+        'heatmaps': rendered_heatmaps,
+        'offset': next_offset,
+        'limit': limit,
+        'total_count': total_count,
+        'has_more': remaining_count > 0,
+        'remaining_count': remaining_count
+    })
 
 @app.route('/health', methods=['GET', 'POST'])
 def health():
