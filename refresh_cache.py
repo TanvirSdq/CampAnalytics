@@ -49,8 +49,8 @@ def configured_codes(args):
 def main():
     current_year = date.today().year
     parser = argparse.ArgumentParser(description="Refresh stale/missing campaign cache entries.")
-    parser.add_argument("--years", default=f"{current_year - 4}-{current_year - 1}",
-                        help="Year or inclusive range, e.g. 2022-2025.")
+    parser.add_argument("--years", default=f"2010-{current_year}",
+                        help=f"Year or inclusive range (default: 2010-{current_year}).")
     parser.add_argument("--events", default=",".join(EVENT_MAP),
                         help="Comma-separated event codes.")
     parser.add_argument("--countries", default=",".join(sorted(COUNTRY_MAP)),
