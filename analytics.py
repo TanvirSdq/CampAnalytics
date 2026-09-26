@@ -49,6 +49,30 @@ EVENT_COUNTRY_SCOPE = config.get('EVENT_COUNTRY_SCOPE', {k: '*' for k in EVENT_M
 CATEGORY_NAME_OVERRIDE = config.get('CATEGORY_NAME_OVERRIDE', {})
 COUNTRY_MAP = config['COUNTRY_MAP']
 REGION_COUNTRY_MAPPING = config['REGION_COUNTRY_MAPPING']
+COUNTRIES_WITH_THE = set(config.get('COUNTRIES_WITH_THE', ['cz', 'nl', 'ph', 'uk', 'us']))
+KNOWN_BOTS = set(config.get('KNOWN_BOTS', [
+    'Flickr upload bot',
+    'File Upload Bot (Magnus Manske)',
+    'CommonsDelinker',
+    'WLM-Bot',
+    'Cropbot',
+    'Rotbot',
+    'FlickrLickr',
+    'Wiki Loves Earth Bot',
+    'UploadWizard'
+]))
+BOT_REGEX = re.compile(config.get('BOT_REGEX', r'(?i)(?:bot|_bot|-bot|\s+bot)$'))
+
+def is_bot_account(username):
+    """Identify automated bot accounts to ensure human-only analytical integrity."""
+    if not username:
+        return True
+    u = username.strip()
+    if u in KNOWN_BOTS:
+        return True
+    if BOT_REGEX.search(u):
+        return True
+    return False
 
 CODE_RE = re.compile(r'^(all|wla|wlf|wle|wlm|wlb)([a-z]{0,2})(\d{2})$')
 EXAMPLE_CODES = "wlmde21 wlmde22 wlmbd22 wlmbd23"
@@ -224,10 +248,87 @@ def code_to_category(code):
         country_label = COUNTRY_MAP.get(cc)
         if not country_label:
             return None
-        category += f"_in_{country_label}"
+        if cc in COUNTRIES_WITH_THE:
+            category += f"_in_the_{country_label}"
+        else:
+            category += f"_in_{country_label}"
     return category
 
+def get_category_candidates(code):
+    """
+    Returns ordered list of candidate Commons category names for a code,
+    accounting for linguistic variations (with / without 'the') and overrides.
+    """
+    primary = code_to_category(code)
+    if not primary:
+        return []
+    candidates = [primary]
+    code_clean = re.sub(r'\s+', '', code).lower()
+    match = CODE_RE.match(code_clean)
+    if match:
+        event, cc, yr = match.groups()
+        event_scope = EVENT_COUNTRY_SCOPE.get(event, '*')
+        countryless = isinstance(event_scope, dict) and event_scope.get('no_country_suffix', False)
+        if cc and not countryless:
+            country_label = COUNTRY_MAP.get(cc)
+            if country_label:
+                event_name = EVENT_MAP.get(event)
+                cat_event = CATEGORY_NAME_OVERRIDE.get(event, event_name.replace(' ', '_')) if event_name else event
+                base = f"Images_from_Wiki_Loves_{cat_event}_{2000 + int(yr)}"
+                alt = f"{base}_in_{country_label}" if cc in COUNTRIES_WITH_THE else f"{base}_in_the_{country_label}"
+                if alt not in candidates:
+                    candidates.append(alt)
+    return candidates
+
 # --- DATA ACQUISITION LOGIC ---
+def _fetch_replica_data(category):
+    """
+    Direct SQL query against Toolforge MariaDB replica (commonswiki_p) if available.
+    Returns dict {username: file_count} or None if replica is unavailable.
+    """
+    try:
+        from pathlib import Path
+        replica_cnf = Path.home() / "replica.my.cnf"
+        if not replica_cnf.exists():
+            return None
+        import configparser
+        parser = configparser.ConfigParser()
+        parser.read(replica_cnf)
+        user = parser["client"].get("user")
+        password = parser["client"].get("password")
+        if not user:
+            return None
+        import pymysql
+        host = os.getenv("COMMONS_REPLICA_HOST", "commonswiki.web.db.svc.wikimedia.cloud")
+        conn = pymysql.connect(
+            host=host, port=3306, user=user, password=password or "",
+            database="commonswiki_p", charset="utf8mb4", connect_timeout=4
+        )
+        cat_title = category.replace(" ", "_")
+        if cat_title.startswith("Category:"):
+            cat_title = cat_title[9:]
+        with conn.cursor() as cur:
+            sql = """
+            SELECT a.actor_name, COUNT(*) as cnt
+            FROM categorylinks cl
+            JOIN page p ON cl.cl_from = p.page_id
+            JOIN image i ON p.page_title = i.img_name
+            JOIN actor_image a ON i.img_actor = a.actor_id
+            WHERE cl.cl_to = %s AND p.page_namespace = 6
+            GROUP BY a.actor_name
+            """
+            cur.execute(sql, (cat_title,))
+            rows = cur.fetchall()
+            conn.close()
+            uploader_counts = {}
+            for actor, count in rows:
+                if actor and not is_bot_account(actor):
+                    uploader_counts[actor] = int(count)
+            return uploader_counts if uploader_counts else None
+    except Exception as exc:
+        logger.debug(f"Commons replica query unavailable: {exc}")
+        return None
+
 def _fetch_toolforge_data(category):
     try:
         url = f"https://ptools.toolforge.org/uploadersincat.php?category={category}"
@@ -237,7 +338,8 @@ def _fetch_toolforge_data(category):
         matches = re.findall(r'User:([^"\'<>#]+)</a>\s*:\s*(\d+)\s*files', response.text)
         if matches:
             uploader_counts = {html.unescape(user.strip()): int(count) for user, count in matches}
-            return uploader_counts
+            human_counts = {u: c for u, c in uploader_counts.items() if not is_bot_account(u)}
+            return human_counts
         if "No files found" in response.text or "<fieldset>" in response.text:
             return {}
         return None
@@ -268,7 +370,7 @@ def _fetch_participants_from_api(category):
                 imageinfo = page.get("imageinfo", [])
                 if imageinfo:
                     user = imageinfo[0].get("user")
-                    if user:
+                    if user and not is_bot_account(user):
                         users.add(user)
 
             continuation = payload.get("continue")
@@ -327,22 +429,37 @@ def get_participants(code):
         _COMPOSITE_BREAKDOWNS[code_clean] = breakdown
         return combined_users
 
-    category = code_to_category(code_clean)
-    if not category:
+    categories = get_category_candidates(code_clean)
+    if not categories:
         return set()
 
-    # 1. High-speed primary: Toolforge replica scraper
-    toolforge_uploaders = _fetch_toolforge_data(category)
-    if toolforge_uploaders is not None:
-        users = set(toolforge_uploaders.keys())
-        campaign_cache.put_participants(code_clean, users)
-        return users
+    verified_empty = False
+    for cat in categories:
+        # 1. High-speed primary: Toolforge direct replica SQL (if available)
+        replica_data = _fetch_replica_data(cat)
+        if replica_data:
+            users = set(replica_data.keys())
+            campaign_cache.put_participants(code_clean, users)
+            return users
 
-    # 2. Resilient fallback: Commons Action API
-    users, success = _fetch_participants_from_api(category)
-    if success:
-        campaign_cache.put_participants(code_clean, users)
-    return users
+        # 2. Opportunistic ptools scraper (only accept if non-empty verified uploaders)
+        toolforge_uploaders = _fetch_toolforge_data(cat)
+        if toolforge_uploaders:  # Non-empty verified dict
+            users = set(toolforge_uploaders.keys())
+            campaign_cache.put_participants(code_clean, users)
+            return users
+
+        # 3. Resilient fallback: Commons Action API
+        users, success = _fetch_participants_from_api(cat)
+        if success:
+            if users:
+                campaign_cache.put_participants(code_clean, users)
+                return users
+            verified_empty = True
+
+    if verified_empty:
+        campaign_cache.put_participants(code_clean, set())
+    return set()
 
 def _fetch_file_sample_metrics(category, max_sample=1500):
     params = {
@@ -353,7 +470,7 @@ def _fetch_file_sample_metrics(category, max_sample=1500):
         "gcmtype": "file",
         "gcmlimit": "500",
         "prop": "categories|globalusage",
-        "clcategories": "Category:Quality images|Category:Featured pictures",
+        "clcategories": "Category:Quality images|Category:Featured pictures|Category:Featured pictures on Wikimedia Commons|Category:Valued images",
         "gulimit": "10",
     }
 
@@ -449,18 +566,25 @@ def get_campaign_structural_metrics(code):
         campaign_cache.put_metrics(code_clean, agg_metrics)
         return agg_metrics
 
-    category = code_to_category(code)
-    if not category:
+    categories = get_category_candidates(code_clean)
+    if not categories:
         return {"quality_image_share": 0.0, "top10_uploader_share": 100.0, "usage_share": 0.0, "total_uploads": 0}
 
-    toolforge_uploaders = _fetch_toolforge_data(category)
+    uploader_counts = {}
+    chosen_cat = categories[0]
+    for cat in categories:
+        replica_data = _fetch_replica_data(cat)
+        if replica_data:
+            uploader_counts = replica_data
+            chosen_cat = cat
+            break
+        tf_data = _fetch_toolforge_data(cat)
+        if tf_data:
+            uploader_counts = tf_data
+            chosen_cat = cat
+            break
 
-    if toolforge_uploaders:
-        uploader_counts = toolforge_uploaders
-        total_uploads = sum(uploader_counts.values())
-    else:
-        uploader_counts = {}
-        total_uploads = 0
+    total_uploads = sum(uploader_counts.values()) if uploader_counts else 0
 
     if uploader_counts:
         top_uploader_count = max(1, ceil(len(uploader_counts) * 0.10))
@@ -471,7 +595,7 @@ def get_campaign_structural_metrics(code):
     else:
         top10_uploader_share = 100.0
 
-    sample = _fetch_file_sample_metrics(category, max_sample=1500)
+    sample = _fetch_file_sample_metrics(chosen_cat, max_sample=1500)
     sample_size = sample["sampled"]
 
     if sample_size > 0:
@@ -490,9 +614,8 @@ def get_campaign_structural_metrics(code):
         "usage_share": usage_share,
         "total_uploads": total_uploads,
     }
-    # Cache only when at least one source completed successfully. An empty
-    # Toolforge result is valid; None means the scraper failed.
-    if toolforge_uploaders is not None or sample["success"]:
+    # Cache only when at least one source completed successfully.
+    if uploader_counts or sample["success"]:
         campaign_cache.put_metrics(code_clean, metrics)
     return metrics
 
@@ -831,18 +954,26 @@ def generate_health_metrics(
     metrics = {}
 
     # 1. Retention Index: volunteer continuity from baseline cohort
-    if baseline_users:
+    is_inaugural = not bool(baseline_users)
+    ret_bm = float(benchmarks.get('retention', GLOBAL_MOVEMENT_BASELINES['retention']))
+    if is_inaugural:
+        metrics['Retention'] = {
+            'raw': 'Inaugural Baseline',
+            'score': None,
+            'benchmark': ret_bm,
+            'weight': 0,
+            'is_inaugural': True
+        }
+    else:
         overlap = len(target_users & baseline_users)
         retention_rate = (overlap / len(baseline_users)) * 100.0
-    else:
-        retention_rate = 0.0
-    ret_bm = float(benchmarks.get('retention', GLOBAL_MOVEMENT_BASELINES['retention']))
-    metrics['Retention'] = {
-        'raw': f"{retention_rate:.1f}%",
-        'score': calculate_relative_score(retention_rate, ret_bm, positive_is_higher=True),
-        'benchmark': ret_bm,
-        'weight': 25
-    }
+        metrics['Retention'] = {
+            'raw': f"{retention_rate:.1f}%",
+            'score': calculate_relative_score(retention_rate, ret_bm, positive_is_higher=True),
+            'benchmark': ret_bm,
+            'weight': 25,
+            'is_inaugural': False
+        }
 
     # 2. Growth Capacity: newcomer participant influx share
     if target_users:
@@ -888,17 +1019,29 @@ def generate_health_metrics(
         'weight': 15
     }
 
-    # Paired composite aggregation:
-    # - Community Vitality (50%): Retention (25%) + Newcomer Growth (25%)
-    # - Content Impact (35%): Usage Share (20%) + Quality Share (15%)
-    # - Participation Equity (15%): Contributor Concentration (15%)
-    overall = (
-        (metrics['Retention']['score'] * 0.25) +
-        (metrics['Growth']['score'] * 0.25) +
-        (metrics['Usage']['score'] * 0.20) +
-        (metrics['Quality']['score'] * 0.15) +
-        (metrics['Diversity']['score'] * 0.15)
-    )
+    # Dynamic Paired Aggregation:
+    # If inaugural edition (no prior baseline), dynamically re-weight across the remaining
+    # four dimensions proportionally (Growth 33.3%, Usage 26.7%, Quality 20.0%, Diversity 20.0%).
+    # Otherwise, standard paired model: Community (50%), Content (35%), Equity (15%).
+    if is_inaugural:
+        overall = (
+            (metrics['Growth']['score'] * (25.0 / 75.0)) +
+            (metrics['Usage']['score'] * (20.0 / 75.0)) +
+            (metrics['Quality']['score'] * (15.0 / 75.0)) +
+            (metrics['Diversity']['score'] * (15.0 / 75.0))
+        )
+        metrics['Growth']['weight'] = 33
+        metrics['Usage']['weight'] = 27
+        metrics['Quality']['weight'] = 20
+        metrics['Diversity']['weight'] = 20
+    else:
+        overall = (
+            (metrics['Retention']['score'] * 0.25) +
+            (metrics['Growth']['score'] * 0.25) +
+            (metrics['Usage']['score'] * 0.20) +
+            (metrics['Quality']['score'] * 0.15) +
+            (metrics['Diversity']['score'] * 0.15)
+        )
     metrics['Overall'] = round(overall)
 
     return metrics
@@ -912,15 +1055,21 @@ def generate_insights(metrics, region_name, benchmarks, counts=None):
     newcomer_count = max(0, target_count - overlap_count)
 
     # 1. Retention Insight
-    raw_ret = float(metrics['Retention']['raw'].replace('%', '')) if isinstance(metrics['Retention']['raw'], str) else float(metrics['Retention']['raw'])
-    ret_bm = benchmarks.get('retention', GLOBAL_MOVEMENT_BASELINES['retention'])
-    if raw_ret >= ret_bm:
-        diff_str = f"+{raw_ret - ret_bm:.1f}% above"
-        insights.append(f"Retention is strong ({raw_ret:.1f}%): retained {overlap_count:,} out of {base_count:,} prior-edition contributors ({diff_str} {region_label} of {ret_bm:.1f}%). Demonstrates high volunteer continuity.")
-    elif raw_ret >= (ret_bm * 0.6):
-        insights.append(f"Retention is moderate ({raw_ret:.1f}%): {overlap_count:,} returning uploaders retained from {base_count:,} baseline. Tracking within typical range for annual photo contests (benchmark: {ret_bm:.1f}%).")
+    if metrics['Retention'].get('is_inaugural'):
+        insights.append(
+            "Inaugural campaign edition: Volunteer retention cannot be evaluated without a prior baseline cycle. "
+            "Evaluation index dynamically calibrated across newcomer recruitment, content utility, quality recognition, and participation equity."
+        )
     else:
-        insights.append(f"Retention indicates high turnover ({raw_ret:.1f}%): retained {overlap_count:,} of {base_count:,} baseline contributors (below {region_label} of {ret_bm:.1f}%). Characteristic of outreach drives where post-contest re-engagement is limited.")
+        raw_ret = float(metrics['Retention']['raw'].replace('%', '')) if isinstance(metrics['Retention']['raw'], str) else float(metrics['Retention']['raw'])
+        ret_bm = benchmarks.get('retention', GLOBAL_MOVEMENT_BASELINES['retention'])
+        if raw_ret >= ret_bm:
+            diff_str = f"+{raw_ret - ret_bm:.1f}% above"
+            insights.append(f"Retention is strong ({raw_ret:.1f}%): retained {overlap_count:,} out of {base_count:,} prior-edition contributors ({diff_str} {region_label} of {ret_bm:.1f}%). Demonstrates high volunteer continuity.")
+        elif raw_ret >= (ret_bm * 0.6):
+            insights.append(f"Retention is moderate ({raw_ret:.1f}%): {overlap_count:,} returning uploaders retained from {base_count:,} baseline. Tracking within typical range for annual photo contests (benchmark: {ret_bm:.1f}%).")
+        else:
+            insights.append(f"Retention indicates high turnover ({raw_ret:.1f}%): retained {overlap_count:,} of {base_count:,} baseline contributors (below {region_label} of {ret_bm:.1f}%). Characteristic of outreach drives where post-contest re-engagement is limited.")
 
     # 2. Growth / Influx Insight
     raw_growth = float(metrics['Growth']['raw'].replace('%', '')) if isinstance(metrics['Growth']['raw'], str) else float(metrics['Growth']['raw'])
@@ -1314,37 +1463,32 @@ def df_to_csv_with_metadata(df, metadata=None):
 
 
 @timed_cache(ttl=3600)
-def compute_content_utility_deep(code, max_sample=1000):
+def compute_content_utility_deep(code, max_sample=500):
     """
     Computes comprehensive cross-wiki media deployment statistics for a campaign edition:
     - Overall deployment rate (% of uploaded files used on at least one Wikimedia project)
     - Total cumulative usages across all Wikipedia and Wikimedia project articles
     - Distribution of usage by target wiki domain (e.g., en.wikipedia.org, bn.wikipedia.org)
     - Top utilized files with thumbnail preview links and usage counts
-    - Top utilized photographers leaderboard
+    - Top utilized photographers leaderboard (excluding automated bots)
     """
     code_clean = re.sub(r'\s+', '', code).lower()
     m = CODE_RE.match(code_clean)
     if not m:
         return None
 
+    # 1. Read from persistent MariaDB/SQLite cache if available
+    cached = campaign_cache.get_content_utility(code_clean)
+    if cached is not None:
+        return cached
+
     evt, cc, yr = m.group(1), m.group(2), m.group(3)
-    category = code_to_category(code_clean)
+    categories = get_category_candidates(code_clean)
+    if not categories:
+        return None
+
     base_metrics = get_campaign_structural_metrics(code_clean) or {}
     total_cohort_uploads = int(base_metrics.get("total_uploads", 0) or 0)
-
-    params = {
-        "action": "query",
-        "format": "json",
-        "generator": "categorymembers",
-        "gcmtitle": f"Category:{category}",
-        "gcmtype": "file",
-        "gcmlimit": "100",
-        "prop": "globalusage|imageinfo",
-        "gulimit": "50",
-        "iiprop": "user|timestamp|url",
-        "iiurlwidth": "300"
-    }
 
     total_sampled = 0
     used_files_count = 0
@@ -1354,100 +1498,109 @@ def compute_content_utility_deep(code, max_sample=1000):
     unique_articles = set()
     media_usages = []
 
-    try:
-        response = http_session.get(COMMONS_API, params=params, headers=COMMONS_HEADERS, timeout=12)
-        if response.status_code == 200:
-            payload = response.json()
-            pages = payload.get("query", {}).get("pages", {})
-            for p in pages.values():
-                total_sampled += 1
-                title = p.get("title", "")
-                gu = p.get("globalusage", [])
-                ii = p.get("imageinfo", [{}])[0] if p.get("imageinfo") else {}
-                uploader = ii.get("user") or "Community Contributor"
-                thumb_url = ii.get("thumburl", "")
-                safe_title = urllib.parse.quote(title.replace(" ", "_"))
-                desc_url = ii.get("descriptionurl") or f"https://commons.wikimedia.org/wiki/{safe_title}"
+    # Iterate over candidate categories until files are found or all candidates checked
+    for cat in categories:
+        params = {
+            "action": "query",
+            "format": "json",
+            "generator": "categorymembers",
+            "gcmtitle": f"Category:{cat}",
+            "gcmtype": "file",
+            "gcmlimit": "100",
+            "prop": "globalusage|imageinfo",
+            "gulimit": "50",
+            "iiprop": "user|timestamp|url",
+            "iiurlwidth": "300"
+        }
+        start_time = time.time()
+        while total_sampled < max_sample:
+            # Enforce 8-second time budget for live web requests to prevent Toolforge gateway 504 timeouts
+            if time.time() - start_time > 8.0:
+                break
+            try:
+                response = http_session.get(COMMONS_API, params=params, headers=COMMONS_HEADERS, timeout=6)
+                if response.status_code != 200:
+                    break
+                payload = response.json()
+                pages = payload.get("query", {}).get("pages", {})
+                if not pages:
+                    break
 
-                if gu:
-                    used_files_count += 1
-                    file_usages_count = len(gu)
-                    total_usages += file_usages_count
-                    uploader_utility[uploader]["used_files"] += 1
-                    uploader_utility[uploader]["total_usages"] += file_usages_count
+                for p in pages.values():
+                    total_sampled += 1
+                    title = p.get("title", "")
+                    gu = p.get("globalusage", [])
+                    ii = p.get("imageinfo", [{}])[0] if p.get("imageinfo") else {}
+                    uploader = ii.get("user") or "Community Contributor"
+                    thumb_url = ii.get("thumburl", "")
+                    safe_title = urllib.parse.quote(title.replace(" ", "_"))
+                    desc_url = ii.get("descriptionurl") or f"https://commons.wikimedia.org/wiki/{safe_title}"
 
-                    for u in gu:
-                        wiki = u.get("wiki", "unknown")
-                        art = u.get("title", "").replace("_", " ")
-                        project_dist[wiki] += 1
-                        unique_articles.add(f"{wiki}:{art}")
-                        media_usages.append({
-                            "file_title": title.replace("File:", "").replace("_", " "),
-                            "full_title": title,
-                            "article": art,
-                            "wiki": wiki,
-                            "commons_url": desc_url,
-                            "thumb_url": thumb_url
-                        })
-    except Exception as e:
-        logger.warning(f"Error fetching live globalusage for {category}: {e}")
+                    # Filter bot accounts from contributor metrics and leaderboards
+                    if gu and not is_bot_account(uploader):
+                        used_files_count += 1
+                        file_usages_count = len(gu)
+                        total_usages += file_usages_count
+                        uploader_utility[uploader]["used_files"] += 1
+                        uploader_utility[uploader]["total_usages"] += file_usages_count
 
-    # Fallback to structural metrics if live sampling yielded zero or had error
-    if total_sampled == 0 or used_files_count == 0:
-        fallback_uploads = total_cohort_uploads or 100
-        fallback_pct = float(base_metrics.get("usage_share", 0.0) or 4.5)
-        if fallback_pct == 0.0:
-            fallback_pct = 4.5
-        est_used = max(1, int(round(fallback_uploads * (fallback_pct / 100.0))))
-        est_usages = int(round(est_used * 2.2))
-        
-        if total_sampled == 0:
-            total_sampled = fallback_uploads
-        if used_files_count == 0:
-            used_files_count = est_used
-            total_usages = est_usages
-            project_dist["en.wikipedia.org"] += int(round(est_usages * 0.45))
-            project_dist[f"{cc}.wikipedia.org"] += int(round(est_usages * 0.35))
-            project_dist["commons.wikimedia.org"] += int(round(est_usages * 0.20))
-            unique_articles.add("en.wikipedia.org:Featured Article Overview")
-            unique_articles.add(f"{cc}.wikipedia.org:Regional Monuments Registry")
+                        for u in gu:
+                            wiki = u.get("wiki", "unknown")
+                            art = u.get("title", "").replace("_", " ")
+                            project_dist[wiki] += 1
+                            unique_articles.add(f"{wiki}:{art}")
+                            if len(media_usages) < 50:
+                                media_usages.append({
+                                    "file_title": title.replace("File:", "").replace("_", " "),
+                                    "full_title": title,
+                                    "article": art,
+                                    "wiki": wiki,
+                                    "commons_url": desc_url,
+                                    "thumb_url": thumb_url
+                                })
 
-    usage_rate = (used_files_count / total_sampled * 100) if total_sampled > 0 else float(base_metrics.get("usage_share", 4.5) or 4.5)
-    
-    # Photographers Leaderboard
+                continuation = payload.get("continue")
+                if not continuation or "gcmcontinue" not in continuation:
+                    break
+                params["gcmcontinue"] = continuation.get("gcmcontinue")
+                params["continue"] = continuation.get("continue", "gcmcontinue||")
+            except Exception as e:
+                logger.warning(f"Error fetching live globalusage for {cat}: {e}")
+                break
+
+        if total_sampled > 0:
+            break
+
+    # STRICT EMPIRICAL REPORTING — ZERO FABRICATED DATA
+    usage_rate = (used_files_count / total_sampled * 100) if total_sampled > 0 else 0.0
+
+    # Photographers Leaderboard (human uploaders only)
     top_photographers = []
     rank = 1
     for uploader, stats in sorted(uploader_utility.items(), key=lambda x: (x[1]["total_usages"], x[1]["used_files"]), reverse=True):
-        top_photographers.append({
-            "rank": rank,
-            "uploader": uploader,
-            "used_files_count": stats["used_files"],
-            "total_usages": stats["total_usages"]
-        })
-        rank += 1
+        if not is_bot_account(uploader):
+            top_photographers.append({
+                "rank": rank,
+                "uploader": uploader,
+                "used_files_count": stats["used_files"],
+                "total_usages": stats["total_usages"]
+            })
+            rank += 1
 
-    # Fallback photographers if none found
-    if not top_photographers and used_files_count > 0:
-        top_photographers.append({
-            "rank": 1,
-            "uploader": "Community Contributors",
-            "used_files_count": used_files_count,
-            "total_usages": total_usages
-        })
-
-    top_project = max(project_dist.items(), key=lambda x: x[1])[0] if project_dist else f"{cc}.wikipedia.org"
+    top_project = max(project_dist.items(), key=lambda x: x[1])[0] if project_dist else "None recorded"
     effective_pool = total_cohort_uploads if total_cohort_uploads > 0 else total_sampled
 
     sorted_projects = []
-    total_proj_usages = sum(project_dist.values()) or 1
-    for domain, count in sorted(project_dist.items(), key=lambda x: x[1], reverse=True):
-        sorted_projects.append({
-            "domain": domain,
-            "count": count,
-            "share_pct": round((count / total_proj_usages) * 100, 1)
-        })
+    total_proj_usages = sum(project_dist.values()) or 0
+    if total_proj_usages > 0:
+        for domain, count in sorted(project_dist.items(), key=lambda x: x[1], reverse=True):
+            sorted_projects.append({
+                "domain": domain,
+                "count": count,
+                "share_pct": round((count / total_proj_usages) * 100, 1)
+            })
 
-    return {
+    result = {
         "code": code_clean,
         "event_type": evt,
         "country_code": cc,
@@ -1458,17 +1611,20 @@ def compute_content_utility_deep(code, max_sample=1000):
         "global_utility_rate_pct": round(usage_rate, 1),
         "total_usages": total_usages,
         "total_global_usages": total_usages,
-        "unique_articles_count": len(unique_articles) or max(1, int(round(total_usages * 0.8))),
+        "unique_articles_count": len(unique_articles),
         "top_consuming_project": top_project,
         "projects": sorted_projects,
         "media_usages": media_usages[:50],
         "top_files": media_usages[:50],
         "top_photographers": top_photographers[:25]
     }
+    if total_sampled > 0:
+        campaign_cache.put_content_utility(code_clean, result)
+    return result
 
 
 @timed_cache(ttl=3600)
-def compute_quality_recognition_deep(code, max_sample=1000):
+def compute_quality_recognition_deep(code, max_sample=500):
     """
     Computes comprehensive Commons quality designation statistics for a campaign edition:
     - Quality Images (QI) count & percentage (via direct Commons category discovery + sampling)
@@ -1482,8 +1638,16 @@ def compute_quality_recognition_deep(code, max_sample=1000):
     if not m:
         return None
 
+    # 1. Read from persistent MariaDB/SQLite cache if available
+    cached = campaign_cache.get_quality_recognition(code_clean)
+    if cached is not None:
+        return cached
+
     evt, cc, yr = m.group(1), m.group(2), m.group(3)
-    category = code_to_category(code_clean)
+    categories = get_category_candidates(code_clean)
+    if not categories:
+        return None
+
     base_metrics = get_campaign_structural_metrics(code_clean) or {}
     total_cohort_uploads = int(base_metrics.get("total_uploads", 0) or 0)
 
@@ -1494,176 +1658,189 @@ def compute_quality_recognition_deep(code, max_sample=1000):
     recognized_files = []
     uploader_counts = defaultdict(lambda: {"qi": 0, "fp": 0, "vi": 0, "total": 0})
 
-    # 1. Try querying dedicated Quality Images subcategory first (e.g. Quality images from Wiki Loves Monuments 2024 in Germany)
-    cat_clean = category.replace("_", " ")
-    qi_cat_candidates = [
-        cat_clean.replace("Images from ", "Quality images from "),
-        f"Quality images from {cat_clean.replace('Images from ', '')}",
-        f"Quality images from {cat_clean}"
-    ]
+    # 1. Try querying dedicated Quality Images subcategories across candidates
+    for cat in categories:
+        cat_clean = cat.replace("_", " ")
+        qi_cat_candidates = [
+            cat_clean.replace("Images from ", "Quality images from "),
+            f"Quality images from {cat_clean.replace('Images from ', '')}",
+            f"Quality images from {cat_clean}"
+        ]
 
-    for qcat in qi_cat_candidates:
-        if qcat == cat_clean or qcat == category:
-            continue
-        try:
-            r_qi = http_session.get(
-                COMMONS_API,
-                params={"action": "query", "format": "json", "prop": "categoryinfo", "titles": f"Category:{qcat}"},
-                headers=COMMONS_HEADERS,
-                timeout=8
-            )
-            if r_qi.status_code == 200:
-                p_info = list(r_qi.json().get("query", {}).get("pages", {}).values())[0]
-                cinfo = p_info.get("categoryinfo")
-                if cinfo and cinfo.get("files", 0) > 0:
-                    qi_count = cinfo.get("files", 0)
-                    # Fetch sample of files from this dedicated quality category
-                    r_qfiles = http_session.get(
-                        COMMONS_API,
-                        params={
-                            "action": "query", "format": "json", "generator": "categorymembers",
-                            "gcmtitle": f"Category:{qcat}", "gcmtype": "file", "gcmlimit": "40",
-                            "prop": "imageinfo", "iiprop": "user|timestamp|url", "iiurlwidth": "300"
-                        },
-                        headers=COMMONS_HEADERS,
-                        timeout=10
-                    )
-                    if r_qfiles.status_code == 200:
-                        qpages = r_qfiles.json().get("query", {}).get("pages", {})
-                        for p in qpages.values():
-                            title = p.get("title", "")
-                            ii = p.get("imageinfo", [{}])[0] if p.get("imageinfo") else {}
-                            uploader = ii.get("user") or "Community Photographer"
-                            thumb_url = ii.get("thumburl", "")
-                            safe_title = urllib.parse.quote(title.replace(" ", "_"))
-                            desc_url = ii.get("descriptionurl") or f"https://commons.wikimedia.org/wiki/{safe_title}"
+        for qcat in qi_cat_candidates:
+            if qcat == cat_clean or qcat == cat:
+                continue
+            try:
+                r_qi = http_session.get(
+                    COMMONS_API,
+                    params={"action": "query", "format": "json", "prop": "categoryinfo", "titles": f"Category:{qcat}"},
+                    headers=COMMONS_HEADERS,
+                    timeout=6
+                )
+                if r_qi.status_code == 200:
+                    p_info = list(r_qi.json().get("query", {}).get("pages", {}).values())[0]
+                    cinfo = p_info.get("categoryinfo")
+                    if cinfo and cinfo.get("files", 0) > 0:
+                        qi_count = cinfo.get("files", 0)
+                        # Fetch sample of files from this dedicated quality category
+                        r_qfiles = http_session.get(
+                            COMMONS_API,
+                            params={
+                                "action": "query", "format": "json", "generator": "categorymembers",
+                                "gcmtitle": f"Category:{qcat}", "gcmtype": "file", "gcmlimit": "40",
+                                "prop": "imageinfo", "iiprop": "user|timestamp|url", "iiurlwidth": "300"
+                            },
+                            headers=COMMONS_HEADERS,
+                            timeout=8
+                        )
+                        if r_qfiles.status_code == 200:
+                            qpages = r_qfiles.json().get("query", {}).get("pages", {})
+                            for p in qpages.values():
+                                title = p.get("title", "")
+                                ii = p.get("imageinfo", [{}])[0] if p.get("imageinfo") else {}
+                                uploader = ii.get("user") or "Community Photographer"
+                                thumb_url = ii.get("thumburl", "")
+                                safe_title = urllib.parse.quote(title.replace(" ", "_"))
+                                desc_url = ii.get("descriptionurl") or f"https://commons.wikimedia.org/wiki/{safe_title}"
 
-                            uploader_counts[uploader]["qi"] += 1
+                                if not is_bot_account(uploader):
+                                    uploader_counts[uploader]["qi"] += 1
+                                    uploader_counts[uploader]["total"] += 1
+                                    recognized_files.append({
+                                        "title": title.replace("File:", "").replace("_", " "),
+                                        "full_title": title,
+                                        "honors": "Quality Image",
+                                        "uploader": uploader,
+                                        "commons_url": desc_url,
+                                        "thumb_url": thumb_url
+                                    })
+                        break
+            except Exception as e:
+                logger.warning(f"Error checking QI subcategory {qcat}: {e}")
+        if qi_count > 0:
+            break
+
+    # 2. Sample general category for inline Quality/Featured/Valued designations if QI subcategory was empty
+    if not recognized_files:
+        for cat in categories:
+            params = {
+                "action": "query",
+                "format": "json",
+                "generator": "categorymembers",
+                "gcmtitle": f"Category:{cat}",
+                "gcmtype": "file",
+                "gcmlimit": "100",
+                "prop": "categories|imageinfo",
+                "clcategories": "Category:Quality images|Category:Featured pictures|Category:Featured pictures on Wikimedia Commons|Category:Valued images",
+                "cllimit": "20",
+                "iiprop": "user|timestamp|url",
+                "iiurlwidth": "300"
+            }
+            sampled_this_cat = 0
+            start_time = time.time()
+            while sampled_this_cat < max_sample:
+                if time.time() - start_time > 8.0:
+                    break
+                try:
+                    response = http_session.get(COMMONS_API, params=params, headers=COMMONS_HEADERS, timeout=6)
+                    if response.status_code != 200:
+                        break
+                    payload = response.json()
+                    pages = payload.get("query", {}).get("pages", {})
+                    if not pages:
+                        break
+
+                    for p in pages.values():
+                        sampled_this_cat += 1
+                        title = p.get("title", "")
+                        cats = [c.get("title", "") for c in p.get("categories", [])]
+                        ii = p.get("imageinfo", [{}])[0] if p.get("imageinfo") else {}
+                        uploader = ii.get("user") or "Community Photographer"
+                        thumb_url = ii.get("thumburl", "")
+                        safe_title = urllib.parse.quote(title.replace(" ", "_"))
+                        desc_url = ii.get("descriptionurl") or f"https://commons.wikimedia.org/wiki/{safe_title}"
+
+                        honors = []
+                        is_qi = "Category:Quality images" in cats
+                        is_fp = "Category:Featured pictures" in cats or "Category:Featured pictures on Wikimedia Commons" in cats
+                        is_vi = "Category:Valued images" in cats
+
+                        if is_qi:
+                            qi_count += 1
+                            honors.append("Quality Image")
+                            if not is_bot_account(uploader):
+                                uploader_counts[uploader]["qi"] += 1
+                        if is_fp:
+                            fp_count += 1
+                            honors.append("Featured Picture")
+                            if not is_bot_account(uploader):
+                                uploader_counts[uploader]["fp"] += 1
+                        if is_vi:
+                            vi_count += 1
+                            honors.append("Valued Image")
+                            if not is_bot_account(uploader):
+                                uploader_counts[uploader]["vi"] += 1
+
+                        if honors and not is_bot_account(uploader):
                             uploader_counts[uploader]["total"] += 1
                             recognized_files.append({
                                 "title": title.replace("File:", "").replace("_", " "),
                                 "full_title": title,
-                                "honors": "Quality Image",
+                                "honors": ", ".join(honors),
                                 "uploader": uploader,
                                 "commons_url": desc_url,
                                 "thumb_url": thumb_url
                             })
+
+                    continuation = payload.get("continue")
+                    if not continuation or "gcmcontinue" not in continuation:
+                        break
+                    params["gcmcontinue"] = continuation.get("gcmcontinue")
+                    params["continue"] = continuation.get("continue", "gcmcontinue||")
+                except Exception as e:
+                    logger.warning(f"Error sampling general category {cat} for quality: {e}")
                     break
-        except Exception as e:
-            logger.warning(f"Error checking QI subcategory {qcat}: {e}")
 
-    # 2. Sample general category for inline Quality/Featured/Valued designations if QI subcat was empty
-    if not recognized_files:
-        params = {
-            "action": "query",
-            "format": "json",
-            "generator": "categorymembers",
-            "gcmtitle": f"Category:{category}",
-            "gcmtype": "file",
-            "gcmlimit": "100",
-            "prop": "categories|imageinfo",
-            "clcategories": "Category:Quality images|Category:Featured pictures|Category:Valued images",
-            "cllimit": "10",
-            "iiprop": "user|timestamp|url",
-            "iiurlwidth": "300"
-        }
-        try:
-            response = http_session.get(COMMONS_API, params=params, headers=COMMONS_HEADERS, timeout=12)
-            if response.status_code == 200:
-                payload = response.json()
-                pages = payload.get("query", {}).get("pages", {})
-                for p in pages.values():
-                    if total_sampled == 0:
-                        total_sampled += 1
-                    title = p.get("title", "")
-                    cats = [c.get("title", "") for c in p.get("categories", [])]
-                    ii = p.get("imageinfo", [{}])[0] if p.get("imageinfo") else {}
-                    uploader = ii.get("user") or "Community Photographer"
-                    thumb_url = ii.get("thumburl", "")
-                    safe_title = urllib.parse.quote(title.replace(" ", "_"))
-                    desc_url = ii.get("descriptionurl") or f"https://commons.wikimedia.org/wiki/{safe_title}"
+            if sampled_this_cat > 0:
+                total_sampled = total_cohort_uploads or sampled_this_cat
+                break
 
-                    honors = []
-                    is_qi = "Category:Quality images" in cats
-                    is_fp = "Category:Featured pictures" in cats
-                    is_vi = "Category:Valued images" in cats
+    effective_total = total_cohort_uploads or total_sampled or len(recognized_files) or 1
+    total_honors = qi_count + fp_count + vi_count
+    quality_rate = (total_honors / effective_total * 100.0) if effective_total > 0 else 0.0
 
-                    if is_qi:
-                        qi_count += 1
-                        honors.append("Quality Image")
-                        uploader_counts[uploader]["qi"] += 1
-                    if is_fp:
-                        fp_count += 1
-                        honors.append("Featured Picture")
-                        uploader_counts[uploader]["fp"] += 1
-                    if is_vi:
-                        vi_count += 1
-                        honors.append("Valued Image")
-                        uploader_counts[uploader]["vi"] += 1
-
-                    if honors:
-                        uploader_counts[uploader]["total"] += 1
-                        recognized_files.append({
-                            "title": title.replace("File:", "").replace("_", " "),
-                            "full_title": title,
-                            "honors": ", ".join(honors),
-                            "uploader": uploader,
-                            "commons_url": desc_url,
-                            "thumb_url": thumb_url
-                        })
-        except Exception as e:
-            logger.warning(f"Error sampling general category for quality: {e}")
-
-    # Fallback to structural metrics if no quality files or stats found
-    fallback_pool = total_cohort_uploads or total_sampled or 100
-    total_sampled = fallback_pool
-    fallback_pct = float(base_metrics.get("quality_image_share", 0.0) or 1.8)
-    if fallback_pct == 0.0:
-        fallback_pct = 1.8
-
-    if qi_count == 0:
-        qi_count = max(1, int(round(total_sampled * (fallback_pct / 100.0))))
-
-    quality_rate = (qi_count / total_sampled * 100) if total_sampled > 0 else fallback_pct
-
-    # Photographer Leaderboard
+    # Photographer Leaderboard (human uploaders only)
     leaderboard = []
     rank = 1
     for uploader, counts in sorted(uploader_counts.items(), key=lambda x: (x[1]["total"], x[1]["fp"], x[1]["qi"]), reverse=True):
-        leaderboard.append({
-            "rank": rank,
-            "uploader": uploader,
-            "total_honors": counts["total"],
-            "qi_count": counts["qi"],
-            "fp_count": counts["fp"],
-            "vi_count": counts["vi"]
-        })
-        rank += 1
+        if not is_bot_account(uploader):
+            leaderboard.append({
+                "rank": rank,
+                "uploader": uploader,
+                "total_honors": counts["total"],
+                "qi_count": counts["qi"],
+                "fp_count": counts["fp"],
+                "vi_count": counts["vi"]
+            })
+            rank += 1
 
-    if not leaderboard and qi_count > 0:
-        leaderboard.append({
-            "rank": 1,
-            "uploader": "Community Photographers",
-            "total_honors": qi_count,
-            "qi_count": qi_count,
-            "fp_count": fp_count,
-            "vi_count": vi_count
-        })
-
-    return {
+    result = {
         "code": code_clean,
         "event_type": evt,
         "country_code": cc,
         "year": 2000 + int(yr),
-        "total_sampled": total_sampled,
+        "total_sampled": effective_total,
         "quality_rate_pct": round(quality_rate, 2),
         "qi_count": qi_count,
         "fp_count": fp_count,
         "vi_count": vi_count,
-        "recognized_files_count": len(recognized_files) or qi_count,
+        "recognized_files_count": len(recognized_files),
         "honored_photographers_count": len(leaderboard),
         "recognized_files": recognized_files[:50],
         "leaderboard": leaderboard[:25]
     }
+    if total_sampled > 0 or recognized_files:
+        campaign_cache.put_quality_recognition(code_clean, result)
+    return result
 
 

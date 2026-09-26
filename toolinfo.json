@@ -2,14 +2,14 @@
   "$schema": "https://meta.wikimedia.org/wiki/Toolhub/Schema",
   "name": "campanalytics",
   "title": "CampAnalytics — Event Evaluation",
-  "description": "High-performance analytics suite for Wikimedia Commons campaigns (Wiki Loves Monuments, Earth, Folklore, Africa, Bangla). Evaluates longitudinal participant retention, newcomer influx, and 5-dimension regional health benchmarking.",
+  "description": "High-performance analytics suite for Wikimedia Commons campaigns (Wiki Loves Monuments, Earth, Folklore, Africa, Bangla). Features 5-dimension regional health evaluation, participant retention matrices, newcomer influx, live encyclopedic content utility, and Commons quality recognition honors.",
   "url": "https://campanalytics.toolforge.org/",
   "repository": "https://github.com/siddiquetanvir/CampAnalytics",
   "issue_tracker_url": "https://github.com/siddiquetanvir/CampAnalytics/issues",
   "license": "GPL-2.0-or-later",
   "author": "Tanvir Siddique",
   "developer_docs_url": "https://github.com/siddiquetanvir/CampAnalytics#readme",
-  "user_docs_url": "https://campanalytics.toolforge.org/?mode=Methodology",
+  "user_docs_url": "https://campanalytics.toolforge.org/methodology",
   "keywords": [
     "analytics",
     "campaigns",
@@ -17,6 +17,9 @@
     "evaluation",
     "statistics",
     "retention",
+    "influx",
+    "globalusage",
+    "quality-images",
     "wikiloves",
     "toolforge"
   ]

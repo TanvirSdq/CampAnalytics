@@ -611,16 +611,16 @@ def health():
                 target_users = all_fetched_data.get(target_event.lower(), set())
                 base_users = all_fetched_data.get(baseline_event.lower(), set())
 
-                if not base_users or not target_users:
+                if not target_users:
                     scope_notice = analytics.get_campaign_scope_notice(event_type, target_cc)
                     if scope_notice:
                         error = scope_notice
                     else:
-                        error = f"Data acquisition notice: Could not retrieve participant data for baseline ({baseline_event}) or target ({target_event}). Please verify the campaign codes or network connectivity."
+                        error = f"Data acquisition notice: Could not retrieve participant data for target campaign ({target_event}). Please verify the campaign code or network connectivity."
                 else:
                     target_users_count = len(target_users)
-                    base_users_count = len(base_users)
-                    intersect_users_count = len(target_users & base_users)
+                    base_users_count = len(base_users) if base_users else 0
+                    intersect_users_count = len(target_users & base_users) if base_users else 0
 
                     peer_volumes = {}
                     for cc in regional_countries:
@@ -695,7 +695,10 @@ def health():
                     
                     for m in metrics:
                         if m != 'Overall':
-                            metrics[m]['stars'] = analytics.calculate_stars(metrics[m]['score'])[0]
+                            if metrics[m].get('score') is not None:
+                                metrics[m]['stars'] = analytics.calculate_stars(metrics[m]['score'])[0]
+                            else:
+                                metrics[m]['stars'] = '—'
 
                     counts = {
                         'target': target_users_count,

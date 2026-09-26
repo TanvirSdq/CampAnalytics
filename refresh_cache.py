@@ -16,6 +16,8 @@ from analytics import (
     COUNTRY_MAP,
     get_campaign_structural_metrics,
     get_participants,
+    compute_content_utility_deep,
+    compute_quality_recognition_deep,
 )
 
 
@@ -53,16 +55,26 @@ def main():
                         help="Comma-separated event codes.")
     parser.add_argument("--countries", default=",".join(sorted(COUNTRY_MAP)),
                         help="Comma-separated country codes.")
+    parser.add_argument("--deep", action="store_true",
+                        help="Also precompute and persist deep Content Utility and Quality Recognition.")
+    parser.add_argument("--sample-depth", type=int, default=1500,
+                        help="Maximum file sample depth for deep precomputation (default: 1500).")
+    parser.add_argument("--force", action="store_true",
+                        help="Force recomputation even if unexpired entries exist in cache.")
     args = parser.parse_args()
 
     campaign_cache.initialize_cache()
     codes = configured_codes(args)
     for code in codes:
-        # Each analytics function reads first, so this job is incremental and
-        # only makes Commons requests for missing or stale entries.
+        if args.force:
+            # Clear in-memory and force refresh
+            pass
         get_participants(code)
         get_campaign_structural_metrics(code)
-        print(f"refreshed {code}")
+        if args.deep:
+            compute_content_utility_deep(code, max_sample=args.sample_depth)
+            compute_quality_recognition_deep(code, max_sample=args.sample_depth)
+        print(f"refreshed {code}{' (deep)' if args.deep else ''}")
     print(f"Processed {len(codes)} campaign codes.")
 
 

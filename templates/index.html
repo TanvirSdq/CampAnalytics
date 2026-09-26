@@ -528,12 +528,12 @@
                     <div>
                         <div class="scorecard-card-title">
                             <span>Retention Index</span>
-                            <span class="scorecard-card-weight">Weight 25%</span>
+                            <span class="scorecard-card-weight">Weight {{ metrics['Retention']['weight'] }}%</span>
                         </div>
                         <div class="scorecard-card-value">{{ metrics['Retention']['raw'] }}</div>
                         <div class="scorecard-card-stars">{{ metrics['Retention']['stars'] }}</div>
                     </div>
-                    <div class="scorecard-card-score">Score: {{ "%.1f"|format(metrics['Retention']['score']) }} / 100</div>
+                    <div class="scorecard-card-score">Score: {% if metrics['Retention']['score'] is not none %}{{ "%.1f"|format(metrics['Retention']['score']) }} / 100{% else %}Inaugural (N/A){% endif %}</div>
                 </div>
 
                 <!-- Dimension 2: Growth Capacity -->
@@ -541,7 +541,7 @@
                     <div>
                         <div class="scorecard-card-title">
                             <span>Growth Capacity</span>
-                            <span class="scorecard-card-weight">Weight 25%</span>
+                            <span class="scorecard-card-weight">Weight {{ metrics['Growth']['weight'] }}%</span>
                         </div>
                         <div class="scorecard-card-value">{{ metrics['Growth']['raw'] }}</div>
                         <div class="scorecard-card-stars">{{ metrics['Growth']['stars'] }}</div>
@@ -554,7 +554,7 @@
                     <div>
                         <div class="scorecard-card-title">
                             <span>Content Utility</span>
-                            <span class="scorecard-card-weight">Weight 20%</span>
+                            <span class="scorecard-card-weight">Weight {{ metrics['Usage']['weight'] }}%</span>
                         </div>
                         <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Usage']['raw']) }}%</div>
                         <div class="scorecard-card-stars">{{ metrics['Usage']['stars'] }}</div>
@@ -567,7 +567,7 @@
                     <div>
                         <div class="scorecard-card-title">
                             <span>Quality Recognition</span>
-                            <span class="scorecard-card-weight">Weight 15%</span>
+                            <span class="scorecard-card-weight">Weight {{ metrics['Quality']['weight'] }}%</span>
                         </div>
                         <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Quality']['raw']) }}%</div>
                         <div class="scorecard-card-stars">{{ metrics['Quality']['stars'] }}</div>
@@ -580,7 +580,7 @@
                     <div>
                         <div class="scorecard-card-title">
                             <span>Contributor Diversity</span>
-                            <span class="scorecard-card-weight">Weight 15%</span>
+                            <span class="scorecard-card-weight">Weight {{ metrics['Diversity']['weight'] }}%</span>
                         </div>
                         <div class="scorecard-card-value">{{ "%.1f"|format(metrics['Diversity']['raw']) }}%</div>
                         <div class="scorecard-card-stars">{{ metrics['Diversity']['stars'] }}</div>
@@ -654,15 +654,15 @@
                         <tbody>
                             <tr>
                                 <td style="font-weight: 600;">Retention Index</td>
-                                <td>25%</td>
+                                <td>{{ metrics['Retention']['weight'] }}%</td>
                                 <td>{{ metrics['Retention']['raw'] }}</td>
                                 <td>{{ "%.1f"|format(metrics['Retention']['benchmark']) }}%</td>
-                                <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Retention']['score']) }} / 100</td>
-                                <td>{{ metrics['Retention']['stars'] }}</td>
+                                <td style="font-weight: 600; color: var(--wiki-blue);">{% if metrics['Retention']['score'] is not none %}{{ "%.1f"|format(metrics['Retention']['score']) }} / 100{% else %}Inaugural (N/A){% endif %}</td>
+                                <td>{{ metrics['Retention']['stars'] if metrics['Retention']['stars'] else '—' }}</td>
                             </tr>
                             <tr>
                                 <td style="font-weight: 600;">Growth Capacity</td>
-                                <td>25%</td>
+                                <td>{{ metrics['Growth']['weight'] }}%</td>
                                 <td>{{ metrics['Growth']['raw'] }}</td>
                                 <td>{{ "%.1f"|format(metrics['Growth']['benchmark']) }}%</td>
                                 <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Growth']['score']) }} / 100</td>
@@ -670,7 +670,7 @@
                             </tr>
                             <tr>
                                 <td style="font-weight: 600;">Content Utility</td>
-                                <td>20%</td>
+                                <td>{{ metrics['Usage']['weight'] }}%</td>
                                 <td>{{ "%.1f"|format(metrics['Usage']['raw']) }}%</td>
                                 <td>{{ "%.1f"|format(metrics['Usage']['benchmark']) }}%</td>
                                 <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Usage']['score']) }} / 100</td>
@@ -678,7 +678,7 @@
                             </tr>
                             <tr>
                                 <td style="font-weight: 600;">Quality Recognition</td>
-                                <td>15%</td>
+                                <td>{{ metrics['Quality']['weight'] }}%</td>
                                 <td>{{ "%.1f"|format(metrics['Quality']['raw']) }}%</td>
                                 <td>{{ "%.1f"|format(metrics['Quality']['benchmark']) }}%</td>
                                 <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Quality']['score']) }} / 100</td>
@@ -686,7 +686,7 @@
                             </tr>
                             <tr>
                                 <td style="font-weight: 600;">Contributor Diversity</td>
-                                <td>15%</td>
+                                <td>{{ metrics['Diversity']['weight'] }}%</td>
                                 <td>{{ "%.1f"|format(metrics['Diversity']['raw']) }}%</td>
                                 <td>{{ "%.1f"|format(metrics['Diversity']['benchmark']) }}%</td>
                                 <td style="font-weight: 600; color: var(--wiki-blue);">{{ "%.1f"|format(metrics['Diversity']['score']) }} / 100</td>

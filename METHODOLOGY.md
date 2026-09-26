@@ -99,6 +99,14 @@ $$\text{Evaluation Index} = 0.25 S_{\text{ret}} + 0.25 S_{\text{grow}} + 0.20 S_
 - **Mission & Content Impact Pair (35%)**: Balances practical encyclopedic utility ($20\%$) against formal artistic quality ($15\%$). File uploads that illustrate Wikipedia articles deliver direct mission value; recognized Quality Images reflect high photographic execution.
 - **Participation Equity (15%)**: Assesses contributor distribution breadth, guarding against campaigns where aggregate numbers are heavily skewed by a single power uploader.
 
+### 4.3 Inaugural Campaign Calibration (Dynamic Re-Weighting)
+
+When evaluating an inaugural edition of a campaign in a territory (where $|U_{\text{base}}| = 0$ due to the absence of a prior evaluated annual cycle), volunteer retention cannot be empirically measured. Rather than assigning an artificial $0.0\%$ score that would penalize inaugural organizing teams, the framework dynamically suppresses the retention dimension and recalibrates the remaining four indicators proportionally across the unit interval:
+
+$$\text{Evaluation Index}_{\text{inaugural}} = \frac{25}{75} S_{\text{grow}} + \frac{20}{75} S_{\text{util}} + \frac{15}{75} S_{\text{qual}} + \frac{15}{75} S_{\text{div}} \approx 0.333 S_{\text{grow}} + 0.267 S_{\text{util}} + 0.200 S_{\text{qual}} + 0.200 S_{\text{div}}$$
+
+This dynamic normalization maintains index defensibility and preserves community evaluation comparability across emerging initiatives.
+
 ---
 
 ## 5. Non-Linear Relative Performance Scoring
@@ -210,6 +218,10 @@ $$U_r = \frac{|F_{\text{in-use}}|}{|F|} \times 100\%$$
    $$B_{\text{proj}} = \left| \bigcup_{f \in F} \{ \text{domain}(p) \mid p \in P(f) \} \right|$$
 3. **Photographer Impact Contribution**: For uploader $u$, the aggregate usage volume of their portfolio is evaluated to construct the campaign contributor utility leaderboard.
 
+### 8.3 Empirical Non-Imputation & Bot Exclusion Principles
+1. **Strict Non-Imputation (Zero-Floor Integrity)**: In accordance with movement research standards, CampAnalytics strictly prohibits synthetic data imputation or simulated extrapolation. If sampling detects zero encyclopedic embeddings for a cohort, the utility rate is explicitly recorded as $0.0\%$, reflecting the true unindexed empirical reality rather than heuristic projections.
+2. **Automated Bot Exclusion**: Accounts recognized as automated ingestion or synchronization bots (e.g. `Flickr upload bot`, `File Upload Bot (Magnus Manske)`, `CommonsDelinker`, `WLM-Bot`, and accounts matching bot naming patterns) are systematically excluded from contributor metrics, retention cohorts, newcomer pools, and photographer leaderboards. Contributor Diversity ($S_{\text{div}}$) is evaluated exclusively across genuine human participants.
+
 ---
 
 ## 9. Quality Recognition Modeling (Commons Curatorial Standards)
@@ -219,7 +231,7 @@ Quality Recognition quantifies formal artistic, technical, and canonical achieve
 ### 9.1 Community Designation Types
 Submissions are evaluated against three formal Commons award categories:
 1. **Quality Images (QI)**: Images meeting rigorous technical standards (composition, exposure, sharpness, lighting), evaluated and ratified by the Commons Quality Images committee.
-2. **Featured Pictures (FP)**: The movement's premier visual content, selected by community consensus via strict multi-day candidacy votes.
+2. **Featured Pictures (FP)**: The movement's premier visual content, selected by community consensus via strict multi-day candidacy votes (indexed under both `Category:Featured pictures` and `Category:Featured pictures on Wikimedia Commons`).
 3. **Valued Images (VI)**: Images recognized as the most valuable of their kind for depicting particular encyclopedic subjects or concepts.
 
 ### 9.2 Quality Rate Formulation
@@ -230,6 +242,9 @@ $$Q_r = \frac{|F_{\text{honored}}|}{|F|} \times 100\%$$
 
 The **Honored Photographers Count** ($H$) quantifies distinct uploaders who created at least one recognized work:
 $$H = |\{ \text{uploader}(f) \mid f \in F_{\text{honored}} \}|$$
+
+### 9.3 Category Linguistic Normalization & Discovery
+To prevent category fragmentation across international campaigns, CampAnalytics incorporates automated grammar normalization. National campaigns containing definite articles (e.g. `in the United States`, `in the Netherlands`, `in the Philippines`, `in the United Kingdom`, `in the Czech Republic`) are automatically resolved alongside canonical aliases and MediaWiki category redirect directives (`{{Category redirect}}`).
 
 ---
 

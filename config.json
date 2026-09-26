@@ -22,6 +22,19 @@
     "wlb": {"countries": ["bd", "in"], "no_country_suffix": true}
   },
   "CATEGORY_NAME_OVERRIDE": {},
+  "COUNTRIES_WITH_THE": ["cz", "nl", "ph", "uk", "us"],
+  "KNOWN_BOTS": [
+    "Flickr upload bot",
+    "File Upload Bot (Magnus Manske)",
+    "CommonsDelinker",
+    "WLM-Bot",
+    "Cropbot",
+    "Rotbot",
+    "FlickrLickr",
+    "Wiki Loves Earth Bot",
+    "UploadWizard"
+  ],
+  "BOT_REGEX": "(?i)(?:bot|_bot|-bot|\\s+bot)$",
   "COUNTRY_MAP": {
     "dz": "Algeria", "ar": "Argentina", "au": "Australia", "at": "Austria",
     "bd": "Bangladesh", "be": "Belgium", "br": "Brazil", "ca": "Canada",

@@ -734,6 +734,111 @@ class TestErrorHandlingAndSecurity(BaseTestCase):
         self.assertIn('Regional Heatmap Matrix', text)
 
 
+class TestMethodologicalIntegrityAndScraping(BaseTestCase):
+    """Rigorous tests covering bot filtering, category resolution, inaugural weighting, and non-synthetic integrity."""
+
+    def test_bot_account_detection(self):
+        """Verify that known bot accounts and regex patterns are identified and filtered."""
+        from analytics import is_bot_account
+        # Known bot names
+        self.assertTrue(is_bot_account("Flickr upload bot"))
+        self.assertTrue(is_bot_account("File Upload Bot (Magnus Manske)"))
+        self.assertTrue(is_bot_account("CommonsDelinker"))
+        self.assertTrue(is_bot_account("WLM-Bot"))
+        self.assertTrue(is_bot_account("Cropbot"))
+        self.assertTrue(is_bot_account("Rotbot"))
+        self.assertTrue(is_bot_account("UploadWizard"))
+        # Regex patterns
+        self.assertTrue(is_bot_account("TanvirSdqBot"))
+        self.assertTrue(is_bot_account("Some_User_bot"))
+        self.assertTrue(is_bot_account("Auto-bot"))
+        self.assertTrue(is_bot_account("Test bot"))
+        # Genuine human usernames
+        self.assertFalse(is_bot_account("TanvirSiddique"))
+        self.assertFalse(is_bot_account("CommunityPhotographer"))
+        self.assertFalse(is_bot_account("WikimediaVolunteer"))
+        self.assertFalse(is_bot_account("Alice"))
+
+    def test_category_candidates_and_definite_articles(self):
+        """Verify candidate generation resolves definite articles for US, UK, NL, PH, CZ."""
+        from analytics import get_category_candidates
+        # United States
+        us_cats = get_category_candidates("wlmus23")
+        self.assertIn("Images_from_Wiki_Loves_Monuments_2023_in_the_United_States", us_cats)
+        self.assertIn("Images_from_Wiki_Loves_Monuments_2023_in_United_States", us_cats)
+
+        # United Kingdom
+        uk_cats = get_category_candidates("wlmuk24")
+        self.assertIn("Images_from_Wiki_Loves_Monuments_2024_in_the_United_Kingdom", uk_cats)
+
+        # Netherlands
+        nl_cats = get_category_candidates("wlmnl22")
+        self.assertIn("Images_from_Wiki_Loves_Monuments_2022_in_the_Netherlands", nl_cats)
+
+        # Germany (no 'the')
+        de_cats = get_category_candidates("wlmde23")
+        self.assertEqual(de_cats[0], "Images_from_Wiki_Loves_Monuments_2023_in_Germany")
+
+    def test_inaugural_campaign_dynamic_reweighting(self):
+        """Verify inaugural editions re-weight remaining dimensions without a 0-star retention penalty."""
+        from analytics import generate_health_metrics
+        target_users = {"Alice", "Bob", "Charlie", "David"}
+        baseline_users = set()  # Inaugural campaign: no prior baseline
+        structural = {
+            "quality_image_share": 2.0,
+            "top10_uploader_share": 40.0,
+            "usage_share": 3.0,
+            "total_uploads": 100
+        }
+        benchmarks = {
+            "retention": 20.0,
+            "growth": 65.0,
+            "quality": 1.5,
+            "diversity": 70.0,
+            "usage": 2.5
+        }
+        metrics = generate_health_metrics(target_users, baseline_users, structural, benchmarks)
+        # Retention must be marked as inaugural
+        self.assertTrue(metrics['Retention']['is_inaugural'])
+        self.assertIsNone(metrics['Retention']['score'])
+        self.assertEqual(metrics['Retention']['weight'], 0)
+        # Weights of other dimensions must sum to 100%
+        self.assertEqual(metrics['Growth']['weight'], 33)
+        self.assertEqual(metrics['Usage']['weight'], 27)
+        self.assertEqual(metrics['Quality']['weight'], 20)
+        self.assertEqual(metrics['Diversity']['weight'], 20)
+        # Overall score must reflect strong fundamentals rather than 0-star penalty
+        self.assertGreater(metrics['Overall'], 60)
+
+    def test_persistent_cache_utility_and_quality(self):
+        """Verify campaign_cache functions store and retrieve rich JSON payloads."""
+        import campaign_cache
+        test_code = "wlmxx99"
+        mock_utility = {
+            "code": test_code,
+            "used_files_count": 5,
+            "total_usages": 12,
+            "usage_rate_pct": 5.0,
+            "top_consuming_project": "en.wikipedia.org"
+        }
+        self.assertTrue(campaign_cache.put_content_utility(test_code, mock_utility))
+        retrieved_utility = campaign_cache.get_content_utility(test_code)
+        self.assertIsNotNone(retrieved_utility)
+        self.assertEqual(retrieved_utility["used_files_count"], 5)
+        self.assertEqual(retrieved_utility["top_consuming_project"], "en.wikipedia.org")
+
+        mock_quality = {
+            "code": test_code,
+            "qi_count": 2,
+            "quality_rate_pct": 2.0,
+            "honored_photographers_count": 1
+        }
+        self.assertTrue(campaign_cache.put_quality_recognition(test_code, mock_quality))
+        retrieved_quality = campaign_cache.get_quality_recognition(test_code)
+        self.assertIsNotNone(retrieved_quality)
+        self.assertEqual(retrieved_quality["qi_count"], 2)
+
 
 if __name__ == '__main__':
     unittest.main()
+

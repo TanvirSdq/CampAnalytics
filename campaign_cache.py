@@ -7,6 +7,7 @@ Toolforge). Database failures are cache misses, never request failures.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sqlite3
@@ -147,6 +148,12 @@ def initialize_cache():
                     code VARCHAR(32) PRIMARY KEY, fetched_at DOUBLE NOT NULL,
                     quality_image_share DOUBLE NOT NULL, top10_uploader_share DOUBLE NOT NULL,
                     usage_share DOUBLE NOT NULL, total_uploads DOUBLE NOT NULL)""",
+                    """CREATE TABLE IF NOT EXISTS campaign_content_utility (
+                    code VARCHAR(32) PRIMARY KEY, fetched_at DOUBLE NOT NULL,
+                    payload_json MEDIUMTEXT NOT NULL)""",
+                    """CREATE TABLE IF NOT EXISTS campaign_quality_recognition (
+                    code VARCHAR(32) PRIMARY KEY, fetched_at DOUBLE NOT NULL,
+                    payload_json MEDIUMTEXT NOT NULL)""",
                 ]
                 for statement in statements:
                     cursor.execute(statement)
@@ -246,3 +253,82 @@ def put_metrics(code, metrics):
     except Exception as exc:
         logger.warning("Unable to write metrics cache: %s", exc)
         return False
+
+
+def get_content_utility(code):
+    try:
+        if not initialize_cache():
+            return None
+        with _connection() as (connection, backend):
+            placeholder = "%s" if backend == "mariadb" else "?"
+            cursor = connection.cursor()
+            cursor.execute("SELECT fetched_at, payload_json FROM campaign_content_utility WHERE code=" + placeholder, (code,))
+            row = cursor.fetchone()
+            if not row or not _fresh(float(row[0])):
+                return None
+            return json.loads(row[1])
+    except Exception as exc:
+        logger.warning("Unable to read content utility cache: %s", exc)
+        return None
+
+
+def put_content_utility(code, payload):
+    try:
+        if not initialize_cache():
+            return False
+        with _connection() as (connection, backend):
+            placeholder = "%s" if backend == "mariadb" else "?"
+            payload_str = json.dumps(payload)
+            cursor = connection.cursor()
+            cursor.execute(
+                "INSERT INTO campaign_content_utility (code, fetched_at, payload_json) VALUES (" + placeholder + ", " + placeholder + ", " + placeholder + ") "
+                + ("ON DUPLICATE KEY UPDATE fetched_at=VALUES(fetched_at), payload_json=VALUES(payload_json)"
+                   if backend == "mariadb" else
+                   "ON CONFLICT(code) DO UPDATE SET fetched_at=excluded.fetched_at, payload_json=excluded.payload_json"),
+                (code, time.time(), payload_str)
+            )
+            connection.commit()
+            return True
+    except Exception as exc:
+        logger.warning("Unable to write content utility cache: %s", exc)
+        return False
+
+
+def get_quality_recognition(code):
+    try:
+        if not initialize_cache():
+            return None
+        with _connection() as (connection, backend):
+            placeholder = "%s" if backend == "mariadb" else "?"
+            cursor = connection.cursor()
+            cursor.execute("SELECT fetched_at, payload_json FROM campaign_quality_recognition WHERE code=" + placeholder, (code,))
+            row = cursor.fetchone()
+            if not row or not _fresh(float(row[0])):
+                return None
+            return json.loads(row[1])
+    except Exception as exc:
+        logger.warning("Unable to read quality recognition cache: %s", exc)
+        return None
+
+
+def put_quality_recognition(code, payload):
+    try:
+        if not initialize_cache():
+            return False
+        with _connection() as (connection, backend):
+            placeholder = "%s" if backend == "mariadb" else "?"
+            payload_str = json.dumps(payload)
+            cursor = connection.cursor()
+            cursor.execute(
+                "INSERT INTO campaign_quality_recognition (code, fetched_at, payload_json) VALUES (" + placeholder + ", " + placeholder + ", " + placeholder + ") "
+                + ("ON DUPLICATE KEY UPDATE fetched_at=VALUES(fetched_at), payload_json=VALUES(payload_json)"
+                   if backend == "mariadb" else
+                   "ON CONFLICT(code) DO UPDATE SET fetched_at=excluded.fetched_at, payload_json=excluded.payload_json"),
+                (code, time.time(), payload_str)
+            )
+            connection.commit()
+            return True
+    except Exception as exc:
+        logger.warning("Unable to write quality recognition cache: %s", exc)
+        return False
+
