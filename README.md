@@ -27,6 +27,8 @@ Both interfaces use the shared core analytics engine ([`analytics.py`](analytics
 
 **CampAnalytics** is an open-source analytics platform for campaign organizers, program evaluators, and Wikimedia community leaders. It analyzes international Wiki Loves photography campaigns by querying live metadata directly from Wikimedia Commons and Toolforge replica databases.
 
+> **Deprecation Notice**: CampAnalytics is deprecated in favor of **[CampTools](https://camptools.toolforge.org/)** ([repository](https://github.com/TanvirSdq/CampAnalytics-rewrite)), which serves as the active production platform on Wikimedia Toolforge. This legacy Python suite continues to run concurrently at [`https://campanalytics.toolforge.org/`](https://campanalytics.toolforge.org/) for comparative reference.
+
 ### Supported Campaigns
 
 | Code | Campaign | Focus | Commons Category Pattern |
